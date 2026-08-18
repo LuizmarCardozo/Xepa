@@ -10,7 +10,7 @@ Estamos desenvolvendo um **aplicativo mobile de ofertas**, inicialmente constru�
 * **HTML**
 * **CSS**
 * **JavaScript puro**
-* **Apache Cordova** para futuramente transformar a aplicação web em aplicativo Android
+* **Apache Cordova** aplicação web em aplicativo Android
 * Backend planejado com **Firebase ou Supabase**
 
 A ideia é desenvolver tudo no **VS Code**, mantendo uma arquitetura simples e modular, sem criar uma quantidade excessiva de pastas e arquivos.
