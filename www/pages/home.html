@@ -1,0 +1,48 @@
+<div>
+  <div class="home-hero">
+    <div class="topbar" style="padding-left: 0; padding-right: 0">
+      <img class="logo-image" src="assets/XEPPPA.png" alt="Xepa" /><button
+        class="icon-btn"
+        onclick="Router.go('perfil')"
+      >
+        👤
+      </button>
+    </div>
+    <div class="greeting">Bom dia! 👋</div>
+    <h1 class="hero-title">Encontre ofertas fresquinhas perto de você.</h1>
+    <div class="search">
+      <input placeholder="Buscar frutas, carnes, legumes..." /><button
+        onclick="Router.go('ofertas')"
+      >
+        ⌕
+      </button>
+    </div>
+    <div class="location">📍 <span>Usar minha localização</span></div>
+  </div>
+  <section class="home-section">
+    <div class="section-title">
+      <h2>Feiras por perto</h2>
+      <button onclick="Router.go('feira')">Ver todas</button>
+    </div>
+    <div class="map-box" onclick="Router.go('feira')">
+      📍 Encontrar feiras próximas
+    </div>
+    <div class="section-title">
+      <h2>Stories</h2>
+      <button
+        id="criar-story-btn"
+        onclick="Router.go('criarStory')"
+        style="display: none"
+      >
+        + Criar
+      </button>
+    </div>
+    <div class="story-row" data-stories></div>
+    <div class="section-title">
+      <h2>Ofertas para você</h2>
+      <button onclick="Router.go('ofertas')">Ver todas</button>
+    </div>
+    <div class="grid" data-home-offers></div>
+  </section>
+  ${Components.bottomNav("home")}
+</div>

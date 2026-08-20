@@ -1,0 +1,6 @@
+.filters{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
+.filter{white-space:nowrap;padding:9px 13px;border-radius:20px;background:#fff;border:1px solid var(--borda);font-size:12px}
+.filter.active{background:var(--verde-escuro);color:#fff}
+.offer-list{display:grid;gap:12px}
+.offer-list .offer-card{display:flex;gap:12px;padding:10px}
+.offer-list .offer-image{width:105px;height:105px;flex-shrink:0}

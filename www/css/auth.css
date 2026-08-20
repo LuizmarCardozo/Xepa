@@ -1,0 +1,52 @@
+.auth-page {
+  min-height: 100vh;
+  max-width: 520px;
+  margin: auto;
+  padding: 34px 22px;
+  background: #fff;
+}
+.auth-page > .logo-image {
+  margin: 20px auto 35px;
+}
+.auth-logo {
+  text-align: center;
+  font-size: 38px;
+  font-weight: 900;
+  color: var(--verde-escuro);
+  margin: 20px 0 35px;
+}
+.auth-logo span {
+  color: var(--verde);
+}
+.auth-card {
+  background: #fff;
+}
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  color: var(--cinza);
+  font-size: 13px;
+}
+.auth-footer button {
+  background: none;
+  color: var(--verde-escuro);
+  font-weight: 800;
+}
+.account-type {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 17px;
+}
+.account-option {
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  background: #fff;
+}
+.account-option.selected {
+  border: 2px solid var(--verde);
+  background: var(--verde-claro);
+  color: var(--verde-escuro);
+}
