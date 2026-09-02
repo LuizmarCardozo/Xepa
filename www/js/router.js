@@ -18,10 +18,11 @@ const Router = {
         if (!r.ok) throw new Error("Página não encontrada");
         return r.text();
       });
-      const renderedHtml = html.replace(
-        /\$\{Components\.bottomNav\("([^"]+)"\)\}/g,
-        (_, active) => Components.bottomNav(active),
-      );
+      const renderedHtml = html
+        .replace(/\$\{Components\.bottomNav\("([^"]+)"\)\}/g, (_, active) =>
+          Components.bottomNav(active),
+        )
+        .replace(/<link\s+rel=["']stylesheet["'][^>]*>/gi, "");
       document.getElementById("app").innerHTML = renderedHtml;
       document.body.classList.toggle(
         "auth-mode",
@@ -35,7 +36,12 @@ const Router = {
             ? "ComerciantePage"
             : route.charAt(0).toUpperCase() + route.slice(1) + "Page"
         ];
-      if (typeof fn === "function") fn();
+      if (typeof fn === "function") {
+        const pageHtml = fn();
+        if (typeof pageHtml === "string" && pageHtml.trim()) {
+          document.getElementById("app").innerHTML = pageHtml;
+        }
+      }
       window.scrollTo(0, 0);
     } catch (e) {
       document.getElementById("app").innerHTML =

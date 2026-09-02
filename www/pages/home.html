@@ -1,48 +1,299 @@
-<div>
-  <div class="home-hero">
-    <div class="topbar" style="padding-left: 0; padding-right: 0">
-      <img class="logo-image" src="assets/XEPPPA.png" alt="Xepa" /><button
-        class="icon-btn"
-        onclick="Router.go('perfil')"
-      >
-        👤
-      </button>
+<!-- home.html — Tela inicial do app Xepa -->
+<!-- Os caminhos relativos permitem abrir este arquivo diretamente no navegador. -->
+<link rel="stylesheet" href="../css/global.css" />
+<link rel="stylesheet" href="../css/components.css" />
+<link rel="stylesheet" href="../css/home.css" />
+
+<div class="home-hero">
+  <div class="top-bar">
+    <div>
+      <h1>Olá 👋</h1>
+      <p>O que você procura hoje?</p>
     </div>
-    <div class="greeting">Bom dia! 👋</div>
-    <h1 class="hero-title">Encontre ofertas fresquinhas perto de você.</h1>
-    <div class="search">
-      <input placeholder="Buscar frutas, carnes, legumes..." /><button
-        onclick="Router.go('ofertas')"
-      >
-        ⌕
-      </button>
-    </div>
-    <div class="location">📍 <span>Usar minha localização</span></div>
+    <button class="icon-btn">🔔<span class="badge">1</span></button>
   </div>
-  <section class="home-section">
-    <div class="section-title">
-      <h2>Feiras por perto</h2>
-      <button onclick="Router.go('feira')">Ver todas</button>
-    </div>
-    <div class="map-box" onclick="Router.go('feira')">
-      📍 Encontrar feiras próximas
-    </div>
-    <div class="section-title">
-      <h2>Stories</h2>
-      <button
-        id="criar-story-btn"
-        onclick="Router.go('criarStory')"
-        style="display: none"
-      >
-        + Criar
-      </button>
-    </div>
-    <div class="story-row" data-stories></div>
-    <div class="section-title">
-      <h2>Ofertas para você</h2>
-      <button onclick="Router.go('ofertas')">Ver todas</button>
-    </div>
-    <div class="grid" data-home-offers></div>
-  </section>
-  ${Components.bottomNav("home")}
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" placeholder="Buscar produtos, produtores, feiras..." />
+  </div>
 </div>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Categorias</h2>
+    <a href="#">Ver todas</a>
+  </div>
+  <div class="cat-scroll hide-scrollbar">
+    <div class="cat-item">
+      <div class="cat-circle cat-hortifruti">🥬</div>
+      <p>Hortifruti</p>
+    </div>
+    <div class="cat-item">
+      <div class="cat-circle cat-laticinios">🥛</div>
+      <p>Laticínios</p>
+    </div>
+    <div class="cat-item">
+      <div class="cat-circle cat-carnes">🥩</div>
+      <p>Carnes</p>
+    </div>
+    <div class="cat-item">
+      <div class="cat-circle cat-padaria">🍞</div>
+      <p>Padaria</p>
+    </div>
+    <div class="cat-item">
+      <div class="cat-circle cat-artesanais">🌾</div>
+      <p>Artesanais</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="banner">
+    <div class="banner-text">
+      <h2>Produtos frescos<br />da sua região</h2>
+      <p>Direto de quem produz<br />para a sua mesa.</p>
+      <button class="banner-btn">Ver feiras próximas</button>
+    </div>
+    <img
+      class="banner-img"
+      src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=300"
+      alt="Cesta de vegetais"
+    />
+    <div class="banner-dots">
+      <span class="active"></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Feiras próximas</h2>
+    <a href="#">Ver no mapa ⦿</a>
+  </div>
+  <div class="markets-scroll hide-scrollbar">
+    <div class="market-card">
+      <div class="market-img-wrap">
+        <img
+          class="market-img"
+          src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&q=80&w=400"
+          alt="Feira"
+        />
+        <span class="market-badge">Aberto · 07h às 13h</span>
+      </div>
+      <div class="market-info">
+        <h4>Feira exemplo</h4>
+        <p>📍 2,3 km de você</p>
+        <div class="rating">
+          <div class="rating-dots">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <span class="rating-count">+24</span>
+        </div>
+      </div>
+    </div>
+    <div class="market-card">
+      <div class="market-img-wrap">
+        <img
+          class="market-img"
+          src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=400"
+          alt="Feira"
+        />
+        <span class="market-badge">Aberto · 07h às 13h</span>
+      </div>
+      <div class="market-info">
+        <h4>Feira exemplo</h4>
+        <p>📍 2,3 km de você</p>
+        <div class="rating">
+          <div class="rating-dots">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <span class="rating-count">+24</span>
+        </div>
+      </div>
+    </div>
+    <div class="market-card">
+      <div class="market-img-wrap">
+        <img
+          class="market-img"
+          src="https://images.unsplash.com/photo-1519996529931-28324d5a630e?auto=format&fit=crop&q=80&w=400"
+          alt="Feira"
+        />
+        <span class="market-badge">Aberto · 07h às 13h</span>
+      </div>
+      <div class="market-info">
+        <h4>Feira exemplo</h4>
+        <p>📍 2,3 km de você</p>
+        <div class="rating">
+          <div class="rating-dots">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <span class="rating-count">+24</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Produtos perto de você</h2>
+    <a href="#">Ver todas</a>
+  </div>
+  <div class="product-grid">
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1561136594-7f68413baa99?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Últimas compras</h2>
+    <a href="#">Ver todas</a>
+  </div>
+  <div class="product-grid">
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1571680322279-a226e6a4cc2a?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1607305387299-a3d9611cd469?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1596097635121-14b63b7a0c9d?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+    <div class="product-card">
+      <img
+        class="product-img"
+        src="https://images.unsplash.com/photo-1546470427-e26264be0b0d?auto=format&fit=crop&q=80&w=300"
+        alt="Tomate orgânico"
+      />
+      <h4>Tomate organico</h4>
+      <p>Só folha</p>
+      <div class="product-bottom">
+        <span class="price"
+          >R$ 8,00<span style="font-size: 10px">/KG</span></span
+        >
+        <button class="add-btn">+</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--
+  Barra de navegação inferior — versão inline, pois o arquivo Components.js
+  não foi enviado. Se seu projeto já tem Components.bottomNav("home"),
+  troque o bloco <nav> abaixo por: ${Components.bottomNav("home")}
+-->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-page="home">
+    <span class="nav-icon">🏬</span>
+    <span class="nav-label">Feira</span>
+  </button>
+  <button class="nav-item" data-page="ofertas">
+    <span class="nav-icon">🏷️</span>
+    <span class="nav-label">Ofertas</span>
+  </button>
+  <button class="nav-item" data-page="pedidos">
+    <span class="nav-icon">🛒</span>
+    <span class="nav-label">Pedidos</span>
+  </button>
+  <button class="nav-item" data-page="perfil">
+    <span class="nav-icon">👤</span>
+    <span class="nav-label">Perfil</span>
+  </button>
+</nav>

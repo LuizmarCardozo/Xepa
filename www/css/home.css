@@ -1,6 +1,555 @@
-.home-hero{padding:4px 16px 0;max-width:520px;margin:auto}
-.greeting{font-size:14px;color:var(--cinza);margin-bottom:3px}
-.hero-title{font-size:25px;color:var(--verde-escuro);line-height:1.12;margin-bottom:15px}
-.location{display:flex;align-items:center;gap:7px;color:var(--cinza);font-size:13px;margin:12px 0}
-.map-box{height:130px;border-radius:20px;background:linear-gradient(135deg,#eef5d7,#fff);border:1px solid var(--borda);display:grid;place-items:center;color:var(--verde-escuro);font-weight:800}
-.home-section{padding:0 16px;max-width:520px;margin:auto}
+/* ==========================================================================
+   home.css — Tela inicial (Home) do app Xepa
+   Baseado no protótipo: header verde de saudação, busca, categorias,
+   banner de destaque, feiras próximas, produtos e últimas compras.
+   ========================================================================== */
+
+:root {
+  --xepa-green: #4caf50;
+  --xepa-green-dark: #2e7d32;
+  --xepa-green-darker: #1b5e20;
+  --xepa-green-bg: #e8f5e1;
+  --xepa-green-pale: #eff9ec;
+  --xepa-red: #e53935;
+  --xepa-text: #1f2937;
+  --xepa-text-muted: #6b7280;
+  --xepa-border: #efefef;
+  --xepa-card-radius: 18px;
+  --xepa-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  --xepa-page-bg: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  background: var(--xepa-page-bg);
+  color: var(--xepa-text);
+  overflow-x: hidden;
+}
+
+#app {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ---------- Utilitários ---------- */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------- Topo / Saudação ---------- */
+.home-hero {
+  background: linear-gradient(180deg, var(--xepa-green-bg) 0%, #ffffff 100%);
+  padding: 24px 20px 18px;
+}
+
+.top-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.top-bar h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--xepa-text);
+}
+
+.top-bar p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--xepa-text-muted);
+}
+
+.icon-btn {
+  position: relative;
+  border: none;
+  background: #ffffff;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--xepa-shadow);
+  flex-shrink: 0;
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--xepa-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 2px solid #fff;
+}
+
+/* ---------- Busca ---------- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: var(--xepa-shadow);
+}
+
+.search-bar span {
+  font-size: 16px;
+  color: var(--xepa-text-muted);
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  background: transparent;
+  color: var(--xepa-text);
+}
+
+.search-bar input::placeholder {
+  color: #a6acb4;
+}
+
+/* ---------- Seções genéricas ---------- */
+.section {
+  padding: 18px 20px 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--xepa-text);
+}
+
+.section-header a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--xepa-green-dark);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ---------- Categorias ---------- */
+.cat-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.cat-item {
+  flex: 0 0 auto;
+  width: 72px;
+  text-align: center;
+}
+
+.cat-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 6px;
+  overflow: hidden;
+}
+
+.cat-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.cat-item p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--xepa-text);
+}
+
+.cat-hortifruti {
+  background: #ddf3d4;
+}
+.cat-laticinios {
+  background: #fdf3d3;
+}
+.cat-carnes {
+  background: #fbe1e1;
+}
+.cat-padaria {
+  background: #fbeadd;
+}
+.cat-artesanais {
+  background: #f2e7d0;
+}
+
+/* ---------- Banner ---------- */
+.banner {
+  position: relative;
+  background: var(--xepa-green-bg);
+  border-radius: var(--xepa-card-radius);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  min-height: 150px;
+}
+
+.banner-text h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--xepa-green-darker);
+  line-height: 1.25;
+}
+
+.banner-text p {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: #3e6b41;
+  line-height: 1.4;
+}
+
+.banner-btn {
+  border: none;
+  background: var(--xepa-green-darker);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 22px;
+  cursor: pointer;
+}
+
+.banner-img {
+  width: 42%;
+  max-width: 140px;
+  height: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.banner-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 20px;
+  display: flex;
+  gap: 5px;
+}
+
+.banner-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(27, 94, 32, 0.25);
+}
+
+.banner-dots span.active {
+  background: var(--xepa-green-darker);
+  width: 14px;
+  border-radius: 3px;
+}
+
+/* ---------- Feiras próximas ---------- */
+.markets-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.market-card {
+  flex: 0 0 auto;
+  width: 150px;
+  border-radius: var(--xepa-card-radius);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--xepa-shadow);
+}
+
+.market-img-wrap {
+  position: relative;
+}
+
+.market-img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  display: block;
+}
+
+.market-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--xepa-green-dark);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 8px;
+}
+
+.market-info {
+  padding: 10px 10px 12px;
+}
+
+.market-info h4 {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.market-info p {
+  margin: 0 0 4px;
+  font-size: 11.5px;
+  color: var(--xepa-text-muted);
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rating-dots {
+  display: flex;
+  gap: 2px;
+}
+
+.rating-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #dadfe3;
+}
+
+.rating-count {
+  font-size: 11px;
+  color: var(--xepa-text-muted);
+}
+
+/* ---------- Produtos ---------- */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: var(--xepa-card-radius);
+  padding: 10px;
+  box-shadow: var(--xepa-shadow);
+}
+
+.product-img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.product-card h4 {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.product-card p {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--xepa-text-muted);
+}
+
+.product-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--xepa-text);
+}
+
+.add-btn {
+  border: none;
+  background: var(--xepa-green);
+  color: #fff;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Espaço final antes da nav ---------- */
+.section:last-of-type {
+  padding-bottom: 100px;
+}
+
+/* ---------- Barra de navegação inferior ---------- */
+.bottom-nav {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  width: min(calc(100% - 32px), 488px);
+  margin: 0 auto;
+  bottom: 14px;
+  background: #fff;
+  border-radius: 26px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px;
+  z-index: 50;
+}
+
+.nav-item {
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  color: var(--xepa-text-muted);
+  cursor: pointer;
+}
+
+.nav-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.nav-label {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.nav-item.active {
+  background: var(--xepa-green-bg);
+  color: var(--xepa-green-dark);
+}
+
+@media (max-width: 380px) {
+  .home-hero {
+    padding: 20px 14px 16px;
+  }
+
+  .section {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .section-header {
+    gap: 8px;
+  }
+
+  .section-header h2 {
+    font-size: 16px;
+  }
+
+  .section-header a {
+    font-size: 12px;
+  }
+
+  .banner {
+    padding: 16px;
+  }
+
+  .banner-text {
+    min-width: 0;
+  }
+
+  .banner-text h2 {
+    font-size: 17px;
+  }
+
+  .banner-btn {
+    padding: 9px 12px;
+    font-size: 11px;
+  }
+
+  .banner-img {
+    width: 38%;
+  }
+
+  .product-card {
+    padding: 8px;
+  }
+
+  .product-img {
+    height: 82px;
+  }
+
+  .price {
+    font-size: 12px;
+  }
+
+  .add-btn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bottom-nav {
+    left: 8px;
+    right: 8px;
+    width: calc(100% - 16px);
+    bottom: 8px;
+    padding: 6px 4px;
+  }
+
+  .nav-item {
+    padding: 7px 8px;
+  }
+}

@@ -1,34 +1,52 @@
+<link rel="stylesheet" href="../css/global.css" />
+<link rel="stylesheet" href="../css/auth.css?v=3" />
+
 <main class="auth-page">
-  <img class="logo-image" src="assets/XEPPPA.png" alt="Xepa" />
-  <h1 class="page-title">Entrar</h1>
-  <p class="subtitle" style="margin-bottom: 22px">Acesse sua conta no Xepa.</p>
+  <div class="auth-brand">
+    <img class="logo-image" src="../assets/XEPPPA.png" alt="Xepa" />
+    <p class="auth-brand-copy">
+      Tudo o que você precisa,<br /><strong>pertinho de você.</strong>
+    </p>
+  </div>
+  <img
+    class="cesta-img"
+    src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=300"
+    alt="Cesta"
+  />
 
-  <form id="login-form">
-    <div class="form-group">
-      <label class="form-label">E-mail</label>
-      <input
-        id="email"
-        class="form-input"
-        type="email"
-        required
-        placeholder="voce@email.com"
-      />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Senha</label>
-      <input
-        id="password"
-        class="form-input"
-        type="password"
-        required
-        placeholder="••••••••"
-      />
-    </div>
-    <button class="btn btn-primary btn-full">Entrar</button>
-  </form>
-
-  <div class="auth-footer">
-    Ainda não tem conta?
-    <button onclick="Router.go('cadastro')">Criar conta</button>
+  <div class="auth-card">
+    <h2>Bem-vindo de volta!</h2>
+    <p class="sub">Entre na sua conta para continuar</p>
+    <form id="login-form">
+      <div class="input-group">
+        <label>E-mail ou Telefone</label>
+        <div class="input-wrapper">
+          <span>✉️</span>
+          <input id="email" type="email" placeholder="E-mail" required />
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Senha</label>
+        <div class="input-wrapper">
+          <span>🔒</span>
+          <input id="password" type="password" placeholder="Senha" required />
+        </div>
+      </div>
+      <a href="#" class="forgot">Esqueci minha senha</a>
+      <button type="submit" class="btn-primary">Entrar <span>→</span></button>
+      <div class="divider">ou</div>
+      <button type="button" class="btn-google">
+        <img
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+          width="20"
+          alt="Google"
+        />
+        Continuar com google
+      </button>
+      <p class="register-link">
+        Ainda não tem uma conta?
+        <a href="#" onclick="Router.go('cadastro')">criar conta</a>
+      </p>
+    </form>
   </div>
 </main>
