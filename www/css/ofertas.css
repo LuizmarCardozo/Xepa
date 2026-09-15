@@ -1,6 +1,327 @@
-.filters{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
-.filter{white-space:nowrap;padding:9px 13px;border-radius:20px;background:#fff;border:1px solid var(--borda);font-size:12px}
-.filter.active{background:var(--verde-escuro);color:#fff}
-.offer-list{display:grid;gap:12px}
-.offer-list .offer-card{display:flex;gap:12px;padding:10px}
-.offer-list .offer-image{width:105px;height:105px;flex-shrink:0}
+/* css/ofertas.css */
+
+:root {
+  --xepa-green-primary: #a1d91a;
+  --xepa-green-dark: #219653;
+  --xepa-text: #111;
+  --xepa-text-muted: #777;
+  --xepa-page-bg: #f9f9f9;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--xepa-page-bg);
+  color: var(--xepa-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  position: relative;
+  background: #fff;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==========================================================================
+   HERO / HEADER
+   ========================================================================== */
+.ofertas-hero {
+  position: relative;
+  width: 100%;
+  display: flex;
+  background: #a7e025;
+}
+.banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   CONTEÚDO BRANCO SOBREPOSTO (CORRIGIDO)
+   ========================================================================== */
+.page-content {
+  position: relative;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  /* Reduzimos a margem para cobrir apenas a linhazinha final do banner */
+  margin-top: -10px;
+  z-index: 10;
+  padding-top: 1px;
+  padding-bottom: 120px;
+  min-height: 60vh;
+}
+
+/* ==========================================================================
+   BUSCA (CORRIGIDA)
+   ========================================================================== */
+.search-wrapper {
+  margin: 0 16px;
+  /* Puxa a barra de busca exatos 24px para cima, ficando no limite perfeito */
+  margin-top: -24px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 11;
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  gap: 10px;
+}
+.search-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--xepa-text);
+}
+.search-bar input::placeholder {
+  color: #ccc;
+}
+
+/* ==========================================================================
+   CATEGORIAS
+   ========================================================================== */
+.categories-section {
+  padding: 0 16px 16px;
+}
+.categories-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #000;
+  margin: 0 0 12px 0;
+}
+.categories-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 66px;
+  flex-shrink: 0;
+}
+.category-img-wrap {
+  width: 66px;
+  height: 66px;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+}
+.category-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.category-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #222;
+  text-align: center;
+}
+
+/* ==========================================================================
+   FILTROS HORIZONTAIS
+   ========================================================================== */
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+.filter {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #555;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.filter.active {
+  border-color: #e0e0e0;
+}
+.filter-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+/* ==========================================================================
+   OFFER GRID (4 COLUNAS)
+   ========================================================================== */
+.offer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 16px;
+}
+.offer-card {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+.offer-img {
+  width: 100%;
+  height: 65px;
+  object-fit: cover;
+}
+.offer-info {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.offer-name {
+  margin: 0;
+  font-size: 9px;
+  font-weight: 900;
+  color: #000;
+  line-height: 1.2;
+}
+.offer-desc {
+  margin: 2px 0 6px;
+  font-size: 8px;
+  color: #999;
+  font-style: italic;
+}
+.offer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+}
+.price-container {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.old-price {
+  font-size: 7px;
+  color: #aaa;
+  text-decoration: line-through;
+  font-weight: 700;
+}
+.new-price {
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--xepa-green-dark);
+}
+.new-price .unit {
+  font-size: 7px;
+  font-weight: 800;
+}
+.add-btn {
+  background: var(--xepa-green-dark);
+  color: #fff;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(33, 150, 83, 0.4);
+}
+
+/* ==========================================================================
+   MENU INFERIOR
+   ========================================================================== */
+.bottom-nav {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
+  background: #fff;
+  border-radius: 40px;
+  display: flex;
+  justify-content: space-around;
+  padding: 6px 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+}
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #111;
+  cursor: pointer;
+  width: 56px;
+}
+.nav-icon-wrap {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.nav-label {
+  font-size: 10.5px;
+  font-weight: 900;
+}
+.nav-item.active .nav-icon-wrap {
+  background: #e6f4ea;
+  color: var(--xepa-green-dark);
+}
+.nav-item.active .nav-label {
+  color: var(--xepa-green-dark);
+}
+
+@media (max-width: 380px) {
+  .bottom-nav {
+    left: 14px;
+    right: 14px;
+    padding: 6px;
+  }
+  .offer-grid {
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .search-wrapper {
+    margin: 0 12px;
+    margin-top: -24px;
+  }
+  .categories-section {
+    padding: 0 12px 16px;
+  }
+  .filters {
+    padding: 0 12px;
+  }
+}
