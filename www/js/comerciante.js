@@ -1,8 +1,58 @@
-const ComerciantePage=()=>{
- const form=document.querySelector("[data-merchant-form]");
- if(form)form.addEventListener("submit",e=>{e.preventDefault();alert("Salvo localmente! Depois conectaremos ao Firebase/Supabase.");Router.go("minhasOfertas")});
- const story=document.querySelector("[data-story-form]");
- if(story)story.addEventListener("submit",e=>{e.preventDefault();alert("Story criado!");Router.go("home")});
- const list=document.querySelector("[data-my-offers]");
- if(list)list.innerHTML=mockOffers.slice(0,3).map(o=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div><b>${o.icon} ${o.name}</b><div class="offer-meta">R$ ${o.price}</div></div><span class="badge">Ativa</span></div>`).join("");
+window.ComerciantePage = async function () {
+  const list = document.querySelector("[data-my-offers]");
+  if (!list || !window.Backend || !window.Backend.getMyOffers) return;
+
+  list.innerHTML = '<p class="merchant-empty">Carregando suas ofertas...</p>';
+
+  try {
+    const offers = await window.Backend.getMyOffers();
+    if (offers.length === 0) {
+      list.innerHTML =
+        '<p class="merchant-empty">Você ainda não publicou ofertas.</p>';
+      return;
+    }
+
+    list.innerHTML = offers.map(renderMerchantOffer).join("");
+    list.querySelectorAll("[data-delete-offer]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!window.confirm("Excluir esta oferta?")) return;
+        button.disabled = true;
+        try {
+          await window.Backend.deleteOffer(button.dataset.deleteOffer);
+          button.closest(".merchant-offer")?.remove();
+          if (!list.querySelector(".merchant-offer")) {
+            list.innerHTML =
+              '<p class="merchant-empty">Você ainda não publicou ofertas.</p>';
+          }
+        } catch (error) {
+          console.error(error);
+          button.disabled = false;
+          alert("Não foi possível excluir a oferta.");
+        }
+      });
+    });
+  } catch (error) {
+    console.error(error);
+    list.innerHTML =
+      '<p class="merchant-empty">Não foi possível carregar suas ofertas.</p>';
+  }
+
+  function renderMerchantOffer(offer) {
+    const image = offer.image
+      ? `<img src="${offer.image}" alt="${offer.name}" class="merchant-offer-image">`
+      : '<div class="merchant-offer-image merchant-offer-placeholder">📦</div>';
+    const price = Number(offer.price).toFixed(2).replace(".", ",");
+
+    return `
+			<article class="merchant-offer">
+				${image}
+				<div class="merchant-offer-info">
+					<h3>${offer.name}</h3>
+					<p>R$ ${price} / ${offer.unit}</p>
+					<span>${offer.active ? "Ativa" : "Inativa"}</span>
+				</div>
+				<button class="merchant-delete" type="button" data-delete-offer="${offer.id}" aria-label="Excluir ${offer.name}">Excluir</button>
+			</article>
+		`;
+  }
 };

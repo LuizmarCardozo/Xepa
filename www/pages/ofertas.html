@@ -4,9 +4,69 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Xepa - Ofertas</title>
-    <link rel="stylesheet" href="../css/global.css" />
-    <link rel="stylesheet" href="../css/components.css" />
-    <link rel="stylesheet" href="../css/ofertas.css" />
+    <!-- O router ignora links, então protegemos o visual da página com essa tag style -->
+    <style>
+      .ofertas-hero {
+        position: relative;
+        width: 100%;
+        display: flex;
+        background: #a7e025;
+      }
+      .banner-img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: cover;
+      }
+      .page-content {
+        position: relative;
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        margin-top: -10px;
+        z-index: 10;
+        padding-top: 1px;
+        padding-bottom: 120px;
+        min-height: 60vh;
+      }
+      .search-wrapper-ofertas {
+        margin: -24px 16px 20px;
+        position: relative;
+        z-index: 11;
+      }
+      .filters {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px;
+        overflow-x: auto;
+        margin-bottom: 20px;
+        scrollbar-width: none;
+      }
+      .filters::-webkit-scrollbar {
+        display: none;
+      }
+      .filter {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 14px;
+        padding: 8px 14px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #555;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .filter.active {
+        border-color: #219653;
+        background: #eaf6ea;
+        color: #219653;
+      }
+      .filter-dropdown {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+      }
+    </style>
   </head>
   <body>
     <div id="app">
@@ -14,7 +74,7 @@
         <!-- ============ HEADER BANNER ============ -->
         <header class="ofertas-hero">
           <img
-            src="../assets/banner_ofertas.png"
+            src="assets/banner_ofertas.png"
             alt="Ofertas da sua região"
             class="banner-img"
           />
@@ -23,7 +83,7 @@
         <!-- ============ ÁREA BRANCA SOBREPOSTA ============ -->
         <div class="page-content">
           <!-- BUSCA -->
-          <div class="search-wrapper">
+          <div class="search-wrapper search-wrapper-ofertas">
             <div class="search-bar">
               <svg
                 class="search-icon"
@@ -70,9 +130,8 @@
               </div>
               <div class="category-item">
                 <div class="category-img-wrap" style="background: #fcebeb">
-                  <!-- Link de Carnes corrigido aqui -->
                   <img
-                    src="https://images.unsplash.com/photo-1607623814075-e51df1bd682f?w=150&q=80"
+                    src="https://images.unsplash.com/photo-1603048297172-c92544798d5e?w=150&q=80"
                     alt="Carnes"
                   />
                 </div>
@@ -100,7 +159,7 @@
           </div>
 
           <!-- FILTROS -->
-          <div class="filters hide-scrollbar">
+          <div class="filters">
             <button class="filter filter-dropdown">
               Ordenar
               <svg
@@ -121,8 +180,8 @@
             <button class="filter">Perto de você</button>
           </div>
 
-          <!-- LISTA DE OFERTAS (Grid 4 colunas) -->
-          <div class="offer-grid" data-offers>
+          <!-- LISTA DE OFERTAS (Agora usando product-grid do home.css para herdar as 4 colunas) -->
+          <div class="product-grid" data-offers>
             <!-- Injetado pelo JS -->
           </div>
         </div>
@@ -149,7 +208,8 @@
           <span class="nav-label">Feira</span>
         </button>
 
-        <button class="nav-item" data-page="ofertas">
+        <!-- CORREÇÃO: Classe "active" agora está no botão correto -->
+        <button class="nav-item active" data-page="ofertas">
           <div class="nav-icon-wrap">
             <svg
               width="22"
@@ -172,7 +232,7 @@
           <span class="nav-label">Ofertas</span>
         </button>
 
-        <button class="nav-item active" data-page="pedidos">
+        <button class="nav-item" data-page="pedidos">
           <div class="nav-icon-wrap">
             <svg
               width="22"
@@ -214,7 +274,5 @@
         </button>
       </nav>
     </div>
-
-    <script src="../js/ofertas.js"></script>
   </body>
 </html>

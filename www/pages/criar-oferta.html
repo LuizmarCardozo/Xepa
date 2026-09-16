@@ -1,1 +1,137 @@
-<main class="page"><div class="page-header"><div><h1 class="page-title">Nova oferta</h1><p class="subtitle">Publique um produto para seus clientes</p></div></div><form class="card" data-merchant-form><div class="form-group"><label class="form-label">Produto</label><input class="form-input" required placeholder="Ex.: Tomate"></div><div class="form-group"><label class="form-label">Categoria</label><select class="form-select"><option>Frutas</option><option>Legumes</option><option>Carnes</option><option>Outros</option></select></div><div class="form-group"><label class="form-label">Preço</label><input class="form-input" required placeholder="0,00"></div><div class="form-group"><label class="form-label">Unidade</label><input class="form-input" placeholder="kg, unidade, bandeja..."></div><div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" placeholder="Detalhes da oferta"></textarea></div><button class="btn btn-primary btn-full">Publicar oferta</button></form></main>
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xepa - Nova oferta</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/components.css" />
+    <link rel="stylesheet" href="../css/criar_oferta.css" />
+  </head>
+  <body>
+    <div id="app">
+      <main class="page co-page">
+        <!-- ============ HEADER ============ -->
+        <header class="co-header">
+          <button class="icon-btn co-back" id="btnBack" aria-label="Voltar">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#08400B"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <div class="co-header-text">
+            <h1 class="page-title">Nova oferta</h1>
+            <p class="subtitle">Publique um produto para seus clientes</p>
+          </div>
+        </header>
+
+        <form id="offerForm" class="co-form" novalidate>
+          <!-- ============ IMAGEM ============ -->
+          <div class="form-group">
+            <label class="form-label">Foto do produto</label>
+            <div class="co-image-drop" id="imageDrop" tabindex="0" role="button" aria-label="Adicionar foto do produto">
+              <input type="file" id="offerImageInput" accept="image/png, image/jpeg, image/webp" hidden />
+
+              <div class="co-image-placeholder" id="imagePlaceholder">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#9EBF26" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                <span class="co-image-label">Adicionar foto</span>
+                <span class="co-image-hint">PNG ou JPG, até 5MB</span>
+              </div>
+
+              <img id="imagePreviewImg" class="co-image-preview-img hidden" alt="Pré-visualização da oferta" />
+
+              <button type="button" class="co-image-remove hidden" id="btnRemoveImage" aria-label="Remover imagem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <span class="co-error" id="errImagem"></span>
+          </div>
+
+          <!-- ============ DADOS DO PRODUTO ============ -->
+          <div class="card co-card">
+            <div class="form-group">
+              <label class="form-label" for="fieldNome">Produto</label>
+              <input class="form-input" id="fieldNome" name="nome" required placeholder="Ex.: Tomate orgânico" maxlength="60" autocomplete="off" />
+              <span class="co-error" id="errNome"></span>
+            </div>
+
+            <div class="co-form-row">
+              <div class="form-group">
+                <label class="form-label" for="fieldCategoria">Categoria</label>
+                <select class="form-select" id="fieldCategoria" name="categoria">
+                  <option value="Hortifruti">Hortifruti</option>
+                  <option value="Laticínios">Laticínios</option>
+                  <option value="Carnes">Carnes</option>
+                  <option value="Padaria">Padaria</option>
+                  <option value="Artesanais">Artesanais</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="fieldUnidade">Unidade</label>
+                <input class="form-input" id="fieldUnidade" name="unidade" placeholder="kg, unidade..." list="unidadesList" autocomplete="off" />
+                <datalist id="unidadesList">
+                  <option value="kg"></option>
+                  <option value="unidade"></option>
+                  <option value="bandeja"></option>
+                  <option value="dúzia"></option>
+                  <option value="maço"></option>
+                  <option value="litro"></option>
+                </datalist>
+              </div>
+            </div>
+
+            <div class="co-form-row">
+              <div class="form-group">
+                <label class="form-label" for="fieldPreco">Preço</label>
+                <div class="co-price-input">
+                  <span>R$</span>
+                  <input class="form-input" id="fieldPreco" name="preco" inputmode="decimal" required placeholder="0,00" autocomplete="off" />
+                </div>
+                <span class="co-error" id="errPreco"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="fieldPrecoAntigo">Preço antigo <span class="co-optional">opcional</span></label>
+                <div class="co-price-input">
+                  <span>R$</span>
+                  <input class="form-input" id="fieldPrecoAntigo" name="precoAntigo" inputmode="decimal" placeholder="0,00" autocomplete="off" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group co-no-margin">
+              <label class="form-label" for="fieldDescricao">Descrição</label>
+              <textarea class="form-textarea" id="fieldDescricao" name="descricao" placeholder="Detalhes da oferta" maxlength="140"></textarea>
+              <span class="co-charcount" id="descCount">0/140</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full co-submit" type="submit" id="btnSubmit">
+            Publicar oferta
+          </button>
+        </form>
+      </main>
+    </div>
+
+    <div class="co-toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="../js/criar_oferta.js"></script>
+  </body>
+</html>

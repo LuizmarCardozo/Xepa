@@ -1,46 +1,43 @@
 // js/ofertas.js
 
-window.OfertasPage = function () {
-  const formatPrice = (value) => value.toFixed(2).replace(".", ",");
+window.OfertasPage = async function () {
+  const list = document.querySelector("[data-offers]");
+  if (!list) return;
 
-  const mockOffers = Array.from({ length: 16 }).map((_, index) => ({
-    id: index + 1,
-    name: "Tomate organico",
-    desc: "So folha",
-    price: 8.0,
-    oldPrice: 12.0,
-    unit: "KG",
-    icon: "assets/imagem tomate.png",
-  }));
+  list.innerHTML = "";
+  if (!window.Backend || !window.Backend.getOffers) return;
+
+  try {
+    const offers = await window.Backend.getOffers();
+    list.innerHTML = offers.map(renderOfferCard).join("");
+  } catch (error) {
+    console.error(error);
+    list.innerHTML = "";
+  }
 
   function renderOfferCard(offer) {
-    const oldPriceHTML = offer.oldPrice
-      ? `<span class="old-price">R$ ${formatPrice(offer.oldPrice)}/${offer.unit}</span>`
+    const image = offer.image
+      ? `<img class="product-img" src="${offer.image}" alt="${offer.name}" />`
       : "";
+    const oldPrice = offer.oldPrice
+      ? `<span class="old-price">R$ ${Number(offer.oldPrice).toFixed(2).replace(".", ",")}/${offer.unit}</span>`
+      : "";
+
     return `
-      <div class="offer-card" data-id="${offer.id}">
-        <img class="offer-img" src="${offer.icon}" alt="${offer.name}" />
-        <div class="offer-info">
-          <h4 class="offer-name">${offer.name}</h4>
-          <p class="offer-desc">${offer.desc}</p>
-          <div class="offer-bottom">
+      <div class="product-card" data-id="${offer.id}">
+        ${image}
+        <div class="product-info">
+          <h4 class="product-name">${offer.name}</h4>
+          <p class="product-desc">${offer.desc || ""}</p>
+          <div class="product-bottom">
             <div class="price-container">
-              ${oldPriceHTML}
-              <span class="new-price">R$ ${formatPrice(offer.price)}<span class="unit">/${offer.unit}</span></span>
+              ${oldPrice}
+              <span class="new-price">R$ ${Number(offer.price).toFixed(2).replace(".", ",")}<span class="unit">/${offer.unit}</span></span>
             </div>
-            <button class="add-btn" data-action="add-to-cart">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </button>
           </div>
         </div>
       </div>
     `;
-  }
-
-  // Injeta as ofertas no grid
-  const list = document.querySelector("[data-offers]");
-  if (list) {
-    list.innerHTML = mockOffers.map(renderOfferCard).join("");
   }
 
   // LIGA OS BOTÕES DO MENU INFERIOR
@@ -48,7 +45,7 @@ window.OfertasPage = function () {
     btn.addEventListener("click", () => {
       const page = btn.getAttribute("data-page");
       if (page && typeof Router !== "undefined") {
-        Router.go(page);
+        page === "ofertas" ? Router.goOffers() : Router.go(page);
       }
     });
   });

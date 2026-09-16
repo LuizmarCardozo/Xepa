@@ -1,7 +1,128 @@
-.merchant-banner{background:var(--verde-escuro);color:#fff;border-radius:20px;padding:18px;margin-bottom:18px}
-.merchant-banner h2{font-size:20px;margin-bottom:5px}
-.merchant-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.action-card{background:#fff;border:1px solid var(--borda);border-radius:18px;padding:17px}
-.action-card .action-icon{font-size:27px;margin-bottom:10px}
-.action-card h3{font-size:15px;margin-bottom:4px}
-.action-card p{font-size:12px;color:var(--cinza)}
+.page {
+  width: 100%;
+  max-width: 520px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.page-title {
+  color: var(--verde-escuro);
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--cinza);
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+
+.merchant-banner {
+  background: var(--verde-escuro);
+  color: #fff;
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.merchant-banner h2 {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+.merchant-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.action-card {
+  width: 100%;
+  min-height: 118px;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 18px;
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.action-card .action-icon {
+  font-size: 27px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.action-card h3 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.action-card p {
+  font-size: 12px;
+  color: var(--cinza);
+}
+
+.merchant-empty {
+  padding: 20px 0;
+  color: var(--cinza);
+  font-size: 14px;
+  text-align: center;
+}
+
+.merchant-offer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+}
+
+.merchant-offer-image {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--verde-claro);
+  display: grid;
+  place-items: center;
+}
+
+.merchant-offer-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.merchant-offer-info h3 {
+  margin: 0 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.merchant-offer-info p,
+.merchant-offer-info span {
+  margin: 0;
+  color: var(--cinza);
+  font-size: 12px;
+}
+
+.merchant-delete {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: #fff0ef;
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 700;
+}

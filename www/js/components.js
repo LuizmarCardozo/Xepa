@@ -6,7 +6,7 @@ const Components = {
           ${active === "home" ? '<div class="active-circle">🏪</div>' : "🏪"}
           <span>Feira</span>
         </button>
-        <button class="nav-item" onclick="Router.go('ofertas')">
+        <button class="nav-item" onclick="Router.goOffers()">
           🏷️ <span>Ofertas</span>
         </button>
         <button class="nav-item" onclick="Router.go('pedidos')">

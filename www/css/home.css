@@ -282,6 +282,23 @@ body {
   height: 65px;
   object-fit: cover;
 }
+.product-img-placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--xepa-page-bg);
+}
+.home-empty {
+  grid-column: 1 / -1;
+  padding: 20px 0;
+  color: var(--xepa-text-muted);
+  font-size: 13px;
+}
+.merchant-home .home-categories-section,
+.merchant-home #home-promo-banner,
+.merchant-home .home-markets-section,
+.merchant-home .home-recent-section {
+  display: none;
+}
 .product-info {
   padding: 6px;
   display: flex;

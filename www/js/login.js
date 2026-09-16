@@ -1,5 +1,15 @@
 window.LoginPage = function () {
   const form = document.getElementById("login-form");
+  const btnGoogle = document.getElementById("btn-google");
+
+  if (btnGoogle) {
+    btnGoogle.addEventListener("click", () => {
+      alert(
+        "A integração com o Google será configurada via Firebase em breve!",
+      );
+    });
+  }
+
   if (form) {
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -7,11 +17,7 @@ window.LoginPage = function () {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
-      // CORREÇÃO do Botão
-      const btn =
-        form.querySelector('button[type="submit"]') ||
-        form.querySelector("button.btn-primary") ||
-        form.querySelector("button");
+      const btn = form.querySelector(".auth-btn-primary");
       let textOriginal = "Entrar";
 
       if (btn) {
@@ -22,7 +28,7 @@ window.LoginPage = function () {
 
       try {
         if (!window.Backend || !window.Backend.login) {
-          alert("⚠️ Erro de conexão: O Firebase não carregou!");
+          alert("⚠️ Erro de conexão com o servidor!");
           throw new Error("Backend não inicializado");
         }
 
