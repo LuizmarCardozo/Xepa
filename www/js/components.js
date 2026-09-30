@@ -1,21 +1,14 @@
 const Components = {
   bottomNav(active) {
     return `
-      <nav class="bottom-nav">
-        <button class="nav-item ${active === "home" ? "active" : ""}" onclick="Router.go('home')">
-          ${active === "home" ? '<div class="active-circle">🏪</div>' : "🏪"}
-          <span>Feira</span>
-        </button>
-        <button class="nav-item" onclick="Router.goOffers()">
-          🏷️ <span>Ofertas</span>
-        </button>
-        <button class="nav-item" onclick="Router.go('pedidos')">
-          🧺 <span>Pedidos</span>
-        </button>
-        <button class="nav-item" onclick="Router.go('perfil')">
-          👤 <span>Perfil</span>
-        </button>
+      <nav class="bottom-nav" aria-label="Navegação principal">
+        <button class="nav-item ${active === "home" ? "active" : ""}" onclick="Router.go('home')" aria-label="Feira">🏪<span>Feira</span></button>
+        <button class="nav-item ${active === "ofertas" ? "active" : ""}" onclick="Router.goOffers()" aria-label="Ofertas">🏷️<span>Ofertas</span></button>
+        <button class="nav-item ${active === "pedidos" ? "active" : ""}" onclick="Router.go('pedidos')" aria-label="Pedidos">🧺<span>Pedidos</span></button>
+        <button class="nav-item ${active === "perfil" ? "active" : ""}" onclick="Router.go('perfil')" aria-label="Perfil">👤<span>Perfil</span></button>
       </nav>
     `;
   },
 };
+
+window.Components = Components;

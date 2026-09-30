@@ -2,7 +2,7 @@
 // Tela "Nova oferta": upload de imagem, máscara de preço, validação
 // e persistência das ofertas no Firebase.
 
-window.CriarOfertaPage = function () {
+window.CriarOfertaPage = async function () {
   const MAX_IMAGE_MB = 5;
 
   const form = document.getElementById("offerForm");
@@ -30,9 +30,26 @@ window.CriarOfertaPage = function () {
   const errPreco = document.getElementById("errPreco");
 
   const toast = document.getElementById("toast");
+  const locationButton = document.getElementById("btnSetOfferLocation");
+  const clearLocationButton = document.getElementById("btnClearOfferLocation");
+  const locationStatus = document.getElementById("offerLocationStatus");
+  const formTitle = document.getElementById("offerFormTitle");
+  const formSubtitle = document.getElementById("offerFormSubtitle");
 
   let currentImageData = null; // dataURL da imagem escolhida
   let toastTimer = null;
+  let offerLocation = null;
+  const editingOfferId = sessionStorage.getItem("xepa-edit-offer-id");
+  let offerReady = !editingOfferId;
+
+  function updateLocationUi() {
+    if (locationStatus) {
+      locationStatus.textContent = offerLocation
+        ? "Localização marcada. Clientes poderão ordenar esta oferta pela distância."
+        : "Marque a localização para aparecer no filtro “Perto de você”.";
+    }
+    clearLocationButton?.classList.toggle("hidden", !offerLocation);
+  }
 
   // ---------------------------------------------------------
   // TOAST
@@ -50,8 +67,9 @@ window.CriarOfertaPage = function () {
   // ---------------------------------------------------------
   if (btnBack) {
     btnBack.addEventListener("click", () => {
+      if (editingOfferId) sessionStorage.removeItem("xepa-edit-offer-id");
       if (typeof Router !== "undefined" && Router.go) {
-        Router.go("ofertas");
+        Router.go(editingOfferId ? "minhasOfertas" : "ofertas");
       } else if (window.history.length > 1) {
         window.history.back();
       } else {
@@ -59,6 +77,41 @@ window.CriarOfertaPage = function () {
       }
     });
   }
+
+  locationButton?.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      locationStatus.textContent = "Este navegador não disponibiliza localização.";
+      return;
+    }
+    if (!window.isSecureContext) {
+      locationStatus.textContent = "A localização exige que o app seja aberto por HTTPS ou localhost.";
+      return;
+    }
+    locationButton.disabled = true;
+    locationStatus.textContent = "Aguardando a permissão e a localização...";
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        offerLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        locationButton.disabled = false;
+        updateLocationUi();
+      },
+      (error) => {
+        locationButton.disabled = false;
+        locationStatus.textContent = error.code === 1
+          ? "Permissão negada. Você pode publicar sem localização ou liberar o acesso no navegador."
+          : "Não foi possível obter a localização. Tente novamente ou publique sem ela.";
+      },
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 12000 },
+    );
+  });
+
+  clearLocationButton?.addEventListener("click", () => {
+    offerLocation = null;
+    updateLocationUi();
+  });
 
   // ---------------------------------------------------------
   // UPLOAD DE IMAGEM
@@ -242,11 +295,60 @@ window.CriarOfertaPage = function () {
     return valid;
   }
 
+  function formatPriceInput(value) {
+    if (value === null || value === undefined || value === "") return "";
+    const amount = Number(value);
+    return Number.isFinite(amount)
+      ? amount.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : "";
+  }
+
+  async function loadOfferForEditing() {
+    if (!editingOfferId) return;
+    offerReady = false;
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Carregando oferta...";
+    try {
+      const offer = await window.Backend.getOffer(editingOfferId);
+      if (!offer || offer.ownerUid !== window.Auth?.user?.uid) {
+        throw new Error("Não foi possível localizar uma oferta sua para editar.");
+      }
+      fieldNome.value = offer.name || "";
+      fieldCategoria.value = offer.category || "Outros";
+      fieldUnidade.value = offer.unit || "unidade";
+      fieldPreco.value = formatPriceInput(offer.price);
+      fieldPrecoAntigo.value = formatPriceInput(offer.oldPrice);
+      fieldDescricao.value = offer.desc || "";
+      offerLocation = offer.location || null;
+      if (offer.image) setImagePreview(offer.image);
+      updateDescCount();
+      updateLocationUi();
+      if (formTitle) formTitle.textContent = "Editar oferta";
+      if (formSubtitle) formSubtitle.textContent = "Atualize as informações desta oferta.";
+      btnSubmit.textContent = "Salvar alterações";
+      offerReady = true;
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || "Não foi possível carregar a oferta.", true);
+      sessionStorage.removeItem("xepa-edit-offer-id");
+    } finally {
+      btnSubmit.disabled = !offerReady;
+    }
+  }
+
   // ---------------------------------------------------------
   // SUBMIT
   // ---------------------------------------------------------
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (!offerReady) {
+      showToast("Aguarde a oferta terminar de carregar.", true);
+      return;
+    }
 
     if (!validate()) {
       showToast("Verifique os campos destacados.", true);
@@ -267,20 +369,30 @@ window.CriarOfertaPage = function () {
           : null,
       desc: fieldDescricao.value.trim(),
       image: currentImageData, // dataURL (ou null, caso sem foto)
+      location: offerLocation,
       createdAt: new Date().toISOString(),
       active: true,
     };
 
     btnSubmit.disabled = true;
-    btnSubmit.textContent = "Publicando...";
+    btnSubmit.textContent = editingOfferId ? "Salvando alterações..." : "Publicando...";
 
     try {
-      if (!window.Backend || !window.Backend.createOffer) {
+      const saveOffer = editingOfferId
+        ? window.Backend?.updateOffer
+        : window.Backend?.createOffer;
+      if (typeof saveOffer !== "function") {
         throw new Error("Backend não inicializado");
       }
 
-      await window.Backend.createOffer(offer);
-      showToast("Oferta publicada com sucesso!");
+      if (editingOfferId) {
+        await window.Backend.updateOffer(editingOfferId, offer);
+        sessionStorage.removeItem("xepa-edit-offer-id");
+        showToast("Oferta atualizada com sucesso!");
+      } else {
+        await window.Backend.createOffer(offer);
+        showToast("Oferta publicada com sucesso!");
+      }
 
       form.reset();
       clearImagePreview();
@@ -289,7 +401,7 @@ window.CriarOfertaPage = function () {
       setFieldError(fieldPreco, errPreco, "");
 
       btnSubmit.disabled = false;
-      btnSubmit.textContent = "Publicar oferta";
+      btnSubmit.textContent = editingOfferId ? "Salvar alterações" : "Publicar oferta";
 
       setTimeout(() => {
         if (typeof Router !== "undefined" && Router.go) {
@@ -300,11 +412,13 @@ window.CriarOfertaPage = function () {
       }, 900);
     } catch (error) {
       console.error(error);
-      showToast("Não foi possível publicar a oferta.", true);
+      showToast("Não foi possível salvar a oferta.", true);
       btnSubmit.disabled = false;
-      btnSubmit.textContent = "Publicar oferta";
+      btnSubmit.textContent = editingOfferId ? "Salvar alterações" : "Publicar oferta";
     }
   });
+
+  await loadOfferForEditing();
 };
 
 // Executa automaticamente quando a página é aberta de forma independente

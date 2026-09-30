@@ -126,3 +126,30 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+.merchant-offer-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.merchant-edit {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: #eaf6ea;
+  color: #176b35;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 390px) {
+  .merchant-offer {
+    flex-wrap: wrap;
+  }
+
+  .merchant-offer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

@@ -29,8 +29,8 @@
             </svg>
           </button>
           <div class="co-header-text">
-            <h1 class="page-title">Nova oferta</h1>
-            <p class="subtitle">Publique um produto para seus clientes</p>
+            <h1 class="page-title" id="offerFormTitle">Nova oferta</h1>
+            <p class="subtitle" id="offerFormSubtitle">Publique um produto para seus clientes</p>
           </div>
         </header>
 
@@ -120,6 +120,15 @@
               <label class="form-label" for="fieldDescricao">Descrição</label>
               <textarea class="form-textarea" id="fieldDescricao" name="descricao" placeholder="Detalhes da oferta" maxlength="140"></textarea>
               <span class="co-charcount" id="descCount">0/140</span>
+            </div>
+
+            <div class="form-group co-location-group">
+              <label class="form-label">Localização do comércio <span class="co-optional">opcional</span></label>
+              <p class="co-location-status" id="offerLocationStatus" role="status">Marque a localização para aparecer no filtro “Perto de você”.</p>
+              <div class="co-location-actions">
+                <button class="btn btn-outline" id="btnSetOfferLocation" type="button">Compartilhar localização</button>
+                <button class="btn btn-outline hidden" id="btnClearOfferLocation" type="button">Remover localização</button>
+              </div>
             </div>
           </div>
 

@@ -15,11 +15,12 @@
     <link rel="stylesheet" href="css/pedidos.css" />
     <link rel="stylesheet" href="css/criar_oferta.css" />
     <link rel="stylesheet" href="css/comerciante.css" />
+    <link rel="stylesheet" href="css/functional.css" />
   </head>
   <body>
     <div id="app"></div>
 
-    <!-- PREPARAÇÃO: Cria as variáveis globais vazias para o router.js não dar erro -->
+    <!-- Estado inicial para a interface carregar enquanto o Firebase inicia. -->
     <script>
       window.Auth = { user: null };
       window.Backend = {};
@@ -35,6 +36,8 @@
     <script src="js/home.js"></script>
     <script src="js/pedidos.js"></script>
     <script src="js/ofertas.js"></script>
+    <script src="js/commerce.js"></script>
+    <script src="js/perfil.js"></script>
     <script src="js/app.js"></script>
 
     <!-- BACKEND FIREBASE -->

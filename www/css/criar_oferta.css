@@ -107,6 +107,29 @@
   margin-top: 4px;
 }
 
+.co-location-group {
+  margin-top: 18px;
+  margin-bottom: 0;
+}
+
+.co-location-status {
+  margin: 0 0 10px;
+  color: var(--cinza);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.co-location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.co-location-actions .btn {
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
 /* ---------- CARD ---------- */
 .co-card {
   padding: 16px;

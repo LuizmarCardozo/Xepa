@@ -1,25 +1,38 @@
-// js/backend.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile,
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  updateProfile,
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import {
-  getFirestore,
+  collection,
+  deleteDoc,
   doc,
   getDoc,
-  setDoc,
-  addDoc,
-  deleteDoc,
-  collection,
+  getFirestore,
   getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
   query,
+  setDoc,
+  updateDoc,
   where,
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  writeBatch,
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import {
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadString,
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUOyibPzAG8nLNu_unoJJ2PsnmpZxiV4Q",
@@ -33,100 +46,259 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
+let resolveAuthReady;
+const authReady = new Promise((resolve) => {
+  resolveAuthReady = resolve;
+});
+let authStateVersion = 0;
 
-window.Auth = { user: null };
+window.Auth = window.Auth || { user: null };
+window.Backend = {};
+
+async function readProfile(user) {
+  const localProfile =
+    JSON.parse(localStorage.getItem(`xepa-profile-${user.uid}`) || "null") ||
+    {};
+  try {
+    const snapshot = await getDoc(doc(db, "users", user.uid));
+    return snapshot.exists() ? { ...localProfile, ...snapshot.data() } : localProfile;
+  } catch (error) {
+    console.warn("Perfil carregado do armazenamento local:", error);
+    return localProfile;
+  }
+}
+
+async function syncUser(user, expectedVersion) {
+  if (!user) {
+    if (expectedVersion !== undefined && expectedVersion !== authStateVersion) {
+      return window.Auth.user;
+    }
+    window.Auth.user = null;
+    return null;
+  }
+  const profile = await readProfile(user);
+  if (
+    auth.currentUser?.uid !== user.uid ||
+    (expectedVersion !== undefined && expectedVersion !== authStateVersion)
+  ) {
+    return window.Auth.user;
+  }
+  const appUser = {
+    uid: user.uid,
+    name: profile.name || user.displayName || user.email?.split("@")[0] || "Usuário",
+    email: user.email || profile.email || "",
+    type: profile.type || "cliente",
+    document: profile.document || "",
+  };
+  window.Auth.user = appUser;
+  return appUser;
+}
+
+function currentUser() {
+  if (!auth.currentUser) throw new Error("Faça login para continuar.");
+  return auth.currentUser;
+}
+
+async function uploadDataUrl(path, dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl || null;
+  const imageRef = ref(storage, path);
+  await uploadString(imageRef, dataUrl, "data_url");
+  return getDownloadURL(imageRef);
+}
+
+function normalizeOfferLocation(location) {
+  if (!location) return null;
+  const { latitude, longitude } = location;
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 || latitude > 90 ||
+    longitude < -180 || longitude > 180
+  ) {
+    return null;
+  }
+  return { latitude, longitude };
+}
 
 window.Backend = {
+  ready: () => authReady,
+
   login: async (email, password) => {
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      let profile = {};
-      try {
-        const profileSnapshot = await getDoc(doc(db, "users", cred.user.uid));
-        if (profileSnapshot.exists()) profile = profileSnapshot.data();
-      } catch (profileError) {
-        console.warn("Perfil não carregado do Firestore:", profileError);
-      }
-      const localProfile =
-        JSON.parse(
-          localStorage.getItem(`xepa-profile-${cred.user.uid}`) || "null",
-        ) || {};
-
-      // CORREÇÃO: Força o nome a ser salvo antes de pular pra Home
-      window.Auth.user = {
-        uid: cred.user.uid,
-        name:
-          profile.name ||
-          localProfile.name ||
-          cred.user.displayName ||
-          email.split("@")[0],
-        email: email,
-        type: profile.type || localProfile.type || "cliente",
-        document: profile.document || localProfile.document,
-      };
-
-      return cred.user;
-    } catch (error) {
-      alert("Erro ao entrar. Verifique seu e-mail e senha.");
-      throw error;
-    }
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      email.trim(),
+      password,
+    );
+    await syncUser(credential.user);
+    return credential.user;
   },
 
-  register: async (name, email, password, type, documentNumber) => {
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, { displayName: name });
-      const profile = { name, email, type, document: documentNumber };
-
+  loginWithGoogle: async () => {
+    const credential = await signInWithPopup(auth, new GoogleAuthProvider());
+    const existingProfile = await readProfile(credential.user);
+    if (!existingProfile.type) {
+      const profile = {
+        name: credential.user.displayName || "Usuário",
+        email: credential.user.email || "",
+        type: "cliente",
+      };
       try {
-        await setDoc(doc(db, "users", cred.user.uid), profile, {
+        await setDoc(doc(db, "users", credential.user.uid), profile, {
           merge: true,
         });
-      } catch (profileError) {
-        // O login continua funcionando enquanto as regras do Firestore não forem publicadas.
-        console.warn("Perfil não salvo no Firestore:", profileError);
+      } catch (error) {
+        console.warn("Perfil do Google mantido no armazenamento local:", error);
         localStorage.setItem(
-          `xepa-profile-${cred.user.uid}`,
+          `xepa-profile-${credential.user.uid}`,
           JSON.stringify(profile),
         );
       }
-
-      // CORREÇÃO: Força o nome a ser salvo antes de pular pra Home
-      window.Auth.user = {
-        uid: cred.user.uid,
-        name: name,
-        email: email,
-        type,
-        document: documentNumber,
-      };
-
-      return cred.user;
-    } catch (error) {
-      alert("Erro ao criar conta: " + error.message);
-      throw error;
     }
+    await syncUser(credential.user);
+    return credential.user;
+  },
+
+  resetPassword: (email) =>
+    sendPasswordResetEmail(auth, email.trim()),
+
+  register: async (name, email, password, type, documentNumber) => {
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      email.trim(),
+      password,
+    );
+    await updateProfile(credential.user, { displayName: name.trim() });
+    const profile = {
+      name: name.trim(),
+      email: email.trim(),
+      type,
+      document: documentNumber,
+    };
+    try {
+      await setDoc(doc(db, "users", credential.user.uid), profile, {
+        merge: true,
+      });
+    } catch (error) {
+      console.warn("Perfil mantido no armazenamento local:", error);
+    }
+    localStorage.setItem(
+      `xepa-profile-${credential.user.uid}`,
+      JSON.stringify(profile),
+    );
+    await syncUser(credential.user);
+    return credential.user;
+  },
+
+  updateProfile: async (profile) => {
+    const user = currentUser();
+    const name = String(profile.name || "").trim();
+    if (!name) throw new Error("Informe seu nome.");
+    const updated = {
+      ...(window.Auth.user || {}),
+      ...profile,
+      name,
+      uid: user.uid,
+      email: user.email || profile.email || "",
+    };
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        name: updated.name,
+        email: updated.email,
+        document: updated.document || "",
+        type: updated.type || "cliente",
+      },
+      { merge: true },
+    );
+    try {
+      await updateProfile(user, { displayName: name });
+    } catch (error) {
+      // O perfil do Firestore é a fonte usada pelo app; Auth é só uma cópia auxiliar.
+      console.warn("Perfil salvo, mas o nome do Firebase Auth não foi sincronizado:", error);
+    }
+    localStorage.setItem(`xepa-profile-${user.uid}`, JSON.stringify(updated));
+    window.Auth.user = updated;
+    return updated;
   },
 
   createOffer: async (offer) => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Usuário não autenticado");
-
+    const user = currentUser();
+    const offerRef = doc(collection(db, "offers"));
+    const image = await uploadDataUrl(
+      `offers/${user.uid}/${offerRef.id}.jpg`,
+      offer.image,
+    );
     const offerData = {
       ownerUid: user.uid,
-      ownerName: user.displayName || "Comerciante",
-      name: offer.name,
+      ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
+      name: offer.name.trim(),
       category: offer.category,
-      unit: offer.unit,
-      price: offer.price,
-      oldPrice: offer.oldPrice,
-      desc: offer.desc,
-      image: offer.image || null,
+      unit: offer.unit || "unidade",
+      price: Number(offer.price),
+      oldPrice: offer.oldPrice == null ? null : Number(offer.oldPrice),
+      desc: (offer.desc || "").trim(),
+      image,
+      location: normalizeOfferLocation(offer.location),
       active: true,
       createdAt: new Date().toISOString(),
     };
-
-    const offerRef = await addDoc(collection(db, "offers"), offerData);
+    await setDoc(offerRef, offerData);
     return { id: offerRef.id, ...offerData };
+  },
+
+  updateOffer: async (offerId, offer) => {
+    const user = currentUser();
+    const offerRef = doc(db, "offers", offerId);
+    const snapshot = await getDoc(offerRef);
+    if (!snapshot.exists()) throw new Error("Esta oferta não existe mais.");
+    const existing = snapshot.data();
+    if (existing.ownerUid !== user.uid) {
+      throw new Error("Você não pode editar esta oferta.");
+    }
+
+    const replacementImagePath = offer.image?.startsWith("data:")
+      ? `offers/${user.uid}/${offerId}-${doc(collection(db, "offers")).id}.jpg`
+      : null;
+    const image = offer.image
+      ? await uploadDataUrl(replacementImagePath || `offers/${user.uid}/${offerId}.jpg`, offer.image)
+      : null;
+    const updatedOffer = {
+      ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
+      name: offer.name.trim(),
+      category: offer.category,
+      unit: offer.unit || "unidade",
+      price: Number(offer.price),
+      oldPrice: offer.oldPrice == null ? null : Number(offer.oldPrice),
+      desc: (offer.desc || "").trim(),
+      image,
+      location: normalizeOfferLocation(offer.location),
+      updatedAt: new Date().toISOString(),
+    };
+    try {
+      await updateDoc(offerRef, updatedOffer);
+    } catch (error) {
+      if (replacementImagePath) {
+        try {
+          await deleteObject(ref(storage, replacementImagePath));
+        } catch (cleanupError) {
+          console.warn("Não foi possível remover a imagem temporária da edição:", cleanupError);
+        }
+      }
+      throw error;
+    }
+
+    if (
+      existing.image?.includes("firebasestorage.googleapis.com") &&
+      existing.image !== image
+    ) {
+      try {
+        await deleteObject(ref(storage, existing.image));
+      } catch (error) {
+        console.warn("A oferta foi atualizada, mas a imagem antiga ficou no Storage:", error);
+      }
+    }
+    return { id: offerId, ...existing, ...updatedOffer };
   },
 
   getOffers: async () => {
@@ -139,10 +311,13 @@ window.Backend = {
     }));
   },
 
-  getMyOffers: async () => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Usuário não autenticado");
+  getOffer: async (offerId) => {
+    const snapshot = await getDoc(doc(db, "offers", offerId));
+    return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+  },
 
+  getMyOffers: async () => {
+    const user = currentUser();
     const snapshot = await getDocs(
       query(collection(db, "offers"), where("ownerUid", "==", user.uid)),
     );
@@ -153,49 +328,219 @@ window.Backend = {
   },
 
   deleteOffer: async (offerId) => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Usuário não autenticado");
-    await deleteDoc(doc(db, "offers", offerId));
+    currentUser();
+    const offerRef = doc(db, "offers", offerId);
+    const snapshot = await getDoc(offerRef);
+    const image = snapshot.exists() ? snapshot.data().image : null;
+    await deleteDoc(offerRef);
+    if (image?.includes("firebasestorage.googleapis.com")) {
+      try {
+        await deleteObject(ref(storage, image));
+      } catch (error) {
+        console.warn("A oferta foi excluída, mas a imagem ficou no Storage:", error);
+      }
+    }
+  },
+
+  createStory: async ({ text, image }) => {
+    const user = currentUser();
+    const storyRef = doc(collection(db, "stories"));
+    const imageUrl = await uploadDataUrl(
+      `stories/${user.uid}/${storyRef.id}.jpg`,
+      image,
+    );
+    const story = {
+      ownerUid: user.uid,
+      ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
+      text: (text || "").trim(),
+      image: imageUrl,
+      createdAt: new Date().toISOString(),
+    };
+    await setDoc(storyRef, story);
+    return { id: storyRef.id, ...story };
+  },
+
+  getStories: async () => {
+    const snapshot = await getDocs(
+      query(collection(db, "stories"), orderBy("createdAt", "desc"), limit(30)),
+    );
+    return snapshot.docs
+      .map((storyDoc) => ({ id: storyDoc.id, ...storyDoc.data() }))
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  },
+
+  createOrders: async (items, fulfillment, address, note) => {
+    const user = currentUser();
+    const groups = new Map();
+    for (const item of items) {
+      if (!item.ownerUid || item.ownerUid === user.uid) {
+        throw new Error("Remova do carrinho os produtos da sua própria conta.");
+      }
+      const group = groups.get(item.ownerUid) || [];
+      group.push({
+        offerId: item.offerId,
+        name: item.name,
+        unit: item.unit,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
+        image: item.image || null,
+      });
+      groups.set(item.ownerUid, group);
+    }
+
+    const createdOrders = [];
+    const batch = writeBatch(db);
+    for (const [merchantUid, orderItems] of groups) {
+      const total = orderItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+      );
+      const order = {
+        buyerUid: user.uid,
+        buyerName: window.Auth.user?.name || user.displayName || "Cliente",
+        merchantUid,
+        merchantName: items.find((item) => item.ownerUid === merchantUid)?.ownerName || "Comerciante",
+        items: orderItems,
+        total,
+        fulfillment,
+        address: fulfillment === "delivery" ? (address || "").trim() : "",
+        note: (note || "").trim(),
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const orderRef = doc(collection(db, "orders"));
+      batch.set(orderRef, order);
+      createdOrders.push({ id: orderRef.id, ...order });
+    }
+    await batch.commit();
+    return createdOrders;
+  },
+
+  getOrders: async () => {
+    const user = currentUser();
+    const [buyerSnapshot, merchantSnapshot] = await Promise.all([
+      getDocs(query(collection(db, "orders"), where("buyerUid", "==", user.uid))),
+      getDocs(query(collection(db, "orders"), where("merchantUid", "==", user.uid))),
+    ]);
+    const byId = new Map();
+    for (const orderDoc of [...buyerSnapshot.docs, ...merchantSnapshot.docs]) {
+      byId.set(orderDoc.id, { id: orderDoc.id, ...orderDoc.data() });
+    }
+    return [...byId.values()].sort((a, b) =>
+      String(b.createdAt).localeCompare(String(a.createdAt)),
+    );
+  },
+
+  watchOrders: (onChange, onError = (error) => console.error(error)) => {
+    const user = currentUser();
+    let buyerOrders = null;
+    let merchantOrders = null;
+    let active = true;
+    let unsubscribeBuyer = () => {};
+    let unsubscribeMerchant = () => {};
+
+    const publish = () => {
+      if (!active || !buyerOrders || !merchantOrders) return;
+      const byId = new Map();
+      for (const order of [...buyerOrders, ...merchantOrders]) {
+        byId.set(order.id, order);
+      }
+      onChange(
+        [...byId.values()].sort((a, b) =>
+          String(b.createdAt).localeCompare(String(a.createdAt)),
+        ),
+      );
+    };
+
+    const fail = (error) => {
+      if (!active) return;
+      active = false;
+      unsubscribeBuyer();
+      unsubscribeMerchant();
+      onError(error);
+    };
+
+    try {
+      unsubscribeBuyer = onSnapshot(
+        query(collection(db, "orders"), where("buyerUid", "==", user.uid)),
+        (snapshot) => {
+          buyerOrders = snapshot.docs.map((orderDoc) => ({
+            id: orderDoc.id,
+            ...orderDoc.data(),
+          }));
+          publish();
+        },
+        fail,
+      );
+      unsubscribeMerchant = onSnapshot(
+        query(collection(db, "orders"), where("merchantUid", "==", user.uid)),
+        (snapshot) => {
+          merchantOrders = snapshot.docs.map((orderDoc) => ({
+            id: orderDoc.id,
+            ...orderDoc.data(),
+          }));
+          publish();
+        },
+        fail,
+      );
+    } catch (error) {
+      active = false;
+      unsubscribeBuyer();
+      unsubscribeMerchant();
+      throw error;
+    }
+
+    return () => {
+      active = false;
+      unsubscribeBuyer();
+      unsubscribeMerchant();
+    };
+  },
+
+  updateOrderStatus: async (orderId, status) => {
+    currentUser();
+    await updateDoc(doc(db, "orders", orderId), {
+      status,
+      updatedAt: new Date().toISOString(),
+    });
   },
 
   logout: async () => {
-    await signOut(auth);
+    authStateVersion += 1;
     window.Auth.user = null;
-    if (typeof Router !== "undefined") Router.go("login");
+    await signOut(auth);
   },
 };
 
-// Mantém o estado sincronizado caso o usuário feche e abra o app de novo
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    getDoc(doc(db, "users", user.uid))
-      .then((profileSnapshot) => {
-        const profile = profileSnapshot.exists() ? profileSnapshot.data() : {};
-        const localProfile =
-          JSON.parse(
-            localStorage.getItem(`xepa-profile-${user.uid}`) || "null",
-          ) || {};
-        window.Auth.user = {
-          uid: user.uid,
-          name:
-            profile.name ||
-            localProfile.name ||
-            user.displayName ||
-            user.email.split("@")[0],
-          email: user.email,
-          type: profile.type || localProfile.type || "cliente",
-          document: profile.document || localProfile.document,
-        };
-
-        const greeting = document.getElementById("user-greeting");
-        if (greeting) {
-          greeting.innerHTML = `Olá, ${window.Auth.user.name} 👋`;
-        }
-      })
-      .catch((error) => {
-        console.warn("Perfil não carregado no início da sessão:", error);
-      });
-  } else {
-    window.Auth.user = null;
-  }
-});
+onAuthStateChanged(
+  auth,
+  async (user) => {
+    const stateVersion = ++authStateVersion;
+    if (window.Auth.user?.uid !== user?.uid) window.Auth.user = null;
+    try {
+      await syncUser(user, stateVersion);
+    } catch (error) {
+      console.error("Não foi possível carregar a sessão:", error);
+      if (
+        stateVersion === authStateVersion &&
+        (!user || auth.currentUser?.uid === user.uid)
+      ) {
+        window.Auth.user = user
+          ? {
+              uid: user.uid,
+              name: user.displayName || user.email?.split("@")[0] || "Usuário",
+              email: user.email || "",
+              type: "cliente",
+            }
+          : null;
+      }
+    } finally {
+      if (stateVersion === authStateVersion) resolveAuthReady(window.Auth.user);
+    }
+  },
+  (error) => {
+    console.error("Falha ao iniciar o Firebase Auth:", error);
+    resolveAuthReady(null);
+  },
+);
