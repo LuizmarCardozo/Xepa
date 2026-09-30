@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#08400B" />
+    <title>Xepa</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/auth.css?v=3" />
+    <link rel="stylesheet" href="css/home.css" />
+    <link rel="stylesheet" href="css/pedidos.css" />
+    <link rel="stylesheet" href="css/criar_oferta.css" />
+    <link rel="stylesheet" href="css/comerciante.css" />
+    <link rel="stylesheet" href="css/functional.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <!-- Estado inicial para a interface carregar enquanto o Firebase inicia. -->
+    <script>
+      window.Auth = { user: null };
+      window.Backend = {};
+    </script>
+
+    <!-- SEUS SCRIPTS NORMAIS -->
+    <script src="js/components.js"></script>
+    <script src="js/router.js?v=2"></script>
+    <script src="js/login.js"></script>
+    <script src="js/criar_oferta.js"></script>
+    <script src="js/cadastro.js"></script>
+    <script src="js/comerciante.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/pedidos.js"></script>
+    <script src="js/ofertas.js"></script>
+    <script src="js/commerce.js"></script>
+    <script src="js/perfil.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- BACKEND FIREBASE -->
+    <script type="module" src="js/backend.js"></script>
+  </body>
+</html>

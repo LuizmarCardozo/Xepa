@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xepa - Ofertas</title>
+    <!-- O router ignora links, então protegemos o visual da página com essa tag style -->
+    <style>
+      .ofertas-hero {
+        position: relative;
+        width: 100%;
+        display: flex;
+        background: #a7e025;
+      }
+      .banner-img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: cover;
+      }
+      .page-content {
+        position: relative;
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        margin-top: -10px;
+        z-index: 10;
+        padding-top: 1px;
+        padding-bottom: 120px;
+        min-height: 60vh;
+      }
+      .search-wrapper-ofertas {
+        margin: -24px 16px 20px;
+        position: relative;
+        z-index: 11;
+      }
+      .filters {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px;
+        overflow-x: auto;
+        margin-bottom: 20px;
+        scrollbar-width: none;
+      }
+      .filters::-webkit-scrollbar {
+        display: none;
+      }
+      .filter {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 14px;
+        padding: 8px 14px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #555;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .filter.active {
+        border-color: #219653;
+        background: #eaf6ea;
+        color: #219653;
+      }
+      .filter-dropdown {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <main class="page">
+        <!-- ============ HEADER BANNER ============ -->
+        <header class="ofertas-hero">
+          <img
+            src="assets/banner_ofertas.png"
+            alt="Ofertas da sua região"
+            class="banner-img"
+          />
+        </header>
+
+        <!-- ============ ÁREA BRANCA SOBREPOSTA ============ -->
+        <div class="page-content">
+          <!-- BUSCA -->
+          <div class="search-wrapper search-wrapper-ofertas">
+            <div class="search-bar">
+              <svg
+                class="search-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#999"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                placeholder="Buscar produtos, produtores, feiras..."
+              />
+            </div>
+          </div>
+
+          <!-- CATEGORIAS -->
+          <div class="categories-section">
+            <h3 class="categories-title">Categorias</h3>
+            <div class="categories-scroll hide-scrollbar">
+              <div class="category-item">
+                <div class="category-img-wrap" style="background: #eaf6ea">
+                  <img
+                    src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=150&q=80"
+                    alt="Hortifruti"
+                  />
+                </div>
+                <span class="category-label">Hortifruti</span>
+              </div>
+              <div class="category-item">
+                <div class="category-img-wrap" style="background: #fff5e6">
+                  <img
+                    src="https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=150&q=80"
+                    alt="Laticínios"
+                  />
+                </div>
+                <span class="category-label">Laticínios</span>
+              </div>
+              <div class="category-item">
+                <div class="category-img-wrap" style="background: #fcebeb">
+                  <img
+                    src="assets/carnes.jpg"
+                    alt="Carnes"
+                  />
+                </div>
+                <span class="category-label">Carnes</span>
+              </div>
+              <div class="category-item">
+                <div class="category-img-wrap" style="background: #fdf4e8">
+                  <img
+                    src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&q=80"
+                    alt="Padaria"
+                  />
+                </div>
+                <span class="category-label">Padaria</span>
+              </div>
+              <div class="category-item">
+                <div class="category-img-wrap" style="background: #fcf1e4">
+                  <img
+                    src="https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=150&q=80"
+                    alt="Artesanais"
+                  />
+                </div>
+                <span class="category-label">Artesanais</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- FILTROS -->
+          <div class="filters">
+            <button class="filter active">Recomendados para você</button>
+            <button class="filter">Preço mínimo</button>
+            <button class="filter">Perto de você</button>
+          </div>
+
+          <!-- LISTA DE OFERTAS (Agora usando product-grid do home.css para herdar as 4 colunas) -->
+          <div class="product-grid" data-offers>
+            <!-- Injetado pelo JS -->
+          </div>
+        </div>
+      </main>
+
+      <!-- ============ NAV INFERIOR ============ -->
+      <nav class="bottom-nav">
+        <button class="nav-item" data-page="home">
+          <div class="nav-icon-wrap">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </div>
+          <span class="nav-label">Feira</span>
+        </button>
+
+        <!-- CORREÇÃO: Classe "active" agora está no botão correto -->
+        <button class="nav-item active" data-page="ofertas">
+          <div class="nav-icon-wrap">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12 2l3.09 3.09L19.36 5l-.54 4.27L22 12l-3.18 2.73.54 4.27-4.27-.09L12 22l-3.09-3.09L4.64 19l.54-4.27L2 12l3.18-2.73-.54-4.27 4.27.09L12 2z"
+              ></path>
+              <path d="M9 15l6-6"></path>
+              <circle cx="9" cy="9" r="0.5" fill="currentColor"></circle>
+              <circle cx="15" cy="15" r="0.5" fill="currentColor"></circle>
+            </svg>
+          </div>
+          <span class="nav-label">Ofertas</span>
+        </button>
+
+        <button class="nav-item" data-page="pedidos">
+          <div class="nav-icon-wrap">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"
+              ></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+          </div>
+          <span class="nav-label">Pedidos</span>
+        </button>
+
+        <button class="nav-item" data-page="perfil">
+          <div class="nav-icon-wrap">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span class="nav-label">Perfil</span>
+        </button>
+      </nav>
+    </div>
+  </body>
+</html>
