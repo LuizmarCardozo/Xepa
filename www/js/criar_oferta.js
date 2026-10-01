@@ -30,6 +30,7 @@ window.CriarOfertaPage = async function () {
   const errPreco = document.getElementById("errPreco");
 
   const toast = document.getElementById("toast");
+  const submitStatus = document.getElementById("coSubmitStatus");
   const locationButton = document.getElementById("btnSetOfferLocation");
   const clearLocationButton = document.getElementById("btnClearOfferLocation");
   const locationStatus = document.getElementById("offerLocationStatus");
@@ -55,11 +56,21 @@ window.CriarOfertaPage = async function () {
   // TOAST
   // ---------------------------------------------------------
   function showToast(message, isError) {
-    toast.textContent = message;
-    toast.classList.toggle("co-toast-error", !!isError);
-    toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    if (toast) {
+      toast.textContent = message;
+      toast.classList.toggle("co-toast-error", !!isError);
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+  }
+
+  function showSubmitStatus(message, type = "success") {
+    if (!submitStatus) return;
+    submitStatus.textContent = message;
+    submitStatus.classList.remove("success", "error");
+    submitStatus.classList.add(type === "error" ? "error" : "success");
+    submitStatus.classList.add("show");
   }
 
   // ---------------------------------------------------------
@@ -80,11 +91,13 @@ window.CriarOfertaPage = async function () {
 
   locationButton?.addEventListener("click", () => {
     if (!navigator.geolocation) {
-      locationStatus.textContent = "Este navegador não disponibiliza localização.";
+      locationStatus.textContent =
+        "Este navegador não disponibiliza localização.";
       return;
     }
     if (!window.isSecureContext) {
-      locationStatus.textContent = "A localização exige que o app seja aberto por HTTPS ou localhost.";
+      locationStatus.textContent =
+        "A localização exige que o app seja aberto por HTTPS ou localhost.";
       return;
     }
     locationButton.disabled = true;
@@ -100,9 +113,10 @@ window.CriarOfertaPage = async function () {
       },
       (error) => {
         locationButton.disabled = false;
-        locationStatus.textContent = error.code === 1
-          ? "Permissão negada. Você pode publicar sem localização ou liberar o acesso no navegador."
-          : "Não foi possível obter a localização. Tente novamente ou publique sem ela.";
+        locationStatus.textContent =
+          error.code === 1
+            ? "Permissão negada. Você pode publicar sem localização ou liberar o acesso no navegador."
+            : "Não foi possível obter a localização. Tente novamente ou publique sem ela.";
       },
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 12000 },
     );
@@ -314,7 +328,9 @@ window.CriarOfertaPage = async function () {
     try {
       const offer = await window.Backend.getOffer(editingOfferId);
       if (!offer || offer.ownerUid !== window.Auth?.user?.uid) {
-        throw new Error("Não foi possível localizar uma oferta sua para editar.");
+        throw new Error(
+          "Não foi possível localizar uma oferta sua para editar.",
+        );
       }
       fieldNome.value = offer.name || "";
       fieldCategoria.value = offer.category || "Outros";
@@ -327,7 +343,8 @@ window.CriarOfertaPage = async function () {
       updateDescCount();
       updateLocationUi();
       if (formTitle) formTitle.textContent = "Editar oferta";
-      if (formSubtitle) formSubtitle.textContent = "Atualize as informações desta oferta.";
+      if (formSubtitle)
+        formSubtitle.textContent = "Atualize as informações desta oferta.";
       btnSubmit.textContent = "Salvar alterações";
       offerReady = true;
     } catch (error) {
@@ -352,6 +369,10 @@ window.CriarOfertaPage = async function () {
 
     if (!validate()) {
       showToast("Verifique os campos destacados.", true);
+      showSubmitStatus(
+        "Verifique os campos destacados antes de publicar.",
+        "error",
+      );
       return;
     }
 
@@ -375,7 +396,9 @@ window.CriarOfertaPage = async function () {
     };
 
     btnSubmit.disabled = true;
-    btnSubmit.textContent = editingOfferId ? "Salvando alterações..." : "Publicando...";
+    btnSubmit.textContent = editingOfferId
+      ? "Salvando alterações..."
+      : "Publicando...";
 
     try {
       const saveOffer = editingOfferId
@@ -389,9 +412,11 @@ window.CriarOfertaPage = async function () {
         await window.Backend.updateOffer(editingOfferId, offer);
         sessionStorage.removeItem("xepa-edit-offer-id");
         showToast("Oferta atualizada com sucesso!");
+        showSubmitStatus("Oferta atualizada com sucesso!", "success");
       } else {
         await window.Backend.createOffer(offer);
         showToast("Oferta publicada com sucesso!");
+        showSubmitStatus("Oferta publicada com sucesso!", "success");
       }
 
       form.reset();
@@ -401,7 +426,9 @@ window.CriarOfertaPage = async function () {
       setFieldError(fieldPreco, errPreco, "");
 
       btnSubmit.disabled = false;
-      btnSubmit.textContent = editingOfferId ? "Salvar alterações" : "Publicar oferta";
+      btnSubmit.textContent = editingOfferId
+        ? "Salvar alterações"
+        : "Publicar oferta";
 
       setTimeout(() => {
         if (typeof Router !== "undefined" && Router.go) {
@@ -409,12 +436,16 @@ window.CriarOfertaPage = async function () {
         } else {
           window.location.href = "ofertas.html";
         }
-      }, 900);
+      }, 1200);
     } catch (error) {
       console.error(error);
-      showToast("Não foi possível salvar a oferta.", true);
+      const message = error?.message || "Não foi possível salvar a oferta.";
+      showToast(message, true);
+      showSubmitStatus(message, "error");
       btnSubmit.disabled = false;
-      btnSubmit.textContent = editingOfferId ? "Salvar alterações" : "Publicar oferta";
+      btnSubmit.textContent = editingOfferId
+        ? "Salvar alterações"
+        : "Publicar oferta";
     }
   });
 

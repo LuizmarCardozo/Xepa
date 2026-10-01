@@ -21,7 +21,9 @@ function writeCart(items) {
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(items));
   document.querySelectorAll("[data-cart-count]").forEach((badge) => {
-    badge.textContent = String(items.reduce((sum, item) => sum + item.quantity, 0));
+    badge.textContent = String(
+      items.reduce((sum, item) => sum + item.quantity, 0),
+    );
   });
 }
 
@@ -70,17 +72,35 @@ window.Cart = {
 };
 
 window.mountCartShortcut = function (referenceElement) {
-  if (!referenceElement?.parentElement || document.querySelector("[data-cart-shortcut]")) return;
+  if (window.Auth?.user?.type === "comerciante") return;
+  if (
+    !referenceElement?.parentElement ||
+    document.querySelector("[data-cart-shortcut]")
+  )
+    return;
   const wrapper = document.createElement("div");
   wrapper.className = "cart-shortcut-wrap";
-  wrapper.innerHTML = '<button class="cart-shortcut" type="button" data-cart-shortcut>🧺 Carrinho <span data-cart-count>' + window.Cart.count() + '</span></button>';
-  wrapper.querySelector("button").addEventListener("click", () => Router.go("carrinho"));
+  wrapper.innerHTML =
+    '<button class="cart-shortcut" type="button" data-cart-shortcut>🧺 Carrinho <span data-cart-count>' +
+    window.Cart.count() +
+    "</span></button>";
+  wrapper
+    .querySelector("button")
+    .addEventListener("click", () => Router.go("carrinho"));
   referenceElement.insertAdjacentElement("afterend", wrapper);
 };
 
 function storyEscape(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (character) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character],
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      })[character],
   );
 }
 
@@ -94,22 +114,39 @@ window.FeiraPageInit = async function () {
   try {
     const stories = await window.Backend.getStories();
     if (!stories.length) {
-      list.innerHTML = '<section class="empty-state card"><h2>Nenhuma novidade ainda</h2><p>As publicações dos comerciantes aparecerão aqui.</p></section>';
+      list.innerHTML =
+        '<section class="empty-state card"><h2>Nenhuma novidade ainda</h2><p>As publicações dos comerciantes aparecerão aqui.</p></section>';
       return;
     }
-    list.innerHTML = stories.map((story) => {
-      const image = story.image
-        ? '<img src="' + storyEscape(story.image) + '" alt="Novidade de ' + storyEscape(story.ownerName || "feira") + '">'
-        : "";
-      const date = story.createdAt ? new Date(story.createdAt).toLocaleString("pt-BR") : "";
-      return '<article class="story-card"><p class="eyebrow">' +
-        storyEscape(story.ownerName || "Feira local") +
-        '</p>' + image + '<p>' + storyEscape(story.text || "") +
-        '</p><small>' + storyEscape(date) + '</small></article>';
-    }).join("");
+    list.innerHTML = stories
+      .map((story) => {
+        const image = story.image
+          ? '<img src="' +
+            storyEscape(story.image) +
+            '" alt="Novidade de ' +
+            storyEscape(story.ownerName || "feira") +
+            '">'
+          : "";
+        const date = story.createdAt
+          ? new Date(story.createdAt).toLocaleString("pt-BR")
+          : "";
+        return (
+          '<article class="story-card"><p class="eyebrow">' +
+          storyEscape(story.ownerName || "Feira local") +
+          "</p>" +
+          image +
+          "<p>" +
+          storyEscape(story.text || "") +
+          "</p><small>" +
+          storyEscape(date) +
+          "</small></article>"
+        );
+      })
+      .join("");
   } catch (error) {
     console.error(error);
-    list.innerHTML = '<section class="empty-state card"><h2>Não foi possível carregar as novidades</h2><button class="btn btn-outline" onclick="Router.go(\'feira\')">Tentar novamente</button></section>';
+    list.innerHTML =
+      '<section class="empty-state card"><h2>Não foi possível carregar as novidades</h2><button class="btn btn-outline" onclick="Router.go(\'feira\')">Tentar novamente</button></section>';
   }
 };
 
@@ -121,7 +158,8 @@ window.ProdutoPageInit = async function () {
   const container = document.getElementById("product-detail");
   const offerId = sessionStorage.getItem("xepa-current-offer");
   if (!container || !offerId) {
-    if (container) container.innerHTML = "<p>Escolha uma oferta para ver os detalhes.</p>";
+    if (container)
+      container.innerHTML = "<p>Escolha uma oferta para ver os detalhes.</p>";
     return;
   }
   try {
@@ -144,19 +182,26 @@ window.ProdutoPageInit = async function () {
         <button class="btn btn-outline btn-full" type="button" onclick="Router.go('carrinho')">Ir para o carrinho (${window.Cart.count()})</button>
       </article>`;
     document.getElementById("detail-add-cart").addEventListener("click", () => {
-      const quantity = Math.max(1, Math.min(99, Number(document.getElementById("detail-quantity").value) || 1));
+      const quantity = Math.max(
+        1,
+        Math.min(
+          99,
+          Number(document.getElementById("detail-quantity").value) || 1,
+        ),
+      );
       window.Cart.add(offer, quantity);
     });
   } catch (error) {
     console.error(error);
-    container.innerHTML = "<p>Não foi possível carregar este produto. Tente novamente.</p>";
+    container.innerHTML =
+      "<p>Não foi possível carregar este produto. Tente novamente.</p>";
   }
 };
 
 window.CarrinhoPage = function () {
   return `
     <main class="page commerce-page">
-      <header class="page-heading"><div><h1>Carrinho</h1><p>Confira os produtos antes de enviar o pedido.</p></div><button class="text-button" onclick="Router.go('ofertas')">Continuar comprando</button></header>
+      <header class="page-heading"><div><h1>Carrinho</h1><p>Confira os produtos antes de reservar o pedido.</p></div><button class="text-button" onclick="Router.go('ofertas')">Continuar comprando</button></header>
       <div id="cart-items" class="commerce-list"></div>
       <section class="card checkout-card">
         <h2>Como receber?</h2>
@@ -167,7 +212,7 @@ window.CarrinhoPage = function () {
         <textarea id="cart-note" class="form-input" rows="2" maxlength="300" placeholder="Ex.: prefiro bananas mais maduras"></textarea>
         <p class="checkout-note">Pagamento combinado diretamente com o comerciante na retirada ou entrega.</p>
         <div class="cart-total-row"><strong>Total</strong><strong id="cart-total">R$ 0,00</strong></div>
-        <button id="checkout-button" class="btn btn-primary btn-full" type="button">Enviar pedido</button>
+        <button id="checkout-button" class="btn btn-primary btn-full" type="button">Reservar pedido</button>
         <p id="checkout-error" class="form-error" role="alert"></p>
       </section>
     </main>`;
@@ -184,31 +229,45 @@ window.CarrinhoPageInit = function () {
   function render() {
     const items = readCart();
     if (!items.length) {
-      list.innerHTML = '<section class="empty-state card"><h2>Seu carrinho está vazio</h2><p>Encontre uma oferta e adicione um produto.</p><button class="btn btn-primary" onclick="Router.go(\'ofertas\')">Ver ofertas</button></section>';
+      list.innerHTML =
+        '<section class="empty-state card"><h2>Seu carrinho está vazio</h2><p>Encontre uma oferta e adicione um produto.</p><button class="btn btn-primary" onclick="Router.go(\'ofertas\')">Ver ofertas</button></section>';
       checkout.disabled = true;
       total.textContent = window.formatMoney(0);
       return;
     }
     checkout.disabled = false;
-    list.innerHTML = items.map((item) => `
+    list.innerHTML = items
+      .map(
+        (item) => `
       <article class="card cart-item">
         ${item.image ? `<img src="${item.image}" alt="${item.name}">` : '<div class="cart-item-placeholder">🥬</div>'}
         <div class="cart-item-info"><strong>${item.name}</strong><span>${item.ownerName}</span><span>${window.formatMoney(item.price)} / ${item.unit}</span></div>
         <label class="quantity-label">Qtd.<input data-quantity="${item.offerId}" type="number" min="1" max="99" value="${item.quantity}"></label>
         <button class="text-button danger-text" data-remove-cart="${item.offerId}" type="button">Remover</button>
-      </article>`).join("");
-    total.textContent = window.formatMoney(items.reduce((sum, item) => sum + item.price * item.quantity, 0));
-    list.querySelectorAll("[data-quantity]").forEach((input) => input.addEventListener("change", () => {
-      const updated = readCart();
-      const item = updated.find((entry) => entry.offerId === input.dataset.quantity);
-      if (item) item.quantity = Math.max(1, Math.min(99, Number(input.value) || 1));
-      writeCart(updated);
-      render();
-    }));
-    list.querySelectorAll("[data-remove-cart]").forEach((button) => button.addEventListener("click", () => {
-      window.Cart.remove(button.dataset.removeCart);
-      render();
-    }));
+      </article>`,
+      )
+      .join("");
+    total.textContent = window.formatMoney(
+      items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    );
+    list.querySelectorAll("[data-quantity]").forEach((input) =>
+      input.addEventListener("change", () => {
+        const updated = readCart();
+        const item = updated.find(
+          (entry) => entry.offerId === input.dataset.quantity,
+        );
+        if (item)
+          item.quantity = Math.max(1, Math.min(99, Number(input.value) || 1));
+        writeCart(updated);
+        render();
+      }),
+    );
+    list.querySelectorAll("[data-remove-cart]").forEach((button) =>
+      button.addEventListener("click", () => {
+        window.Cart.remove(button.dataset.removeCart);
+        render();
+      }),
+    );
   }
 
   fulfillment.addEventListener("change", () => {
@@ -224,7 +283,7 @@ window.CarrinhoPageInit = function () {
       return;
     }
     checkout.disabled = true;
-    checkout.textContent = "Enviando pedido...";
+    checkout.textContent = "Reservando pedido...";
     try {
       await window.Backend.createOrders(
         items,
@@ -233,13 +292,14 @@ window.CarrinhoPageInit = function () {
         document.getElementById("cart-note").value,
       );
       window.Cart.clear();
-      alert("Pedido enviado! Você pode acompanhar o status na aba Pedidos.");
+      alert("Pedido reservado! Você pode acompanhar o status na aba Pedidos.");
       Router.go("pedidos");
     } catch (submitError) {
       console.error(submitError);
-      error.textContent = submitError.message || "Não foi possível enviar o pedido.";
+      error.textContent =
+        submitError.message || "Não foi possível reservar o pedido.";
       checkout.disabled = false;
-      checkout.textContent = "Enviar pedido";
+      checkout.textContent = "Reservar pedido";
     }
   });
   render();
@@ -275,7 +335,8 @@ window.CriarStoryPageInit = function () {
     }
     if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
       input.value = "";
-      document.getElementById("story-error").textContent = "Escolha uma imagem de até 5 MB.";
+      document.getElementById("story-error").textContent =
+        "Escolha uma imagem de até 5 MB.";
       preview.hidden = true;
       return;
     }
@@ -287,7 +348,9 @@ window.CriarStoryPageInit = function () {
         const canvas = document.createElement("canvas");
         canvas.width = Math.max(1, Math.round(image.width * scale));
         canvas.height = Math.max(1, Math.round(image.height * scale));
-        canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+        canvas
+          .getContext("2d")
+          .drawImage(image, 0, 0, canvas.width, canvas.height);
         imageData = canvas.toDataURL("image/jpeg", 0.75);
         preview.src = imageData;
         preview.hidden = false;

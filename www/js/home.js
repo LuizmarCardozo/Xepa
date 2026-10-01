@@ -9,7 +9,10 @@ const HOME_HTML_ESCAPE = {
 };
 
 function homeEscapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (character) => HOME_HTML_ESCAPE[character]);
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    (character) => HOME_HTML_ESCAPE[character],
+  );
 }
 
 function homeImageUrl(value) {
@@ -65,51 +68,67 @@ window.HomePage = function () {
   let homeOffers = [];
   const offersById = new Map();
 
-  if (searchInput && typeof window.mountCartShortcut === "function") {
+  if (
+    !isMerchant &&
+    searchInput &&
+    typeof window.mountCartShortcut === "function"
+  ) {
     window.mountCartShortcut(searchInput.parentElement);
   }
 
-  document.querySelectorAll(".home-categories-section .category-item").forEach((item) => {
-    item.tabIndex = 0;
-    item.setAttribute("role", "button");
-    const applyCategory = () => {
-      const category = item.querySelector(".category-label")?.textContent?.trim();
-      if (!category || !searchInput) return;
-      searchInput.value = category;
-      renderHomeOffers(category);
-    };
-    item.addEventListener("click", applyCategory);
-    item.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        applyCategory();
-      }
+  document
+    .querySelectorAll(".home-categories-section .category-item")
+    .forEach((item) => {
+      item.tabIndex = 0;
+      item.setAttribute("role", "button");
+      const applyCategory = () => {
+        const category = item
+          .querySelector(".category-label")
+          ?.textContent?.trim();
+        if (!category || !searchInput) return;
+        searchInput.value = category;
+        renderHomeOffers(category);
+      };
+      item.addEventListener("click", applyCategory);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          applyCategory();
+        }
+      });
     });
-  });
 
   const notificationButton = document.querySelector(".bell-btn");
   if (notificationButton) {
     notificationButton.setAttribute("aria-label", "Ver pedidos");
-    notificationButton.addEventListener("click", () => window.Router?.go("pedidos"));
+    notificationButton.addEventListener("click", () =>
+      window.Router?.go("pedidos"),
+    );
     const badge = notificationButton.querySelector(".bell-badge");
     if (badge) badge.hidden = true;
   }
 
-  const categoriesLink = document.querySelector(".home-categories-section .link-green");
+  const categoriesLink = document.querySelector(
+    ".home-categories-section .link-green",
+  );
   if (categoriesLink) {
     categoriesLink.addEventListener("click", (event) => {
       event.preventDefault();
       window.Router?.go("ofertas");
     });
   }
-  const storiesLink = document.querySelector(".home-markets-section .link-green");
+  const storiesLink = document.querySelector(
+    ".home-markets-section .link-green",
+  );
   if (storiesLink) {
     storiesLink.addEventListener("click", (event) => {
       event.preventDefault();
       window.Router?.go("feira");
     });
   }
-  const moreOffersLink = document.querySelector(".home-recent-section .link-green");
+  const moreOffersLink = document.querySelector(
+    ".home-recent-section .link-green",
+  );
   if (moreOffersLink) {
     moreOffersLink.addEventListener("click", (event) => {
       event.preventDefault();
@@ -120,7 +139,9 @@ window.HomePage = function () {
   if (isMerchant) {
     document.body.classList.add("merchant-home");
     const title = document.querySelector("#home-products-title");
-    const panelLink = document.querySelector(".home-products-section .link-green");
+    const panelLink = document.querySelector(
+      ".home-products-section .link-green",
+    );
     if (title) title.textContent = "Minhas ofertas";
     if (panelLink) {
       panelLink.textContent = "Ver painel";
@@ -131,7 +152,9 @@ window.HomePage = function () {
     }
   }
 
-  const productsLink = document.querySelector(".home-products-section .link-green");
+  const productsLink = document.querySelector(
+    ".home-products-section .link-green",
+  );
   if (productsLink && !isMerchant) {
     productsLink.addEventListener("click", (event) => {
       event.preventDefault();
@@ -140,11 +163,27 @@ window.HomePage = function () {
   }
 
   if (!isMerchant) {
-    homeMessage(marketsContainer, "Carregando novidades das feiras...", "loading-state home-empty");
-    homeMessage(nearbyContainer, "Carregando ofertas...", "loading-state home-empty");
-    homeMessage(recentContainer, "Carregando ofertas...", "loading-state home-empty");
+    homeMessage(
+      marketsContainer,
+      "Carregando novidades das feiras...",
+      "loading-state home-empty",
+    );
+    homeMessage(
+      nearbyContainer,
+      "Carregando ofertas...",
+      "loading-state home-empty",
+    );
+    homeMessage(
+      recentContainer,
+      "Carregando ofertas...",
+      "loading-state home-empty",
+    );
   } else if (nearbyContainer) {
-    homeMessage(nearbyContainer, "Carregando suas ofertas...", "loading-state home-empty");
+    homeMessage(
+      nearbyContainer,
+      "Carregando suas ofertas...",
+      "loading-state home-empty",
+    );
   }
 
   function openOffer(offer) {
@@ -158,7 +197,11 @@ window.HomePage = function () {
     const name = homeEscapeHtml(offer.name || "Oferta");
     const unit = homeEscapeHtml(offer.unit || "unidade");
     const description = homeEscapeHtml(offer.desc || "Produto fresco à venda.");
-    const image = homeImageMarkup(offer.image, offer.name || "Oferta", "product-img");
+    const image = homeImageMarkup(
+      offer.image,
+      offer.name || "Oferta",
+      "product-img",
+    );
     const cartButton = withCart
       ? `<button class="add-btn" data-add-offer="${id}" type="button" aria-label="Adicionar ${name} ao carrinho">+</button>`
       : "";
@@ -196,7 +239,8 @@ window.HomePage = function () {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         const offer = offersById.get(button.dataset.addOffer);
-        if (offer && typeof window.Cart?.add === "function") window.Cart.add(offer);
+        if (offer && typeof window.Cart?.add === "function")
+          window.Cart.add(offer);
       });
     });
   }
@@ -207,29 +251,47 @@ window.HomePage = function () {
       if (!normalizedTerm) return true;
       return [offer.name, offer.desc, offer.category, offer.ownerName]
         .filter(Boolean)
-        .some((value) => String(value).toLocaleLowerCase("pt-BR").includes(normalizedTerm));
+        .some((value) =>
+          String(value).toLocaleLowerCase("pt-BR").includes(normalizedTerm),
+        );
     });
 
     if (!filteredOffers.length) {
-      homeMessage(nearbyContainer, normalizedTerm ? "Nenhuma oferta encontrada." : "Nenhuma oferta disponível no momento.");
-      homeMessage(recentContainer, normalizedTerm ? "Nenhuma oferta encontrada." : "Nenhuma oferta disponível no momento.");
+      homeMessage(
+        nearbyContainer,
+        normalizedTerm
+          ? "Nenhuma oferta encontrada."
+          : "Nenhuma oferta disponível no momento.",
+      );
+      homeMessage(
+        recentContainer,
+        normalizedTerm
+          ? "Nenhuma oferta encontrada."
+          : "Nenhuma oferta disponível no momento.",
+      );
       return;
     }
 
     const nearbyOffers = filteredOffers.slice(0, 4);
     const additionalOffers = filteredOffers.slice(4, 8);
     if (nearbyContainer) {
-      nearbyContainer.innerHTML = nearbyOffers.map((offer) => renderOfferCard(offer)).join("");
+      nearbyContainer.innerHTML = nearbyOffers
+        .map((offer) => renderOfferCard(offer))
+        .join("");
       bindOfferInteractions(nearbyContainer);
     }
     if (recentContainer) {
       if (additionalOffers.length) {
-        recentContainer.innerHTML = additionalOffers.map((offer) => renderOfferCard(offer)).join("");
+        recentContainer.innerHTML = additionalOffers
+          .map((offer) => renderOfferCard(offer))
+          .join("");
         bindOfferInteractions(recentContainer);
       } else {
         homeMessage(
           recentContainer,
-          normalizedTerm ? "Nenhuma outra oferta encontrada." : "Não há outras ofertas disponíveis no momento.",
+          normalizedTerm
+            ? "Nenhuma outra oferta encontrada."
+            : "Não há outras ofertas disponíveis no momento.",
         );
       }
     }
@@ -237,8 +299,15 @@ window.HomePage = function () {
 
   function renderStory(story) {
     const ownerName = homeEscapeHtml(story.ownerName || "Feira local");
-    const text = homeEscapeHtml(story.text || "Confira as novidades desta feira.");
-    const image = homeImageMarkup(story.image, story.ownerName || "Feira local", "market-img", "📸");
+    const text = homeEscapeHtml(
+      story.text || "Confira as novidades desta feira.",
+    );
+    const image = homeImageMarkup(
+      story.image,
+      story.ownerName || "Feira local",
+      "market-img",
+      "📸",
+    );
     return `
       <article class="market-card">
         <div class="market-img-wrap">
@@ -273,12 +342,16 @@ window.HomePage = function () {
       .then(() => window.Backend.getMyOffers())
       .then((offers) => {
         const availableOffers = Array.isArray(offers) ? offers : [];
-        availableOffers.forEach((offer) => offersById.set(String(offer.id), offer));
+        availableOffers.forEach((offer) =>
+          offersById.set(String(offer.id), offer),
+        );
         if (!availableOffers.length) {
           homeMessage(nearbyContainer, "Você ainda não publicou ofertas.");
           return;
         }
-        nearbyContainer.innerHTML = availableOffers.map((offer) => renderOfferCard(offer, false)).join("");
+        nearbyContainer.innerHTML = availableOffers
+          .map((offer) => renderOfferCard(offer, false))
+          .join("");
         bindOfferInteractions(nearbyContainer);
       })
       .catch((error) => {
@@ -297,7 +370,9 @@ window.HomePage = function () {
         .then(() => backend.getOffers())
         .then((offers) => {
           homeOffers = Array.isArray(offers) ? offers : [];
-          homeOffers.forEach((offer) => offersById.set(String(offer.id), offer));
+          homeOffers.forEach((offer) =>
+            offersById.set(String(offer.id), offer),
+          );
           renderHomeOffers(searchInput?.value || "");
         })
         .catch((error) => {
@@ -308,20 +383,28 @@ window.HomePage = function () {
     }
 
     if (typeof backend?.getStories !== "function") {
-      homeMessage(marketsContainer, "Não foi possível carregar as novidades das feiras.");
+      homeMessage(
+        marketsContainer,
+        "Não foi possível carregar as novidades das feiras.",
+      );
     } else {
       Promise.resolve()
         .then(() => backend.getStories())
         .then((stories) => renderStories(Array.isArray(stories) ? stories : []))
         .catch((error) => {
           console.error(error);
-          homeMessage(marketsContainer, "Não foi possível carregar as novidades das feiras.");
+          homeMessage(
+            marketsContainer,
+            "Não foi possível carregar as novidades das feiras.",
+          );
         });
     }
   }
 
   if (searchInput && !isMerchant) {
-    searchInput.addEventListener("input", () => renderHomeOffers(searchInput.value));
+    searchInput.addEventListener("input", () =>
+      renderHomeOffers(searchInput.value),
+    );
   }
 
   if (isMerchant) loadMerchantOffers();
