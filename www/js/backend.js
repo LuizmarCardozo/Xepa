@@ -1,8 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import {
+  browserLocalPersistence,
+  browserPopupRedirectResolver,
   createUserWithEmailAndPassword,
-  getAuth,
   GoogleAuthProvider,
+  initializeAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -26,6 +28,7 @@ import {
   where,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { createSupabaseStorage } from "./supabase.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUOyibPzAG8nLNu_unoJJ2PsnmpZxiV4Q",
@@ -36,8 +39,12 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const auth = initializeAuth(app, {
+  persistence: browserLocalPersistence,
+  popupRedirectResolver: browserPopupRedirectResolver,
+});
 const db = getFirestore(app);
+const supabaseStorage = createSupabaseStorage(auth);
 let resolveAuthReady;
 const authReady = new Promise((resolve) => {
   resolveAuthReady = resolve;
@@ -111,6 +118,36 @@ function cacheImageLocally(key, image) {
     localStorage.setItem(`xepa-image-cache-${key}`, image);
   } catch (error) {
     console.warn("Não foi possível guardar a imagem no cache local:", error);
+  }
+}
+
+async function prepareOfferImage(image, userId, offerId, existingOffer) {
+  const normalizedImage = normalizeImageData(image);
+  if (normalizedImage?.startsWith("data:image/")) {
+    if (supabaseStorage) {
+      return supabaseStorage.uploadOfferImage(normalizedImage, userId, offerId);
+    }
+    return { image: normalizedImage, imagePath: null };
+  }
+
+  return {
+    image: normalizedImage,
+    imagePath:
+      normalizedImage && normalizedImage === existingOffer?.image
+        ? existingOffer.imagePath || null
+        : null,
+  };
+}
+
+async function removeOfferImage(path) {
+  if (!path || !supabaseStorage) return;
+  try {
+    await supabaseStorage.deleteOfferImage(path);
+  } catch (error) {
+    console.warn(
+      "Não foi possível remover a imagem do Supabase Storage:",
+      error,
+    );
   }
 }
 
@@ -236,8 +273,12 @@ window.Backend = {
   createOffer: async (offer) => {
     const user = currentUser();
     const offerRef = doc(collection(db, "offers"));
-    const image = normalizeImageData(offer.image);
-    cacheImageLocally(`offer-${offerRef.id}`, image);
+    const storedImage = await prepareOfferImage(
+      offer.image,
+      user.uid,
+      offerRef.id,
+    );
+    cacheImageLocally(`offer-${offerRef.id}`, storedImage.image);
     const offerData = {
       ownerUid: user.uid,
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
@@ -247,12 +288,18 @@ window.Backend = {
       price: Number(offer.price),
       oldPrice: offer.oldPrice == null ? null : Number(offer.oldPrice),
       desc: (offer.desc || "").trim(),
-      image,
+      image: storedImage.image,
+      imagePath: storedImage.imagePath,
       location: normalizeOfferLocation(offer.location),
       active: true,
       createdAt: new Date().toISOString(),
     };
-    await setDoc(offerRef, offerData);
+    try {
+      await setDoc(offerRef, offerData);
+    } catch (error) {
+      await removeOfferImage(storedImage.imagePath);
+      throw error;
+    }
     return { id: offerRef.id, ...offerData };
   },
 
@@ -266,8 +313,13 @@ window.Backend = {
       throw new Error("Você não pode editar esta oferta.");
     }
 
-    const image = normalizeImageData(offer.image);
-    cacheImageLocally(`offer-${offerId}`, image);
+    const storedImage = await prepareOfferImage(
+      offer.image,
+      user.uid,
+      offerId,
+      existing,
+    );
+    cacheImageLocally(`offer-${offerId}`, storedImage.image);
     const updatedOffer = {
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
       name: offer.name.trim(),
@@ -276,11 +328,22 @@ window.Backend = {
       price: Number(offer.price),
       oldPrice: offer.oldPrice == null ? null : Number(offer.oldPrice),
       desc: (offer.desc || "").trim(),
-      image,
+      image: storedImage.image,
+      imagePath: storedImage.imagePath,
       location: normalizeOfferLocation(offer.location),
       updatedAt: new Date().toISOString(),
     };
-    await updateDoc(offerRef, updatedOffer);
+    try {
+      await updateDoc(offerRef, updatedOffer);
+    } catch (error) {
+      if (storedImage.imagePath !== existing.imagePath) {
+        await removeOfferImage(storedImage.imagePath);
+      }
+      throw error;
+    }
+    if (storedImage.imagePath !== existing.imagePath) {
+      await removeOfferImage(existing.imagePath);
+    }
     return { id: offerId, ...existing, ...updatedOffer };
   },
 
@@ -311,9 +374,16 @@ window.Backend = {
   },
 
   deleteOffer: async (offerId) => {
-    currentUser();
+    const user = currentUser();
     const offerRef = doc(db, "offers", offerId);
+    const snapshot = await getDoc(offerRef);
+    if (!snapshot.exists()) throw new Error("Esta oferta não existe mais.");
+    const existing = snapshot.data();
+    if (existing.ownerUid !== user.uid) {
+      throw new Error("Você não pode excluir esta oferta.");
+    }
     await deleteDoc(offerRef);
+    await removeOfferImage(existing.imagePath);
   },
 
   createStory: async ({ text, image }) => {
