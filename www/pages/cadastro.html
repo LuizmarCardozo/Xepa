@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="auth.css" />
   </head>
   <body>
-    <main class="app-container">
+    <main class="app-container cadastro-app">
       <!-- CABEÇALHO PADRÃO -->
       <header class="header-section">
         <img src="assets/XEPPPA.png" alt="Logo Xepa" class="logo-img" />
@@ -15,8 +15,12 @@
       </header>
 
       <!-- STEP 1: ESCOLHA DE PERFIL -->
-      <div id="step-1" class="cadastro-step-1">
-        <h2 class="cadastro-main-title">
+      <div
+        id="step-1"
+        class="cadastro-step-1"
+        aria-labelledby="cadastro-type-title"
+      >
+        <h2 id="cadastro-type-title" class="cadastro-main-title">
           Que tipo de<br />cadastro você deseja?
         </h2>
         <p class="cadastro-main-subtitle">
@@ -24,7 +28,12 @@
         </p>
 
         <!-- Opção Comprador -->
-        <div class="type-card" data-type="cliente">
+        <button
+          class="type-card"
+          type="button"
+          data-type="cliente"
+          aria-pressed="false"
+        >
           <div class="type-icon-wrapper">🛒</div>
           <div class="type-text-content">
             <h3>Sou Comprador</h3>
@@ -44,10 +53,15 @@
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </div>
-        </div>
+        </button>
 
         <!-- Opção Vendedor -->
-        <div class="type-card" data-type="comerciante">
+        <button
+          class="type-card"
+          type="button"
+          data-type="comerciante"
+          aria-pressed="false"
+        >
           <div class="type-icon-wrapper">🏪</div>
           <div class="type-text-content">
             <h3>Sou Vendedor</h3>
@@ -67,7 +81,7 @@
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </div>
-        </div>
+        </button>
 
         <!-- Badge Segurança -->
         <div class="secure-badge">
@@ -89,8 +103,13 @@
       </div>
 
       <!-- STEP 2: FORMULÁRIO DE CADASTRO -->
-      <div id="step-2" class="auth-card" style="display: none">
-        <h2>Criar conta</h2>
+      <div
+        id="step-2"
+        class="auth-card"
+        style="display: none"
+        aria-labelledby="cadastro-form-title"
+      >
+        <h2 id="cadastro-form-title">Criar conta</h2>
         <p class="subtitle" id="form-subtitle">
           Preencha seus dados para começar.
         </p>
@@ -110,7 +129,14 @@
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <input type="text" id="name" placeholder="Nome completo" required />
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="Nome completo"
+              autocomplete="name"
+              required
+            />
           </div>
 
           <div class="input-group">
@@ -129,7 +155,14 @@
               ></path>
               <polyline points="22,6 12,13 2,6"></polyline>
             </svg>
-            <input type="email" id="email" placeholder="E-mail" required />
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="E-mail"
+              autocomplete="email"
+              required
+            />
           </div>
 
           <div class="input-group">
@@ -150,6 +183,7 @@
             <input
               type="tel"
               id="document"
+              name="document"
               placeholder="Telefone"
               inputmode="tel"
               autocomplete="off"
@@ -174,7 +208,9 @@
             <input
               type="password"
               id="password"
+              name="password"
               placeholder="Crie uma senha"
+              autocomplete="new-password"
               required
             />
           </div>
@@ -196,12 +232,19 @@
             <input
               type="password"
               id="password-confirm"
+              name="password-confirm"
               placeholder="Confirme sua senha"
+              autocomplete="new-password"
               required
             />
           </div>
 
-          <button type="submit" class="btn-primary" style="margin-top: 10px">
+          <button
+            type="submit"
+            class="btn-primary"
+            id="cadastro-submit"
+            style="margin-top: 10px"
+          >
             Criar conta
           </button>
 
@@ -229,6 +272,189 @@
           </p>
         </form>
       </div>
+
+      <!-- FLUXO DE CADASTRO DO FEIRANTE (4 ETAPAS DO FIGMA) -->
+      <section
+        id="seller-registration"
+        class="seller-registration"
+        aria-label="Cadastro do feirante"
+        hidden
+      >
+        <form id="seller-register-form" novalidate>
+          <section class="seller-screen seller-screen-1" data-seller-screen="1">
+            <div class="seller-hero seller-hero-step-1">
+              <img class="seller-hero-art" src="assets/cadastro-feirante-hero-1.png" srcset="assets/cadastro-feirante-hero-1.png 1x, assets/cadastro-feirante-hero-1@2x.png 2x" width="430" height="480" alt="" />
+              <div class="seller-hero-caption"><h1>Mais pessoas podem encontrar sua banca.</h1><p>Cadastre seus produtos. Mostre o que você tem para oferecer.</p></div>
+            </div>
+
+            <section class="seller-form-card" aria-labelledby="seller-step-1-title">
+              <div class="seller-card-progress">
+                <div class="seller-progress-track" role="progressbar" aria-label="Etapa 1 de 4" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
+                  <span style="width: 16.6667%"></span>
+                </div>
+                <small>Passo 1 de 4</small>
+              </div>
+              <h2 id="seller-step-1-title">Vamos começar?</h2>
+              <p class="seller-card-description">Preencha os dados para começar</p>
+
+              <label class="seller-field" for="seller-full-name">
+                <span class="seller-field-label">NOME COMPLETO <b>*</b></span>
+                <span class="seller-input-wrap">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="3.5"/><rect x="4" y="12" width="16" height="9" rx="3"/></svg>
+                  <input id="seller-full-name" name="seller-full-name" type="text" placeholder="Nome completo" autocomplete="name" required />
+                </span>
+              </label>
+
+              <label class="seller-field" for="seller-responsible-cpf">
+                <span class="seller-field-label">CPF DO RESPONSÁVEL <b>*</b></span>
+                <span class="seller-input-wrap">
+                  <svg class="seller-file-icon" viewBox="0 0 16 24" aria-hidden="true"><path d="M3 1h6l4 5v17H3z"/><path class="seller-file-lines" d="M8 2v5h4M5 11h6M5 14h6M5 17h4"/></svg>
+                  <input id="seller-responsible-cpf" name="seller-responsible-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required />
+                </span>
+              </label>
+
+              <div class="seller-card-actions">
+                <button class="seller-back-button" type="button" data-seller-back><img src="assets/cadastro-feirante-voltar.png" alt="" /><span class="seller-sr-only">Voltar</span></button>
+                <button class="seller-next-button" type="button" data-seller-continue><svg class="seller-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2h4a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-4M1 12h13m-5-5 5 5-5 5"/></svg><span>Continuar</span></button>
+              </div>
+            </section>
+          </section>
+
+          <section class="seller-screen seller-screen-2" data-seller-screen="2" hidden>
+            <div class="seller-hero seller-hero-step-2">
+              <img class="seller-hero-art" src="assets/cadastro-feirante-hero-2.png" srcset="assets/cadastro-feirante-hero-2.png 1x, assets/cadastro-feirante-hero-2@2x.png 2x" width="430" height="477" alt="" />
+              <div class="seller-hero-caption"><h1>Sua banca também merece espaço na internet.</h1><p>Mostre seus produtos, preços e ofertas para novos clientes.</p></div>
+            </div>
+
+            <section class="seller-form-card" aria-labelledby="seller-step-2-title">
+              <div class="seller-card-progress">
+                <div class="seller-progress-track" role="progressbar" aria-label="Etapa 2 de 4" aria-valuemin="1" aria-valuemax="4" aria-valuenow="2"><span style="width: 50%"></span></div>
+                <small>Passo 2 de 4</small>
+              </div>
+              <h2 id="seller-step-2-title">Cadastre sua Banca</h2>
+              <p class="seller-card-description">Preencha as informações para que os clientes conheçam sua banca</p>
+
+              <label class="seller-field" for="seller-stall-name">
+                <span class="seller-field-label">NOME DA BANCA <b>*</b></span>
+                <span class="seller-input-wrap">
+                  <svg class="seller-stall-icon" viewBox="0 0 24 28" aria-hidden="true"><path d="M6 3h12v6H6zM4 10h16v8H4zM8 10v8m4-8v8m4-8v8M3 18h18M5 19l14 8m0-8L5 27M3 11v8m18-8v8"/></svg>
+                  <input id="seller-stall-name" name="seller-stall-name" type="text" placeholder="Ex: Barraca do seu Zé" required />
+                </span>
+              </label>
+
+              <label class="seller-field" for="seller-products">
+                <span class="seller-field-label">O QUE VENDE? <b>*</b></span>
+                <span class="seller-input-wrap seller-select-wrap">
+                  <select id="seller-products" name="seller-products" required>
+                    <option value="" selected disabled>Selecione</option>
+                    <option value="Hortifruti">Hortifruti</option>
+                    <option value="Laticínios">Laticínios</option>
+                    <option value="Carnes">Carnes</option>
+                    <option value="Padaria">Padaria</option>
+                    <option value="Artesanais">Artesanais</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                  <svg class="seller-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 9 8 6 8-6"/></svg>
+                </span>
+              </label>
+
+              <div class="seller-card-actions">
+                <button class="seller-back-button" type="button" data-seller-previous><img src="assets/cadastro-feirante-voltar.png" alt="" /><span class="seller-sr-only">Voltar</span></button>
+                <button class="seller-next-button" type="button" data-seller-continue><svg class="seller-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2h4a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-4M1 12h13m-5-5 5 5-5 5"/></svg><span>Continuar</span></button>
+              </div>
+            </section>
+          </section>
+
+          <section class="seller-screen seller-screen-3" data-seller-screen="3" hidden>
+            <div class="seller-hero seller-hero-step-3">
+              <img class="seller-hero-art" src="assets/cadastro-feirante-hero-3.png" srcset="assets/cadastro-feirante-hero-3.png 1x, assets/cadastro-feirante-hero-3@2x.png 2x" width="430" height="444" alt="" />
+              <div class="seller-hero-caption"><h1>A feira mudou. Sua banca também pode mudar.</h1><p>Leve seu negócio para o digital de forma simples.</p></div>
+            </div>
+
+            <section class="seller-form-card" aria-labelledby="seller-step-3-title">
+              <div class="seller-card-progress">
+                <div class="seller-progress-track" role="progressbar" aria-label="Etapa 3 de 4" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3"><span style="width: 75%"></span></div>
+                <small>Passo 3 de 4</small>
+              </div>
+              <h2 id="seller-step-3-title">Localize sua Feira</h2>
+              <p class="seller-card-description">Nos diga aonde os clientes da sua região podem encontrar sua banca</p>
+
+              <label class="seller-field" for="seller-city">
+                <span class="seller-field-label">CIDADE / UF <b>*</b></span>
+                <span class="seller-input-wrap seller-select-wrap">
+                  <input id="seller-city" name="seller-city" type="text" placeholder="Selecione sua Cidade" autocomplete="address-level2" required />
+                  <svg class="seller-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 9 8 6 8-6"/></svg>
+                </span>
+              </label>
+
+              <label class="seller-field" for="seller-market-name">
+                <span class="seller-field-label">NOME DA FEIRA <b>*</b></span>
+                <span class="seller-input-wrap">
+                  <svg class="seller-map-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 0 0-7-7Zm0 3.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z"/><path class="seller-map-base" d="M8 19c-5 0-5 3 4 3s9-3 4-3"/></svg>
+                  <input id="seller-market-name" name="seller-market-name" type="text" placeholder="Ex: Feira Permanente / Feira Verde" required />
+                </span>
+              </label>
+
+              <label class="seller-field" for="seller-reference">
+                <span class="seller-field-label">NÚMERO DA BANCA / PONTO DE REFERÊNCIA <small>(Opcional)</small></span>
+                <span class="seller-input-wrap">
+                  <svg class="seller-pin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 2 7 7-3 2-3 6-3-3-8 8-2-2 8-8-3-3 6-3z"/></svg>
+                  <input id="seller-reference" name="seller-reference" type="text" placeholder="Ex: Banca Número 10 / Em frente a banca de peixes" />
+                </span>
+              </label>
+
+              <div class="seller-card-actions">
+                <button class="seller-back-button" type="button" data-seller-previous><img src="assets/cadastro-feirante-voltar.png" alt="" /><span class="seller-sr-only">Voltar</span></button>
+                <button class="seller-next-button" type="button" data-seller-continue><svg class="seller-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2h4a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-4M1 12h13m-5-5 5 5-5 5"/></svg><span>Continuar</span></button>
+              </div>
+            </section>
+          </section>
+
+          <section class="seller-screen seller-screen-4" data-seller-screen="4" hidden>
+            <div class="seller-hero seller-hero-step-4">
+              <img class="seller-hero-art" src="assets/cadastro-feirante-hero-4.png" srcset="assets/cadastro-feirante-hero-4.png 1x, assets/cadastro-feirante-hero-4@2x.png 2x" width="430" height="510" alt="" />
+              <div class="seller-hero-caption"><h1>Apresente sua banca para quem está procurando o que você vende.</h1></div>
+            </div>
+
+            <section class="seller-form-card" aria-labelledby="seller-step-4-title">
+              <div class="seller-card-progress">
+                <div class="seller-progress-track" role="progressbar" aria-label="Etapa 4 de 4" aria-valuemin="1" aria-valuemax="4" aria-valuenow="4"><span style="width: 100%"></span></div>
+                <small>Passo 4 de 4</small>
+              </div>
+              <h2 id="seller-step-4-title">Crie seu acesso</h2>
+              <p class="seller-card-description">Configure os dados de acesso para gerenciar sua banca,</p>
+
+              <label class="seller-field" for="seller-contact">
+                <span class="seller-field-label">E-MAIL OU TELEFONE</span>
+                <span class="seller-input-wrap">
+                  <input id="seller-contact" name="seller-contact" type="text" inputmode="email" autocomplete="email" placeholder="Ex:joão@gmail.com ou 6199887-4545" required />
+                </span>
+              </label>
+
+              <label class="seller-field" for="seller-password">
+                <span class="seller-field-label">CRIE SUA SENHA <b>*</b></span>
+                <span class="seller-input-wrap seller-password-wrap">
+                  <input id="seller-password" name="seller-password" type="password" autocomplete="new-password" placeholder="*********" minlength="6" required />
+                  <button class="seller-password-toggle" type="button" aria-label="Mostrar senha" data-password-target="seller-password"><svg viewBox="0 0 24 12" aria-hidden="true"><path d="M2 6s4-4 10-4 10 4 10 4-4 4-10 4S2 6 2 6Z"/><circle cx="12" cy="6" r="2.5"/></svg></button>
+                </span>
+              </label>
+
+              <label class="seller-field" for="seller-password-confirm">
+                <span class="seller-field-label">CONFIRME SUA SENHA <b>*</b></span>
+                <span class="seller-input-wrap seller-password-wrap">
+                  <input id="seller-password-confirm" name="seller-password-confirm" type="password" autocomplete="new-password" placeholder="*********" minlength="6" required />
+                  <button class="seller-password-toggle" type="button" aria-label="Mostrar senha" data-password-target="seller-password-confirm"><svg viewBox="0 0 24 12" aria-hidden="true"><path d="M2 6s4-4 10-4 10 4 10 4-4 4-10 4S2 6 2 6Z"/><circle cx="12" cy="6" r="2.5"/></svg></button>
+                </span>
+              </label>
+
+              <div class="seller-card-actions seller-final-actions">
+                <button class="seller-back-button seller-back-solid" type="button" data-seller-previous><img src="assets/cadastro-feirante-voltar.png" alt="" /><span class="seller-sr-only">Voltar</span></button>
+                <button class="seller-finish-button" type="submit" id="seller-register-submit"><svg class="seller-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2h4a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-4M1 12h13m-5-5 5 5-5 5"/></svg><span>Concluir Cadastro</span></button>
+              </div>
+            </section>
+          </section>
+        </form>
+      </section>
     </main>
 
     <!-- Exemplo de importação do seu arquivo JS real -->

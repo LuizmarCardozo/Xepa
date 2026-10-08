@@ -6,19 +6,41 @@ window.CadastroPage = function () {
   const step1 = document.getElementById("step-1");
   const step2 = document.getElementById("step-2");
   const formSubtitle = document.getElementById("form-subtitle");
+  const formTitle = document.getElementById("cadastro-form-title");
+  const submitButton = document.getElementById("cadastro-submit");
+  const appContainer = document.querySelector(".cadastro-app");
   const documentInput = document.getElementById("document");
+  const sellerRegistration = document.getElementById("seller-registration");
+  const sellerForm = document.getElementById("seller-register-form");
+  const sellerScreens = Array.from(
+    document.querySelectorAll("[data-seller-screen]"),
+  );
+  let sellerStep = 1;
+
+  const showSellerStep = (step) => {
+    sellerStep = step;
+    sellerScreens.forEach((screen) => {
+      screen.hidden = Number(screen.dataset.sellerScreen) !== step;
+    });
+    const activeScreen = sellerScreens.find(
+      (screen) => Number(screen.dataset.sellerScreen) === step,
+    );
+    activeScreen?.querySelector(".seller-form-card")?.scrollTo(0, 0);
+    sellerRegistration?.scrollTo(0, 0);
+  };
 
   const updateDocumentField = () => {
     const isBuyer = selectedType === "cliente";
     if (!documentInput) return;
 
+    documentInput.type = isBuyer ? "tel" : "text";
     documentInput.placeholder = isBuyer ? "Telefone" : "CPF ou CNPJ";
     documentInput.setAttribute(
       "aria-label",
       isBuyer ? "Telefone" : "CPF ou CNPJ",
     );
     documentInput.setAttribute("maxlength", isBuyer ? "11" : "14");
-    documentInput.setAttribute("inputmode", "numeric");
+    documentInput.setAttribute("inputmode", isBuyer ? "tel" : "numeric");
   };
 
   updateDocumentField();
@@ -32,22 +54,31 @@ window.CadastroPage = function () {
   options.forEach((card) => {
     card.addEventListener("click", function () {
       selectedType = this.dataset.type; // Pega 'cliente' ou 'comerciante' do HTML
+      const isMerchant = selectedType === "comerciante";
 
-      // Muda o subtítulo sutilmente
-      if (formSubtitle) {
-        formSubtitle.innerText =
-          selectedType === "cliente"
-            ? "Você está se cadastrando como Comprador."
-            : "Você está se cadastrando como Vendedor.";
-      }
-      if (documentInput) {
-        updateDocumentField();
-      }
+      options.forEach((option) => {
+        option.setAttribute("aria-pressed", String(option === this));
+      });
+      appContainer?.classList.toggle("cadastro-vendedor", isMerchant);
+      if (step2) step2.dataset.accountType = selectedType;
 
-      // Oculta Step 1 e exibe o formulário
       if (step1 && step2) {
         step1.style.display = "none";
+        if (isMerchant) {
+          step2.style.display = "none";
+          if (sellerRegistration) sellerRegistration.hidden = false;
+          showSellerStep(1);
+          return;
+        }
+
+        if (sellerRegistration) sellerRegistration.hidden = true;
         step2.style.display = "flex";
+        if (formTitle) formTitle.textContent = "Criar conta";
+        if (submitButton) submitButton.textContent = "Criar conta";
+        if (formSubtitle) {
+          formSubtitle.textContent = "Você está se cadastrando como Comprador.";
+        }
+        updateDocumentField();
       }
     });
   });
@@ -57,8 +88,154 @@ window.CadastroPage = function () {
   if (btnBack) {
     btnBack.addEventListener("click", function () {
       if (step1 && step2) {
+        if (sellerRegistration) sellerRegistration.hidden = true;
         step2.style.display = "none";
         step1.style.display = "flex";
+        selectedType = "cliente";
+        options.forEach((option) => option.setAttribute("aria-pressed", "false"));
+        appContainer?.classList.remove("cadastro-vendedor");
+        updateDocumentField();
+      }
+    });
+  }
+
+  sellerScreens.forEach((screen) => {
+    const continueButton = screen.querySelector("[data-seller-continue]");
+    const previousButton = screen.querySelector("[data-seller-previous]");
+    const backButton = screen.querySelector("[data-seller-back]");
+
+    continueButton?.addEventListener("click", () => {
+      const fields = Array.from(
+        screen.querySelectorAll("input[required], select[required]"),
+      );
+      const invalidField = fields.find((field) => !field.value.trim());
+      if (invalidField) {
+        invalidField.reportValidity();
+        return;
+      }
+
+      const cpfInput = document.getElementById("seller-responsible-cpf");
+      if (sellerStep === 1 && cpfInput) {
+        const digits = cpfInput.value.replace(/\D/g, "");
+        if (digits.length !== 11) {
+          cpfInput.setCustomValidity("Informe um CPF com 11 dígitos.");
+          cpfInput.reportValidity();
+          cpfInput.setCustomValidity("");
+          return;
+        }
+      }
+
+      if (sellerStep < 4) showSellerStep(sellerStep + 1);
+    });
+
+    previousButton?.addEventListener("click", () => {
+      if (sellerStep > 1) showSellerStep(sellerStep - 1);
+    });
+
+    backButton?.addEventListener("click", () => {
+      if (sellerRegistration) sellerRegistration.hidden = true;
+      if (step1) step1.style.display = "flex";
+      if (step2) step2.style.display = "none";
+      selectedType = "cliente";
+      options.forEach((option) => option.setAttribute("aria-pressed", "false"));
+      appContainer?.classList.remove("cadastro-vendedor");
+      updateDocumentField();
+    });
+  });
+
+  const sellerCpfInput = document.getElementById("seller-responsible-cpf");
+  sellerCpfInput?.addEventListener("input", () => {
+    const digits = sellerCpfInput.value.replace(/\D/g, "").slice(0, 11);
+    sellerCpfInput.value = digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  });
+
+  document.querySelectorAll("[data-password-target]").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const input = document.getElementById(toggle.dataset.passwordTarget);
+      if (!input) return;
+      const shouldShow = input.type === "password";
+      input.type = shouldShow ? "text" : "password";
+      toggle.setAttribute("aria-label", shouldShow ? "Ocultar senha" : "Mostrar senha");
+    });
+  });
+
+  if (sellerForm) {
+    sellerForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const finalScreen = sellerScreens.find(
+        (screen) => Number(screen.dataset.sellerScreen) === 4,
+      );
+      const incompleteField = Array.from(
+        finalScreen?.querySelectorAll("input[required]") || [],
+      ).find((field) => !field.value.trim() || !field.checkValidity());
+      if (incompleteField) {
+        incompleteField.reportValidity();
+        return;
+      }
+
+      const name = document.getElementById("seller-full-name").value.trim();
+      const cpf = document
+        .getElementById("seller-responsible-cpf")
+        .value.replace(/\D/g, "");
+      const contactInput = document.getElementById("seller-contact");
+      const contact = contactInput.value.trim();
+      const password = document.getElementById("seller-password").value;
+      const passwordConfirm = document.getElementById(
+        "seller-password-confirm",
+      ).value;
+
+      if (cpf.length !== 11) {
+        showSellerStep(1);
+        const cpfInput = document.getElementById("seller-responsible-cpf");
+        cpfInput.setCustomValidity("Informe um CPF com 11 dígitos.");
+        cpfInput.reportValidity();
+        cpfInput.setCustomValidity("");
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) {
+        contactInput.setCustomValidity(
+          "O cadastro atual precisa de um e-mail válido para criar o acesso.",
+        );
+        contactInput.reportValidity();
+        contactInput.setCustomValidity("");
+        return;
+      }
+      if (password !== passwordConfirm) {
+        alert("As senhas não coincidem.");
+        return;
+      }
+
+      const registerButton = document.getElementById("seller-register-submit");
+      const registerButtonContent = registerButton?.innerHTML;
+      if (registerButton) {
+        registerButton.disabled = true;
+        registerButton.textContent = "Concluindo cadastro...";
+      }
+
+      try {
+        if (!window.Backend || !window.Backend.register) {
+          throw new Error("Backend não inicializado");
+        }
+        await window.Backend.register(name, contact, password, "comerciante", cpf);
+        Router.go("home");
+      } catch (error) {
+        console.error(error);
+        if (error.code === "auth/email-already-in-use") {
+          alert("Este e-mail já está cadastrado!");
+        } else if (error.code === "auth/weak-password") {
+          alert("A senha deve ter pelo menos 6 caracteres.");
+        } else {
+          alert("Erro ao criar conta. Tente novamente.");
+        }
+        if (registerButton) {
+          registerButton.disabled = false;
+          registerButton.innerHTML = registerButtonContent;
+        }
       }
     });
   }
@@ -136,4 +313,20 @@ window.CadastroPage = function () {
       }
     });
   }
+};
+
+window.CadastroPageInit = function () {
+  const container = document.querySelector(".cadastro-app");
+  const registration = document.getElementById("seller-registration");
+  if (!container || !registration) return;
+
+  // Preserve the Figma frame proportions on narrower phones. Short viewports
+  // scroll the complete screen instead of squeezing the artwork and fields.
+  const resize = () => {
+    registration.style.setProperty("--seller-scale", container.clientWidth / 430);
+  };
+  resize();
+  const observer = new ResizeObserver(resize);
+  observer.observe(container);
+  return () => observer.disconnect();
 };
