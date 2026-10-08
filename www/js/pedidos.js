@@ -68,9 +68,17 @@ window.PedidosPage = function () {
 };
 
 const ORDER_STATUS = {
-  pending: { label: "Aguardando confirmação", next: "accepted", action: "Aceitar pedido" },
+  pending: {
+    label: "Aguardando confirmação",
+    next: "accepted",
+    action: "Aceitar pedido",
+  },
   accepted: { label: "Aceito", next: "ready", action: "Marcar como pronto" },
-  ready: { label: "Pronto para retirar", next: "completed", action: "Concluir pedido" },
+  ready: {
+    label: "Pronto para retirar",
+    next: "completed",
+    action: "Concluir pedido",
+  },
   completed: { label: "Concluído", terminal: true },
   delivered: { label: "Entregue", terminal: true },
   cancelled: { label: "Cancelado", terminal: true },
@@ -94,7 +102,12 @@ function orderStatus(order) {
 
 function orderStatusInfo(order) {
   const status = orderStatus(order);
-  return ORDER_STATUS[status] || { label: status || "Em andamento", terminal: !ACTIVE_ORDER_STATUSES.has(status) };
+  return (
+    ORDER_STATUS[status] || {
+      label: status || "Em andamento",
+      terminal: !ACTIVE_ORDER_STATUSES.has(status),
+    }
+  );
 }
 
 function safeOrderImage(value) {
@@ -104,7 +117,8 @@ function safeOrderImage(value) {
 }
 
 function formatOrderMoney(value) {
-  if (typeof window.formatMoney === "function") return window.formatMoney(value);
+  if (typeof window.formatMoney === "function")
+    return window.formatMoney(value);
   return Number(value || 0).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -130,14 +144,15 @@ function renderOrderItems(items) {
     .map((item) => {
       const image = safeOrderImage(item?.image);
       return `<div class="item-box" title="${escapeOrderHtml(item?.name || "Produto")}">
-        ${image ? `<img src="${image}" alt="${escapeOrderHtml(item?.name || "Produto")}">` : "<span aria-hidden=\"true\">🥬</span>"}
+        ${image ? `<img src="${image}" alt="${escapeOrderHtml(item?.name || "Produto")}">` : '<span aria-hidden="true">🥬</span>'}
         <span class="item-qtd">${escapeOrderHtml(item?.quantity || 0)}</span>
       </div>`;
     })
     .join("");
-  const more = safeItems.length > 4
-    ? `<div class="item-more"><strong>+${safeItems.length - 4}</strong><span>itens</span></div>`
-    : "";
+  const more =
+    safeItems.length > 4
+      ? `<div class="item-more"><strong>+${safeItems.length - 4}</strong><span>itens</span></div>`
+      : "";
   const summary = safeItems.length
     ? safeItems
         .map((item) => `${item?.quantity || 0}x ${item?.name || "Produto"}`)
@@ -145,7 +160,7 @@ function renderOrderItems(items) {
         .join(", ")
     : "Nenhum item informado";
 
-  return `<div class="pedido-items">${itemBoxes || "<div class=\"item-box\" aria-hidden=\"true\">🥬</div>"}${more}</div>
+  return `<div class="pedido-items">${itemBoxes || '<div class="item-box" aria-hidden="true">🥬</div>'}${more}</div>
     <p class="pedido-items-summary">${summary}</p>`;
 }
 
@@ -153,15 +168,25 @@ function renderOrderCard(order, role, userId) {
   const status = orderStatus(order);
   const statusInfo = orderStatusInfo(order);
   const isReceived = role === "merchant";
-  const personName = isReceived ? order.buyerName || "Cliente" : order.merchantName || "Comerciante";
+  const personName = isReceived
+    ? order.buyerName || "Cliente"
+    : order.merchantName || "Comerciante";
   const relationship = isReceived ? "Pedido recebido" : "Pedido enviado";
-  const fulfillment = order.fulfillment === "delivery" ? "Entrega combinada" : "Retirada";
+  const fulfillment =
+    order.fulfillment === "delivery" ? "Entrega combinada" : "Retirada";
   const details = [];
-  if (order.fulfillment === "delivery" && order.address) details.push(`Endereço: ${escapeOrderHtml(order.address)}`);
+  if (order.fulfillment === "delivery" && order.address)
+    details.push(`Endereço: ${escapeOrderHtml(order.address)}`);
   if (order.note) details.push(`Observação: ${escapeOrderHtml(order.note)}`);
-  const detailsHtml = details.length ? `<div class="pedido-details">${details.map((detail) => `<p>${detail}</p>`).join("")}</div>` : "";
-  const canManageAsMerchant = isReceived && order.merchantUid === userId && ACTIVE_ORDER_STATUSES.has(status);
-  const canCancelAsBuyer = !isReceived && order.buyerUid === userId && status === "pending";
+  const detailsHtml = details.length
+    ? `<div class="pedido-details">${details.map((detail) => `<p>${detail}</p>`).join("")}</div>`
+    : "";
+  const canManageAsMerchant =
+    isReceived &&
+    order.merchantUid === userId &&
+    ACTIVE_ORDER_STATUSES.has(status);
+  const canCancelAsBuyer =
+    !isReceived && order.buyerUid === userId && status === "pending";
   const actions = canManageAsMerchant
     ? `<div class="pedido-actions">
         ${statusInfo.next ? `<button class="btn-solid" type="button" data-order-id="${escapeOrderHtml(order.id)}" data-order-status="${escapeOrderHtml(statusInfo.next)}">${escapeOrderHtml(statusInfo.action)}</button>` : ""}
@@ -192,7 +217,7 @@ function renderOrderCard(order, role, userId) {
   </article>`;
 }
 
-window.PedidosPageInit = function () {
+window.PedidosPageInit = async function () {
   const container = document.querySelector("[data-pedidos]");
   if (!container) return;
 
@@ -208,34 +233,54 @@ window.PedidosPageInit = function () {
     feedback.setAttribute("role", isError ? "alert" : "status");
   };
 
-  const filterOrders = (list) => list.filter((order) =>
-    activeFilter === "active"
-      ? ACTIVE_ORDER_STATUSES.has(orderStatus(order))
-      : !ACTIVE_ORDER_STATUSES.has(orderStatus(order)),
-  );
+  const normalizePermissionMessage = (error) => {
+    const message = String(error?.message || "");
+    if (
+      error?.code === "permission-denied" ||
+      /permission|acesso/i.test(message)
+    ) {
+      return "Nenhum pedido foi reservado ainda.";
+    }
+    return error?.message || "Nenhum pedido foi reservado ainda.";
+  };
+
+  const filterOrders = (list) =>
+    list.filter((order) =>
+      activeFilter === "active"
+        ? ACTIVE_ORDER_STATUSES.has(orderStatus(order))
+        : !ACTIVE_ORDER_STATUSES.has(orderStatus(order)),
+    );
 
   const render = () => {
     const buyerOrders = orders.filter((order) => order?.buyerUid === userId);
-    const merchantOrders = orders.filter((order) => order?.merchantUid === userId);
+    const merchantOrders = orders.filter(
+      (order) => order?.merchantUid === userId,
+    );
     const visibleBuyerOrders = filterOrders(buyerOrders);
     const visibleMerchantOrders = filterOrders(merchantOrders);
     const sections = [];
 
     if (visibleBuyerOrders.length) {
-      sections.push(`<section class="orders-section"><h2>Pedidos que fiz</h2>${visibleBuyerOrders
-        .map((order) => renderOrderCard(order, "buyer", userId))
-        .join("")}</section>`);
+      sections.push(
+        `<section class="orders-section"><h2>Pedidos que fiz</h2>${visibleBuyerOrders
+          .map((order) => renderOrderCard(order, "buyer", userId))
+          .join("")}</section>`,
+      );
     }
     if (visibleMerchantOrders.length) {
-      sections.push(`<section class="orders-section"><h2>Pedidos recebidos</h2>${visibleMerchantOrders
-        .map((order) => renderOrderCard(order, "merchant", userId))
-        .join("")}</section>`);
+      sections.push(
+        `<section class="orders-section"><h2>Pedidos recebidos</h2>${visibleMerchantOrders
+          .map((order) => renderOrderCard(order, "merchant", userId))
+          .join("")}</section>`,
+      );
     }
     container.innerHTML = sections.length
       ? sections.join("")
       : `<div class="empty-state"><h3>${activeFilter === "active" ? "Nenhum pedido ativo" : "Nenhum pedido no histórico"}</h3><p>${activeFilter === "active" ? "Seus pedidos em andamento aparecerão aqui." : "Pedidos concluídos ou cancelados aparecerão aqui."}</p></div>`;
 
-    const activeCount = orders.filter((order) => ACTIVE_ORDER_STATUSES.has(orderStatus(order))).length;
+    const activeCount = orders.filter((order) =>
+      ACTIVE_ORDER_STATUSES.has(orderStatus(order)),
+    ).length;
     const historyCount = orders.length - activeCount;
     if (activeCountNode) activeCountNode.textContent = `(${activeCount})`;
     if (historyCountNode) historyCountNode.textContent = `(${historyCount})`;
@@ -245,16 +290,26 @@ window.PedidosPageInit = function () {
         const orderId = button.dataset.orderId;
         const nextStatus = button.dataset.orderStatus;
         const card = button.closest("[data-order-card]");
-        if (!orderId || !nextStatus || !card || typeof window.Backend?.updateOrderStatus !== "function") return;
-        card.querySelectorAll("button").forEach((item) => { item.disabled = true; });
+        if (
+          !orderId ||
+          !nextStatus ||
+          !card ||
+          typeof window.Backend?.updateOrderStatus !== "function"
+        )
+          return;
+        card.querySelectorAll("button").forEach((item) => {
+          item.disabled = true;
+        });
         setFeedback("Atualizando pedido...");
         try {
           await window.Backend.updateOrderStatus(orderId, nextStatus);
           setFeedback("Status do pedido atualizado.");
         } catch (error) {
           console.error(error);
-          card.querySelectorAll("button").forEach((item) => { item.disabled = false; });
-          setFeedback(error?.message || "Não foi possível atualizar o pedido.", true);
+          card.querySelectorAll("button").forEach((item) => {
+            item.disabled = false;
+          });
+          setFeedback(normalizePermissionMessage(error), true);
         }
       });
     });
@@ -262,7 +317,8 @@ window.PedidosPageInit = function () {
 
   document.querySelectorAll("[data-orders-filter]").forEach((button) => {
     button.addEventListener("click", () => {
-      activeFilter = button.dataset.ordersFilter === "history" ? "history" : "active";
+      activeFilter =
+        button.dataset.ordersFilter === "history" ? "history" : "active";
       document.querySelectorAll("[data-orders-filter]").forEach((tab) => {
         const selected = tab === button;
         tab.classList.toggle("active", selected);
@@ -272,14 +328,30 @@ window.PedidosPageInit = function () {
     });
   });
 
-  const activeCountNode = document.querySelector('[data-orders-count="active"]');
-  const historyCountNode = document.querySelector('[data-orders-count="history"]');
+  const activeCountNode = document.querySelector(
+    '[data-orders-count="active"]',
+  );
+  const historyCountNode = document.querySelector(
+    '[data-orders-count="history"]',
+  );
   if (activeCountNode) activeCountNode.textContent = "";
   if (historyCountNode) historyCountNode.textContent = "";
-  container.innerHTML = '<div class="empty-state"><p>Carregando pedidos...</p></div>';
-  if (!userId || typeof window.Backend?.watchOrders !== "function") {
-    setFeedback("Não foi possível carregar os pedidos.", true);
-    container.innerHTML = '<div class="empty-state"><h3>Pedidos indisponíveis</h3><p>Faça login novamente para consultar seus pedidos.</p></div>';
+  container.innerHTML =
+    '<div class="empty-state"><p>Carregando pedidos...</p></div>';
+
+  try {
+    if (typeof window.Backend?.ready === "function")
+      await window.Backend.ready();
+  } catch (error) {
+    console.warn("Auth ainda não foi inicializada:", error);
+  }
+
+  if (
+    !window.Auth?.user?.uid ||
+    typeof window.Backend?.watchOrders !== "function"
+  ) {
+    container.innerHTML =
+      '<div class="empty-state"><h3>Ninguém reservou nenhum pedido</h3><p>Os pedidos dos clientes aparecerão aqui assim que houver alguma reserva.</p></div>';
     return;
   }
 
@@ -291,15 +363,18 @@ window.PedidosPageInit = function () {
       },
       (error) => {
         console.error(error);
-        setFeedback(error?.message || "Não foi possível acompanhar os pedidos.", true);
+        const message = normalizePermissionMessage(error);
+        setFeedback(message, false);
         if (!orders.length) {
-          container.innerHTML = '<div class="empty-state"><h3>Não foi possível carregar</h3><p>Tente novamente em alguns instantes.</p></div>';
+          container.innerHTML =
+            '<div class="empty-state"><h3>Ninguém reservou nenhum pedido</h3><p>Os pedidos dos clientes aparecerão aqui assim que houver alguma reserva.</p></div>';
         }
       },
     );
   } catch (error) {
     console.error(error);
-    setFeedback(error?.message || "Não foi possível acompanhar os pedidos.", true);
-    container.innerHTML = '<div class="empty-state"><h3>Não foi possível carregar</h3><p>Tente novamente em alguns instantes.</p></div>';
+    setFeedback(normalizePermissionMessage(error), false);
+    container.innerHTML =
+      '<div class="empty-state"><h3>Ninguém reservou nenhum pedido</h3><p>Os pedidos dos clientes aparecerão aqui assim que houver alguma reserva.</p></div>';
   }
 };

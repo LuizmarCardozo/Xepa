@@ -1,8 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import {
+  browserLocalPersistence,
+  browserPopupRedirectResolver,
   createUserWithEmailAndPassword,
-  getAuth,
   GoogleAuthProvider,
+  initializeAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -26,27 +28,23 @@ import {
   where,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-import {
-  deleteObject,
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadString,
-} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
+import { createSupabaseStorage } from "./supabase.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUOyibPzAG8nLNu_unoJJ2PsnmpZxiV4Q",
   authDomain: "xepa-50d4b.firebaseapp.com",
   projectId: "xepa-50d4b",
-  storageBucket: "xepa-50d4b.firebasestorage.app",
   messagingSenderId: "432696375024",
   appId: "1:432696375024:web:a5c3fb9b855ad2b3ff3435",
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const auth = initializeAuth(app, {
+  persistence: browserLocalPersistence,
+  popupRedirectResolver: browserPopupRedirectResolver,
+});
 const db = getFirestore(app);
-const storage = getStorage(app);
+const supabaseStorage = createSupabaseStorage(auth);
 let resolveAuthReady;
 const authReady = new Promise((resolve) => {
   resolveAuthReady = resolve;
@@ -62,7 +60,9 @@ async function readProfile(user) {
     {};
   try {
     const snapshot = await getDoc(doc(db, "users", user.uid));
-    return snapshot.exists() ? { ...localProfile, ...snapshot.data() } : localProfile;
+    return snapshot.exists()
+      ? { ...localProfile, ...snapshot.data() }
+      : localProfile;
   } catch (error) {
     console.warn("Perfil carregado do armazenamento local:", error);
     return localProfile;
@@ -86,7 +86,11 @@ async function syncUser(user, expectedVersion) {
   }
   const appUser = {
     uid: user.uid,
-    name: profile.name || user.displayName || user.email?.split("@")[0] || "Usuário",
+    name:
+      profile.name ||
+      user.displayName ||
+      user.email?.split("@")[0] ||
+      "Usuário",
     email: user.email || profile.email || "",
     type: profile.type || "cliente",
     document: profile.document || "",
@@ -100,11 +104,51 @@ function currentUser() {
   return auth.currentUser;
 }
 
-async function uploadDataUrl(path, dataUrl) {
-  if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl || null;
-  const imageRef = ref(storage, path);
-  await uploadString(imageRef, dataUrl, "data_url");
-  return getDownloadURL(imageRef);
+function normalizeImageData(image) {
+  if (!image) return null;
+  if (typeof image !== "string") return null;
+  if (image.startsWith("data:image/")) return image;
+  if (image.startsWith("http://") || image.startsWith("https://")) return image;
+  return null;
+}
+
+function cacheImageLocally(key, image) {
+  if (!key || !image || !image.startsWith("data:image/")) return;
+  try {
+    localStorage.setItem(`xepa-image-cache-${key}`, image);
+  } catch (error) {
+    console.warn("Não foi possível guardar a imagem no cache local:", error);
+  }
+}
+
+async function prepareOfferImage(image, userId, offerId, existingOffer) {
+  const normalizedImage = normalizeImageData(image);
+  if (normalizedImage?.startsWith("data:image/")) {
+    if (supabaseStorage) {
+      return supabaseStorage.uploadOfferImage(normalizedImage, userId, offerId);
+    }
+    return { image: normalizedImage, imagePath: null };
+  }
+
+  return {
+    image: normalizedImage,
+    imagePath:
+      normalizedImage && normalizedImage === existingOffer?.image
+        ? existingOffer.imagePath || null
+        : null,
+  };
+}
+
+async function removeOfferImage(path) {
+  if (!path || !supabaseStorage) return;
+  try {
+    await supabaseStorage.deleteOfferImage(path);
+  } catch (error) {
+    console.warn(
+      "Não foi possível remover a imagem do Supabase Storage:",
+      error,
+    );
+  }
 }
 
 function normalizeOfferLocation(location) {
@@ -113,8 +157,10 @@ function normalizeOfferLocation(location) {
   if (
     !Number.isFinite(latitude) ||
     !Number.isFinite(longitude) ||
-    latitude < -90 || latitude > 90 ||
-    longitude < -180 || longitude > 180
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
   ) {
     return null;
   }
@@ -159,8 +205,7 @@ window.Backend = {
     return credential.user;
   },
 
-  resetPassword: (email) =>
-    sendPasswordResetEmail(auth, email.trim()),
+  resetPassword: (email) => sendPasswordResetEmail(auth, email.trim()),
 
   register: async (name, email, password, type, documentNumber) => {
     const credential = await createUserWithEmailAndPassword(
@@ -215,7 +260,10 @@ window.Backend = {
       await updateProfile(user, { displayName: name });
     } catch (error) {
       // O perfil do Firestore é a fonte usada pelo app; Auth é só uma cópia auxiliar.
-      console.warn("Perfil salvo, mas o nome do Firebase Auth não foi sincronizado:", error);
+      console.warn(
+        "Perfil salvo, mas o nome do Firebase Auth não foi sincronizado:",
+        error,
+      );
     }
     localStorage.setItem(`xepa-profile-${user.uid}`, JSON.stringify(updated));
     window.Auth.user = updated;
@@ -225,10 +273,12 @@ window.Backend = {
   createOffer: async (offer) => {
     const user = currentUser();
     const offerRef = doc(collection(db, "offers"));
-    const image = await uploadDataUrl(
-      `offers/${user.uid}/${offerRef.id}.jpg`,
+    const storedImage = await prepareOfferImage(
       offer.image,
+      user.uid,
+      offerRef.id,
     );
+    cacheImageLocally(`offer-${offerRef.id}`, storedImage.image);
     const offerData = {
       ownerUid: user.uid,
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
@@ -238,12 +288,18 @@ window.Backend = {
       price: Number(offer.price),
       oldPrice: offer.oldPrice == null ? null : Number(offer.oldPrice),
       desc: (offer.desc || "").trim(),
-      image,
+      image: storedImage.image,
+      imagePath: storedImage.imagePath,
       location: normalizeOfferLocation(offer.location),
       active: true,
       createdAt: new Date().toISOString(),
     };
-    await setDoc(offerRef, offerData);
+    try {
+      await setDoc(offerRef, offerData);
+    } catch (error) {
+      await removeOfferImage(storedImage.imagePath);
+      throw error;
+    }
     return { id: offerRef.id, ...offerData };
   },
 
@@ -257,12 +313,13 @@ window.Backend = {
       throw new Error("Você não pode editar esta oferta.");
     }
 
-    const replacementImagePath = offer.image?.startsWith("data:")
-      ? `offers/${user.uid}/${offerId}-${doc(collection(db, "offers")).id}.jpg`
-      : null;
-    const image = offer.image
-      ? await uploadDataUrl(replacementImagePath || `offers/${user.uid}/${offerId}.jpg`, offer.image)
-      : null;
+    const storedImage = await prepareOfferImage(
+      offer.image,
+      user.uid,
+      offerId,
+      existing,
+    );
+    cacheImageLocally(`offer-${offerId}`, storedImage.image);
     const updatedOffer = {
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
       name: offer.name.trim(),
@@ -271,32 +328,21 @@ window.Backend = {
       price: Number(offer.price),
       oldPrice: offer.oldPrice == null ? null : Number(offer.oldPrice),
       desc: (offer.desc || "").trim(),
-      image,
+      image: storedImage.image,
+      imagePath: storedImage.imagePath,
       location: normalizeOfferLocation(offer.location),
       updatedAt: new Date().toISOString(),
     };
     try {
       await updateDoc(offerRef, updatedOffer);
     } catch (error) {
-      if (replacementImagePath) {
-        try {
-          await deleteObject(ref(storage, replacementImagePath));
-        } catch (cleanupError) {
-          console.warn("Não foi possível remover a imagem temporária da edição:", cleanupError);
-        }
+      if (storedImage.imagePath !== existing.imagePath) {
+        await removeOfferImage(storedImage.imagePath);
       }
       throw error;
     }
-
-    if (
-      existing.image?.includes("firebasestorage.googleapis.com") &&
-      existing.image !== image
-    ) {
-      try {
-        await deleteObject(ref(storage, existing.image));
-      } catch (error) {
-        console.warn("A oferta foi atualizada, mas a imagem antiga ficou no Storage:", error);
-      }
+    if (storedImage.imagePath !== existing.imagePath) {
+      await removeOfferImage(existing.imagePath);
     }
     return { id: offerId, ...existing, ...updatedOffer };
   },
@@ -328,27 +374,23 @@ window.Backend = {
   },
 
   deleteOffer: async (offerId) => {
-    currentUser();
+    const user = currentUser();
     const offerRef = doc(db, "offers", offerId);
     const snapshot = await getDoc(offerRef);
-    const image = snapshot.exists() ? snapshot.data().image : null;
-    await deleteDoc(offerRef);
-    if (image?.includes("firebasestorage.googleapis.com")) {
-      try {
-        await deleteObject(ref(storage, image));
-      } catch (error) {
-        console.warn("A oferta foi excluída, mas a imagem ficou no Storage:", error);
-      }
+    if (!snapshot.exists()) throw new Error("Esta oferta não existe mais.");
+    const existing = snapshot.data();
+    if (existing.ownerUid !== user.uid) {
+      throw new Error("Você não pode excluir esta oferta.");
     }
+    await deleteDoc(offerRef);
+    await removeOfferImage(existing.imagePath);
   },
 
   createStory: async ({ text, image }) => {
     const user = currentUser();
     const storyRef = doc(collection(db, "stories"));
-    const imageUrl = await uploadDataUrl(
-      `stories/${user.uid}/${storyRef.id}.jpg`,
-      image,
-    );
+    const imageUrl = normalizeImageData(image);
+    cacheImageLocally(`story-${storyRef.id}`, imageUrl);
     const story = {
       ownerUid: user.uid,
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
@@ -399,7 +441,9 @@ window.Backend = {
         buyerUid: user.uid,
         buyerName: window.Auth.user?.name || user.displayName || "Cliente",
         merchantUid,
-        merchantName: items.find((item) => item.ownerUid === merchantUid)?.ownerName || "Comerciante",
+        merchantName:
+          items.find((item) => item.ownerUid === merchantUid)?.ownerName ||
+          "Comerciante",
         items: orderItems,
         total,
         fulfillment,
@@ -420,8 +464,12 @@ window.Backend = {
   getOrders: async () => {
     const user = currentUser();
     const [buyerSnapshot, merchantSnapshot] = await Promise.all([
-      getDocs(query(collection(db, "orders"), where("buyerUid", "==", user.uid))),
-      getDocs(query(collection(db, "orders"), where("merchantUid", "==", user.uid))),
+      getDocs(
+        query(collection(db, "orders"), where("buyerUid", "==", user.uid)),
+      ),
+      getDocs(
+        query(collection(db, "orders"), where("merchantUid", "==", user.uid)),
+      ),
     ]);
     const byId = new Map();
     for (const orderDoc of [...buyerSnapshot.docs, ...merchantSnapshot.docs]) {

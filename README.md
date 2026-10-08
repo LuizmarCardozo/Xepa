@@ -14,6 +14,38 @@ Abra <http://localhost:8080>.
 
 O Firebase usado pela demonstração é o projeto configurado em `www/js/backend.js` e `.firebaserc`. No Console do Firebase, habilite Authentication com e-mail/senha, Firestore e Storage. As regras locais estão em `firestore.rules` e `storage.rules`.
 
+### Imagens de ofertas no Supabase Storage
+
+O envio de imagens de ofertas usa o Supabase Storage quando configurado. O bucket público deste projeto é `produtos`. No Supabase, habilite Firebase como provedor de autenticação de terceiros, usando o projeto Firebase `xepa-50d4b`. Este app é HTML/JavaScript estático e não carrega `.env.local` nem variáveis `NEXT_PUBLIC_*` automaticamente; copie a Project URL e a chave pública (`sb_publishable_...` ou `anon`) do painel Supabase para `url` e `anonKey` em `window.XEPA_SUPABASE_CONFIG`, no início de `www/index.html`. Nunca coloque uma chave `service_role` no navegador.
+
+Execute estas políticas no SQL Editor do Supabase para permitir leitura pública das imagens e escrita/exclusão apenas na pasta do usuário autenticado. Tokens Firebase normalmente não incluem `role: authenticated`; as políticas de escrita usam `to public`, mas continuam exigindo correspondência do UID do token com a primeira pasta do arquivo.
+
+```sql
+drop policy if exists "Public can read offer images" on storage.objects;
+drop policy if exists "Users can upload their offer images" on storage.objects;
+drop policy if exists "Users can delete their offer images" on storage.objects;
+
+create policy "Public can read offer images"
+on storage.objects for select
+using (bucket_id = 'produtos');
+
+create policy "Users can upload their offer images"
+on storage.objects for insert to public
+with check (
+  bucket_id = 'produtos'
+  and (storage.foldername(name))[1] = (auth.jwt() ->> 'sub')
+);
+
+create policy "Users can delete their offer images"
+on storage.objects for delete to public
+using (
+  bucket_id = 'produtos'
+  and (storage.foldername(name))[1] = (auth.jwt() ->> 'sub')
+);
+```
+
+Sem esses dados de configuração, o app mantém o fluxo anterior de imagens, sem bloquear a criação e edição de ofertas. Com o Storage ativo, a URL e o caminho do arquivo são salvos na oferta; trocar, remover ou excluir uma oferta também remove o arquivo anterior do bucket.
+
 Para publicar Hosting e as regras depois de autenticar o Firebase CLI:
 
 ```bash
@@ -41,17 +73,15 @@ Este repositório ainda não contém a configuração nativa Cordova necessária
 
 Aplicativo mobile desenvolvimento baseado no framework Apache Cordova
 
-
-
 ### 1. Visão geral
 
 Estamos desenvolvendo um **aplicativo mobile de ofertas**, inicialmente construído como uma aplicação web utilizando:
 
-* **HTML**
-* **CSS**
-* **JavaScript puro**
-* **Apache Cordova** aplicação web em aplicativo Android
-* Backend planejado com **Firebase ou Supabase**
+- **HTML**
+- **CSS**
+- **JavaScript puro**
+- **Apache Cordova** aplicação web em aplicativo Android
+- Backend planejado com **Firebase ou Supabase**
 
 A ideia é desenvolver tudo no **VS Code**, mantendo uma arquitetura simples e modular, sem criar uma quantidade excessiva de pastas e arquivos.
 
@@ -65,19 +95,18 @@ O projeto começou a partir de um protótipo de baixa fidelidade desenhado para 
 
 A Home possui:
 
-* Logo no topo
-* Barra de pesquisa
-* Botão de menu
-* Título "FEED DE OFERTAS"
-* Lista de ofertas
-* Cards de produtos/ofertas
-* Sistema de favoritos
-* Botão `+` para adicionar uma oferta
-* Navegação inferior com:
-
-  * `+`
-  * `HOME`
-  * `PERFIL`
+- Logo no topo
+- Barra de pesquisa
+- Botão de menu
+- Título "FEED DE OFERTAS"
+- Lista de ofertas
+- Cards de produtos/ofertas
+- Sistema de favoritos
+- Botão `+` para adicionar uma oferta
+- Navegação inferior com:
+  - `+`
+  - `HOME`
+  - `PERFIL`
 
 A identidade visual utiliza principalmente:
 
@@ -139,19 +168,19 @@ A Home já foi criada em HTML e JavaScript.
 
 O HTML possui:
 
-* Header
-* Logo
-* Pesquisa
-* Menu
-* Feed de ofertas
-* Contador de ofertas
-* Área dinâmica para os cards
-* Mensagem para quando nenhuma oferta for encontrada
-* Barra de navegação inferior
-* Menu lateral
-* Modal para adicionar oferta
+- Header
+- Logo
+- Pesquisa
+- Menu
+- Feed de ofertas
+- Contador de ofertas
+- Área dinâmica para os cards
+- Mensagem para quando nenhuma oferta for encontrada
+- Barra de navegação inferior
+- Menu lateral
+- Modal para adicionar oferta
 
-A estrutura HTML já está preparada para carregar as ofertas dinamicamente através do JavaScript.  
+A estrutura HTML já está preparada para carregar as ofertas dinamicamente através do JavaScript.
 
 A logo atual está sendo carregada através de:
 
@@ -159,10 +188,8 @@ A logo atual está sendo carregada através de:
 assets/XEPPPA.png
 ```
 
-conforme o HTML atual. 
+conforme o HTML atual.
 
 ---
-
-
 
 > **Estamos desenvolvendo um aplicativo mobile de ofertas chamado provisoriamente "Xepa". O frontend será feito com HTML, CSS e JavaScript puro, utilizando Apache Cordova posteriormente para transformar a aplicação em Android. A arquitetura deve permanecer simples e modular, sem excesso de pastas. A Home já foi criada e possui logo, pesquisa, feed dinâmico de ofertas, favoritos usando localStorage, menu lateral, botão de adicionar oferta, modal e navegação inferior HOME/PERFIL. As cores principais são #9EBF26 e #08400B, com fundo branco. O backend ainda não foi escolhido, sendo Firebase ou Supabase as opções. O desenvolvimento deve continuar aproveitando a estrutura existente, evitando reescrever o que já funciona. As próximas funcionalidades serão adicionadas gradualmente, começando pelas outras páginas e depois pela integração com o backend.**
