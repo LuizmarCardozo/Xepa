@@ -1,27 +1,47 @@
-<main class="page">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Painel</h1>
-      <p class="subtitle">Gerencie suas publicações</p>
+<main class="page merchant-products-page">
+  <header class="merchant-products-header">
+    <div class="merchant-products-brand">
+      <img src="assets/Xepalogo.png" alt="Xepa" />
     </div>
-  </div>
-  <div class="merchant-banner">
-    <h2>Área do comerciante 🏪</h2>
-    <p>Publique ofertas e mantenha seus clientes atualizados.</p>
-  </div>
-  <div class="merchant-actions">
-    <button class="action-card" onclick="Router.go('criarOferta')">
-      <div class="action-icon">➕</div>
-      <h3>Criar oferta</h3>
-      <p>Adicionar produto</p></button
-    ><button class="action-card" onclick="Router.go('criarStory')">
-      <div class="action-icon">📸</div>
-      <h3>Criar Story</h3>
-      <p>Mostrar novidades</p>
+    <button
+      class="merchant-store-shortcut"
+      type="button"
+      onclick="Router.go('perfil')"
+      aria-label="Abrir perfil da loja"
+    >
+      <span class="merchant-store-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10h18l-1.5-6h-15L3 10Z" />
+          <path d="M5 10v10h14V10M9 20v-6h6v6M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
+        </svg>
+      </span>
+      <span class="merchant-store-copy"><strong>Minha loja</strong><small>Feirante</small></span>
+      <span class="merchant-store-chevron" aria-hidden="true">›</span>
     </button>
-  </div>
-  <div class="section-title"><h2>Minhas ofertas</h2></div>
-  <div data-my-offers></div>
-  <div class="section-title"><h2>Pedidos reservados</h2></div>
-  <div data-merchant-orders></div>
+    <div class="merchant-products-title">
+      <h1>Produtos</h1>
+      <p>Gerencie todos os produtos da sua loja.</p>
+    </div>
+  </header>
+
+  <button
+    class="merchant-add-product"
+    type="button"
+    onclick="Router.go('criarOferta')"
+    aria-label="Adicionar produto à banca"
+  >
+    <span class="merchant-add-product-icon" aria-hidden="true">+</span>
+    <span class="merchant-add-product-copy">
+      <strong>Adicionar produto</strong>
+      <small>Cadastre um novo produto na sua loja.</small>
+    </span>
+    <span class="merchant-add-product-chevron" aria-hidden="true">›</span>
+  </button>
+
+  <section class="merchant-products-list" aria-labelledby="merchant-products-list-title">
+    <h2 id="merchant-products-list-title">Seus produtos <span data-offer-count></span></h2>
+    <div data-my-offers>
+      <p class="merchant-products-message">Carregando seus produtos...</p>
+    </div>
+  </section>
 </main>

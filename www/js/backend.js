@@ -416,7 +416,7 @@ window.Backend = {
     const groups = new Map();
     for (const item of items) {
       if (!item.ownerUid || item.ownerUid === user.uid) {
-        throw new Error("Remova do carrinho os produtos da sua própria conta.");
+        throw new Error("Remova da cesta os produtos da sua própria conta.");
       }
       const group = groups.get(item.ownerUid) || [];
       group.push({
@@ -426,6 +426,7 @@ window.Backend = {
         price: Number(item.price),
         quantity: Number(item.quantity),
         image: item.image || null,
+        location: item.location || null,
       });
       groups.set(item.ownerUid, group);
     }
@@ -444,6 +445,8 @@ window.Backend = {
         merchantName:
           items.find((item) => item.ownerUid === merchantUid)?.ownerName ||
           "Comerciante",
+        marketLocation:
+          orderItems.find((item) => item.location)?.location || null,
         items: orderItems,
         total,
         fulfillment,

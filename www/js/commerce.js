@@ -36,7 +36,7 @@ window.formatMoney = (value) =>
 window.Cart = {
   items: readCart,
   count: () => readCart().reduce((sum, item) => sum + item.quantity, 0),
-  add(offer, quantity = 1) {
+  add(offer, quantity = 1, { silent = false } = {}) {
     if (!offer?.id || !offer.ownerUid) {
       alert("Esta oferta não está disponível para compra.");
       return;
@@ -47,7 +47,10 @@ window.Cart = {
     }
     const items = readCart();
     const existing = items.find((item) => item.offerId === offer.id);
-    if (existing) existing.quantity += quantity;
+    if (existing) {
+      existing.quantity += quantity;
+      if (!existing.location) existing.location = offer.location || null;
+    }
     else {
       items.push({
         offerId: offer.id,
@@ -57,11 +60,23 @@ window.Cart = {
         unit: offer.unit || "unidade",
         price: Number(offer.price),
         image: offer.image || null,
+        location: offer.location || null,
         quantity,
       });
     }
     writeCart(items);
-    alert(`${offer.name} foi adicionado ao carrinho.`);
+    if (!silent) alert(`${offer.name} foi adicionado à cesta.`);
+  },
+  setQuantity(offerId, quantity) {
+    const items = readCart();
+    const item = items.find((entry) => entry.offerId === offerId);
+    if (!item) return;
+    if (quantity < 1) {
+      window.Cart.remove(offerId);
+      return;
+    }
+    item.quantity = Math.min(99, quantity);
+    writeCart(items);
   },
   remove(offerId) {
     writeCart(readCart().filter((item) => item.offerId !== offerId));
@@ -81,7 +96,7 @@ window.mountCartShortcut = function (referenceElement) {
   const wrapper = document.createElement("div");
   wrapper.className = "cart-shortcut-wrap";
   wrapper.innerHTML =
-    '<button class="cart-shortcut" type="button" data-cart-shortcut>🧺 Carrinho <span data-cart-count>' +
+    '<button class="cart-shortcut" type="button" data-cart-shortcut>🧺 Cesta <span data-cart-count>' +
     window.Cart.count() +
     "</span></button>";
   wrapper
@@ -151,17 +166,163 @@ window.FeiraPageInit = async function () {
 };
 
 window.ProdutoPage = function () {
-  return `<main class="page commerce-page"><div class="page-heading"><button class="text-button" onclick="Router.go('ofertas')">← Voltar às ofertas</button></div><div id="product-detail"><p class="loading-state">Carregando produto...</p></div></main>`;
+  return `
+    <main class="product-selection-page">
+      <div id="product-detail">
+        <p class="loading-state">Carregando produto...</p>
+      </div>
+      <section class="product-recommendations" aria-labelledby="product-recommendations-title">
+        <h2 id="product-recommendations-title">Veja também</h2>
+        <div class="product-recommendation-grid" data-product-recommendations>
+          <p class="loading-state">Carregando produtos...</p>
+        </div>
+      </section>
+      <section class="product-cart-summary" data-product-cart-summary aria-live="polite" hidden>
+        <div class="product-cart-total">
+          <strong>Total <span data-product-cart-total>R$ 0,00</span></strong>
+          <small data-product-cart-count>0 itens</small>
+        </div>
+        <button class="btn btn-primary" type="button" data-view-cart>Ver sacola</button>
+      </section>
+    </main>`;
 };
 
 window.ProdutoPageInit = async function () {
   const container = document.getElementById("product-detail");
+  const recommendationContainer = document.querySelector(
+    "[data-product-recommendations]",
+  );
   const offerId = sessionStorage.getItem("xepa-current-offer");
   if (!container || !offerId) {
     if (container)
       container.innerHTML = "<p>Escolha uma oferta para ver os detalhes.</p>";
     return;
   }
+
+  const recommendations = new Map();
+  const cartSummary = document.querySelector("[data-product-cart-summary]");
+  const cartTotal = document.querySelector("[data-product-cart-total]");
+  const cartCount = document.querySelector("[data-product-cart-count]");
+  let draftQuantity = 1;
+
+  const updateCartSummary = () => {
+    const items = window.Cart.items();
+    const count = items.reduce((sum, item) => sum + item.quantity, 0);
+    const total = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+    if (cartSummary) cartSummary.hidden = count === 0;
+    if (cartTotal) cartTotal.textContent = window.formatMoney(total);
+    if (cartCount) {
+      cartCount.textContent = `${count} ${count === 1 ? "item" : "itens"}`;
+    }
+  };
+
+  const renderSelection = (offer) => {
+    const cartItem = window.Cart.items().find(
+      (item) => item.offerId === offer.id,
+    );
+    const selectedQuantity = cartItem?.quantity || 1;
+    const selection = document.querySelector("[data-product-selection]");
+    if (!selection) return;
+
+    selection.innerHTML = `
+      <div class="product-quantity-control" aria-label="Quantidade">
+        <button type="button" data-quantity-change="-1" aria-label="Diminuir quantidade">−</button>
+        <strong>${cartItem ? selectedQuantity : draftQuantity}</strong>
+        <button type="button" data-quantity-change="1" aria-label="Aumentar quantidade">+</button>
+      </div>
+      ${cartItem ? "" : '<button class="btn btn-primary btn-full" type="button" data-reserve-product>Reservar</button>'}
+    `;
+
+    selection
+      .querySelector("[data-reserve-product]")
+      ?.addEventListener("click", () => {
+        window.Cart.add(offer, draftQuantity, { silent: true });
+        renderSelection(offer);
+        updateCartSummary();
+      });
+
+    selection
+      .querySelectorAll("[data-quantity-change]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          const change = Number(button.dataset.quantityChange);
+          if (cartItem) {
+            window.Cart.setQuantity(offer.id, selectedQuantity + change);
+          } else {
+            draftQuantity = Math.max(1, Math.min(99, draftQuantity + change));
+          }
+          renderSelection(offer);
+          updateCartSummary();
+        });
+      });
+  };
+
+  const renderRecommendations = (offers, selectedOffer) => {
+    if (!recommendationContainer) return;
+    const relatedOffers = offers
+      .filter(
+        (offer) =>
+          offer?.active &&
+          offer.id !== selectedOffer.id &&
+          offer.ownerUid !== window.Auth?.user?.uid,
+      )
+      .slice(0, 8);
+    relatedOffers.forEach((offer) =>
+      recommendations.set(String(offer.id), offer),
+    );
+    if (!relatedOffers.length) {
+      recommendationContainer.innerHTML =
+        '<p class="product-recommendation-empty">Não há outros produtos disponíveis no momento.</p>';
+      return;
+    }
+
+    recommendationContainer.innerHTML = relatedOffers
+      .map(
+        (offer) => `
+          <article class="product-recommendation-card">
+            <button class="product-recommendation-open" type="button" data-open-recommendation="${storyEscape(offer.id)}" aria-label="Ver ${storyEscape(offer.name || "produto")}">
+              ${offer.image ? `<img src="${storyEscape(offer.image)}" alt="">` : '<span class="product-recommendation-placeholder" aria-hidden="true">🥬</span>'}
+              <strong>${storyEscape(offer.name || "Produto")}</strong>
+              <small>${storyEscape(offer.ownerName || "Feira local")}</small>
+              <b>${window.formatMoney(offer.price)}<small>/${storyEscape(offer.unit || "unidade")}</small></b>
+            </button>
+            <button class="product-recommendation-add" type="button" data-add-recommendation="${storyEscape(offer.id)}" aria-label="Adicionar ${storyEscape(offer.name || "produto")} à sacola">+</button>
+          </article>
+        `,
+      )
+      .join("");
+
+    recommendationContainer
+      .querySelectorAll("[data-open-recommendation]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          sessionStorage.setItem(
+            "xepa-current-offer",
+            button.dataset.openRecommendation,
+          );
+          window.Router.go("produto");
+        });
+      });
+    recommendationContainer
+      .querySelectorAll("[data-add-recommendation]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          const recommendedOffer = recommendations.get(
+            button.dataset.addRecommendation,
+          );
+          if (!recommendedOffer) return;
+          window.Cart.add(recommendedOffer, 1, { silent: true });
+          updateCartSummary();
+          button.textContent = "✓";
+          button.disabled = true;
+          button.setAttribute("aria-label", "Adicionado à sacola");
+        });
+      });
+  };
+
   try {
     const offer = await window.Backend.getOffer(offerId);
     if (!offer || !offer.active) {
@@ -169,39 +330,50 @@ window.ProdutoPageInit = async function () {
       return;
     }
     container.innerHTML = `
-      <article class="card product-detail-card">
-        ${offer.image ? `<img class="product-detail-image" src="${offer.image}" alt="${offer.name}">` : ""}
-        <p class="eyebrow">${offer.category || "Oferta"}</p>
-        <h1>${offer.name}</h1>
-        <p>${offer.desc || "Produto fresco à venda."}</p>
-        <p class="product-detail-seller">Vendido por ${offer.ownerName || "Comerciante"}</p>
-        <strong class="product-detail-price">${window.formatMoney(offer.price)} / ${offer.unit || "unidade"}</strong>
-        <label class="form-label" for="detail-quantity">Quantidade</label>
-        <input id="detail-quantity" class="form-input" type="number" min="1" max="99" value="1">
-        <button id="detail-add-cart" class="btn btn-primary btn-full" type="button">Adicionar ao carrinho</button>
-        <button class="btn btn-outline btn-full" type="button" onclick="Router.go('carrinho')">Ir para o carrinho (${window.Cart.count()})</button>
-      </article>`;
-    document.getElementById("detail-add-cart").addEventListener("click", () => {
-      const quantity = Math.max(
-        1,
-        Math.min(
-          99,
-          Number(document.getElementById("detail-quantity").value) || 1,
-        ),
-      );
-      window.Cart.add(offer, quantity);
-    });
+      <section class="product-detail">
+        <div class="product-detail-hero">
+          ${offer.image ? `<img class="product-detail-image" src="${storyEscape(offer.image)}" alt="${storyEscape(offer.name || "Produto")}">` : '<div class="product-detail-image product-detail-placeholder" aria-hidden="true">🥬</div>'}
+          <button class="product-detail-back" type="button" onclick="Router.back('ofertas')" aria-label="Voltar à tela anterior">‹</button>
+        </div>
+        <article class="product-detail-content">
+          <p class="eyebrow">${storyEscape(offer.category || "Oferta")}</p>
+          <h1>${storyEscape(offer.name || "Produto")}</h1>
+          <p class="product-detail-description">${storyEscape(offer.desc || "Produto fresco à venda.")}</p>
+          <p class="product-detail-seller">Vendido por ${storyEscape(offer.ownerName || "Comerciante")}</p>
+          <strong class="product-detail-price">${window.formatMoney(offer.price)}<span>/${storyEscape(offer.unit || "unidade")}</span></strong>
+          <div data-product-selection></div>
+        </article>
+      </section>`;
+    renderSelection(offer);
+    updateCartSummary();
+
+    document
+      .querySelector("[data-view-cart]")
+      ?.addEventListener("click", () => window.Router.go("carrinho"));
+
+    if (typeof window.Backend?.getOffers === "function") {
+      const offers = await window.Backend.getOffers();
+      renderRecommendations(Array.isArray(offers) ? offers : [], offer);
+    } else if (recommendationContainer) {
+      recommendationContainer.innerHTML =
+        '<p class="product-recommendation-empty">Não foi possível carregar outros produtos.</p>';
+    }
   } catch (error) {
     console.error(error);
-    container.innerHTML =
-      "<p>Não foi possível carregar este produto. Tente novamente.</p>";
+    if (container.textContent.includes("Carregando produto")) {
+      container.innerHTML =
+        "<p>Não foi possível carregar este produto. Tente novamente.</p>";
+    } else if (recommendationContainer) {
+      recommendationContainer.innerHTML =
+        '<p class="product-recommendation-empty">Não foi possível carregar outros produtos.</p>';
+    }
   }
 };
 
 window.CarrinhoPage = function () {
   return `
     <main class="page commerce-page">
-      <header class="page-heading"><div><h1>Carrinho</h1><p>Confira os produtos antes de reservar o pedido.</p></div><button class="text-button" onclick="Router.go('ofertas')">Continuar comprando</button></header>
+      <header class="page-heading"><div><h1>Cesta</h1><p>Confira os produtos antes de reservar o pedido.</p></div><button class="text-button" onclick="Router.go('ofertas')">Continuar comprando</button></header>
       <div id="cart-items" class="commerce-list"></div>
       <section class="card checkout-card">
         <h2>Como receber?</h2>
@@ -230,7 +402,7 @@ window.CarrinhoPageInit = function () {
     const items = readCart();
     if (!items.length) {
       list.innerHTML =
-        '<section class="empty-state card"><h2>Seu carrinho está vazio</h2><p>Encontre uma oferta e adicione um produto.</p><button class="btn btn-primary" onclick="Router.go(\'ofertas\')">Ver ofertas</button></section>';
+        '<section class="empty-state card"><h2> Sua cesta está vazia</h2><p>Encontre uma oferta e adicione um produto.</p><button class="btn btn-primary" onclick="Router.go(\'ofertas\')">Ver ofertas</button></section>';
       checkout.disabled = true;
       total.textContent = window.formatMoney(0);
       return;

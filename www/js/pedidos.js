@@ -128,13 +128,117 @@ function formatOrderMoney(value) {
 function formatOrderDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Data não informada";
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return date
+    .toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(", ", " às ");
+}
+
+function orderMarketLocation(order) {
+  const location =
+    order?.marketLocation ||
+    order?.items?.find((item) => item?.location)?.location;
+  if (
+    !location ||
+    location.latitude === undefined ||
+    location.longitude === undefined
+  ) {
+    return null;
+  }
+  const latitude = Number(location.latitude);
+  const longitude = Number(location.longitude);
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return null;
+  }
+  return { latitude, longitude };
+}
+
+function renderOrderTracking(order) {
+  const status = orderStatus(order);
+  if (status === "cancelled" || status === "rejected") {
+    return `<p class="pedido-tracking-final">${escapeOrderHtml(orderStatusInfo(order).label)}.</p>`;
+  }
+  const stages = [
+    ["pending", "Pedido enviado"],
+    ["accepted", "Confirmado pelo vendedor"],
+    ["ready", "Pronto para retirada/entrega"],
+    ["completed", "Concluído"],
+  ];
+  const currentStage =
+    status === "delivered" ? "completed" : status;
+  const currentIndex = stages.findIndex(([stage]) => stage === currentStage);
+  return `<ol class="pedido-tracking-steps">${stages
+    .map(
+      ([stage, label], index) => `
+        <li class="${index <= currentIndex ? "is-complete" : ""}${stage === currentStage ? " is-current" : ""}">
+          <span aria-hidden="true"></span>
+          <div><strong>${label}</strong>${stage === currentStage ? `<small>${escapeOrderHtml(formatOrderDate(order.updatedAt || order.createdAt))}</small>` : ""}</div>
+        </li>`,
+    )
+    .join("")}</ol>`;
+}
+
+function renderOrderDetails(
+  order,
+  fairSellerName,
+  fulfillment,
+  cancellationAction,
+) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const location = orderMarketLocation(order);
+  const locationHtml = location
+    ? `<a href="https://www.google.com/maps?q=${location.latitude},${location.longitude}" target="_blank" rel="noopener noreferrer">Ver localização da feira no mapa</a>`
+    : '<span class="market-location-unavailable">Localização da feira não cadastrada pelo vendedor</span>';
+  const deliveryDetails =
+    order.fulfillment === "delivery" && order.address
+      ? `<p><strong>Endereço combinado:</strong> ${escapeOrderHtml(order.address)}</p>`
+      : "";
+  const note = order.note
+    ? `<p><strong>Observação:</strong> ${escapeOrderHtml(order.note)}</p>`
+    : "";
+  return `
+    <div class="pedido-expanded" data-panel-content="details" hidden>
+      <section class="pedido-detail-section">
+        <h5>Produtos do pedido</h5>
+        <ul class="pedido-detail-items">${items
+          .map(
+            (item) => `
+              <li>
+                <span>${escapeOrderHtml(item?.quantity || 0)} × ${escapeOrderHtml(item?.name || "Produto")}</span>
+                <strong>${escapeOrderHtml(formatOrderMoney(Number(item?.price || 0) * Number(item?.quantity || 0)))}</strong>
+              </li>`,
+          )
+          .join("")}</ul>
+      </section>
+      <section class="pedido-detail-section">
+        <h5>Feira e vendedor</h5>
+        <p><strong>${escapeOrderHtml(fairSellerName)}</strong></p>
+        ${locationHtml}
+      </section>
+      <section class="pedido-detail-section">
+        <h5>Recebimento</h5>
+        <p>${escapeOrderHtml(fulfillment)}</p>
+        ${deliveryDetails}
+        ${note}
+      </section>
+      ${cancellationAction}
+    </div>
+    <div class="pedido-expanded pedido-tracking" data-panel-content="tracking" hidden>
+      <h5>Acompanhamento do pedido</h5>
+      ${renderOrderTracking(order)}
+    </div>`;
 }
 
 function renderOrderItems(items) {
@@ -174,13 +278,6 @@ function renderOrderCard(order, role, userId) {
   const relationship = isReceived ? "Pedido recebido" : "Pedido enviado";
   const fulfillment =
     order.fulfillment === "delivery" ? "Entrega combinada" : "Retirada";
-  const details = [];
-  if (order.fulfillment === "delivery" && order.address)
-    details.push(`Endereço: ${escapeOrderHtml(order.address)}`);
-  if (order.note) details.push(`Observação: ${escapeOrderHtml(order.note)}`);
-  const detailsHtml = details.length
-    ? `<div class="pedido-details">${details.map((detail) => `<p>${detail}</p>`).join("")}</div>`
-    : "";
   const canManageAsMerchant =
     isReceived &&
     order.merchantUid === userId &&
@@ -188,32 +285,51 @@ function renderOrderCard(order, role, userId) {
   const canCancelAsBuyer =
     !isReceived && order.buyerUid === userId && status === "pending";
   const actions = canManageAsMerchant
-    ? `<div class="pedido-actions">
-        ${statusInfo.next ? `<button class="btn-solid" type="button" data-order-id="${escapeOrderHtml(order.id)}" data-order-status="${escapeOrderHtml(statusInfo.next)}">${escapeOrderHtml(statusInfo.action)}</button>` : ""}
-        <button class="btn-outline" type="button" data-order-id="${escapeOrderHtml(order.id)}" data-order-status="cancelled">${status === "pending" ? "Recusar" : "Cancelar"}</button>
+    ? `<div class="pedido-actions pedido-actions-manage">
+        ${statusInfo.next ? `<button class="btn-solid pedido-action-primary" type="button" data-order-id="${escapeOrderHtml(order.id)}" data-order-status="${escapeOrderHtml(statusInfo.next)}">${escapeOrderHtml(statusInfo.action)}</button>` : ""}
+        <button class="btn-outline pedido-action-secondary" type="button" data-order-id="${escapeOrderHtml(order.id)}" data-order-status="cancelled">${status === "pending" ? "Recusar" : "Cancelar"}</button>
       </div>`
     : canCancelAsBuyer
       ? `<div class="pedido-actions"><button class="btn-outline" type="button" data-order-id="${escapeOrderHtml(order.id)}" data-order-status="cancelled">Cancelar pedido</button></div>`
       : "";
+  const buyerActions = !isReceived
+    ? `<div class="pedido-actions pedido-actions-buyer">
+        <button class="btn-outline" type="button" data-order-panel="details" aria-expanded="false">Ver detalhes</button>
+        <button class="btn-solid" type="button" data-order-panel="tracking" aria-expanded="false">Acompanhar pedido</button>
+      </div>
+      `
+    : `<div class="pedido-actions pedido-actions-buyer">
+        <button class="btn-outline" type="button" data-order-panel="details" aria-expanded="false">Ver detalhes</button>
+      </div>
+      ${actions}`;
+  const marketLocation = orderMarketLocation(order);
+  const marketSubtitle = marketLocation
+    ? `<a class="market-map-link" href="https://www.google.com/maps?q=${marketLocation.latitude},${marketLocation.longitude}" target="_blank" rel="noopener noreferrer">Ver ponto da feira no mapa</a>`
+    : '<span class="market-location-unavailable">Localização da feira não cadastrada</span>';
 
-  return `<article class="pedido-card" data-order-card="${escapeOrderHtml(order.id)}">
+  return `<article class="pedido-card${isReceived ? " pedido-card-merchant" : ""}${status === "pending" && canManageAsMerchant ? " pedido-card-awaiting" : ""}" data-order-card="${escapeOrderHtml(order.id)}">
     <header class="pedido-header">
       <div class="shop-info">
-        <div class="shop-icon" aria-hidden="true">${isReceived ? "👤" : "🏪"}</div>
+        <div class="shop-icon" aria-hidden="true">${isReceived ? "👤" : '<img src="assets/icone%20feira.png" alt="">'}</div>
         <div class="shop-text">
           <h4>${escapeOrderHtml(personName)}</h4>
-          <p>${escapeOrderHtml(relationship)} · ${escapeOrderHtml(formatOrderDate(order.createdAt))}</p>
+          <p>${isReceived ? escapeOrderHtml(relationship) : marketSubtitle}</p>
         </div>
       </div>
       <span class="status-badge status-${escapeOrderHtml(status)}">${escapeOrderHtml(statusInfo.label)}</span>
     </header>
     ${renderOrderItems(order.items)}
-    ${detailsHtml}
     <div class="pedido-info">
-      <div class="info-block"><span class="info-label">Recebimento</span><strong class="info-value">${escapeOrderHtml(fulfillment)}</strong></div>
+      <div class="info-block"><span class="info-label">Pedido feito em:</span><strong class="info-value">${escapeOrderHtml(formatOrderDate(order.createdAt))}</strong></div>
       <div class="info-block right"><span class="info-label">Total</span><strong class="info-value price">${escapeOrderHtml(formatOrderMoney(order.total))}</strong></div>
     </div>
-    ${actions}
+    ${buyerActions}
+    ${renderOrderDetails(
+      order,
+      order.merchantName || "Vendedor",
+      fulfillment,
+      !isReceived && canCancelAsBuyer ? actions : "",
+    )}
   </article>`;
 }
 
@@ -277,6 +393,26 @@ window.PedidosPageInit = async function () {
     container.innerHTML = sections.length
       ? sections.join("")
       : `<div class="empty-state"><h3>${activeFilter === "active" ? "Nenhum pedido ativo" : "Nenhum pedido no histórico"}</h3><p>${activeFilter === "active" ? "Seus pedidos em andamento aparecerão aqui." : "Pedidos concluídos ou cancelados aparecerão aqui."}</p></div>`;
+
+    container.querySelectorAll("[data-order-panel]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const panelName = button.dataset.orderPanel;
+        const card = button.closest("[data-order-card]");
+        const panel = card?.querySelector(
+          `[data-panel-content="${panelName}"]`,
+        );
+        if (!panel) return;
+        const isOpening = panel.hidden;
+        card
+          .querySelectorAll("[data-panel-content]")
+          .forEach((item) => (item.hidden = true));
+        card
+          .querySelectorAll("[data-order-panel]")
+          .forEach((item) => item.setAttribute("aria-expanded", "false"));
+        panel.hidden = !isOpening;
+        button.setAttribute("aria-expanded", String(isOpening));
+      });
+    });
 
     const activeCount = orders.filter((order) =>
       ACTIVE_ORDER_STATUSES.has(orderStatus(order)),

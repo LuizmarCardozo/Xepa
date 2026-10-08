@@ -29,10 +29,18 @@ body {
 }
 
 body.auth-mode {
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
+}
+
+body.auth-mode #app {
+  display: flex;
+  justify-content: center;
+  height: 100dvh;
+  padding: 0;
 }
 
 /* CONTAINER PRINCIPAL */
@@ -452,6 +460,9 @@ body.auth-mode {
   background: #fff;
   font-family: "Xepa Inter", Arial, sans-serif;
   scrollbar-width: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .seller-registration::-webkit-scrollbar { display: none; }
@@ -459,21 +470,23 @@ body.auth-mode {
 
 #seller-register-form {
   position: relative;
-  width: 100%;
+  width: 430px;
+  min-width: 430px;
   height: calc(932px * var(--seller-scale));
+  margin: 0 auto;
 }
 
 .seller-screen {
   position: absolute;
   top: 0;
-  left: 0;
+  left: 50%;
   width: 430px;
   height: 932px;
   overflow: hidden;
   isolation: isolate;
   background: #fff;
-  transform: scale(var(--seller-scale));
-  transform-origin: top left;
+  transform: translateX(-50%) scale(var(--seller-scale));
+  transform-origin: top center;
   color: #000;
 }
 

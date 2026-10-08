@@ -42,6 +42,86 @@
   gap: 12px;
 }
 
+.merchant-products-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 88px);
+  padding: 38px 16px 120px;
+  background: #fff;
+}
+
+.merchant-add-product {
+  display: flex;
+  width: 100%;
+  min-height: 88px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #b8e2ba;
+  border-radius: 10px;
+  padding: 14px 4px;
+  background: #eaf4e9;
+  box-shadow: 0 2px 3px rgb(0 0 0 / 30%);
+  color: #080d09;
+  text-align: left;
+  font-size: 23px;
+  font-weight: 800;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.merchant-add-product:hover {
+  background: #e2f0e1;
+  box-shadow: 0 3px 7px rgb(0 0 0 / 18%);
+}
+
+.merchant-add-product:active {
+  transform: translateY(1px);
+}
+
+.merchant-add-product:focus-visible,
+.merchant-create-story-link:focus-visible {
+  outline: 3px solid rgb(33 150 83 / 30%);
+  outline-offset: 3px;
+}
+
+.merchant-add-product-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #249b3e;
+  color: #fff;
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.merchant-products-list {
+  margin-top: 28px;
+}
+
+.merchant-products-list h1 {
+  margin: 0 0 12px;
+  color: #17431e;
+  font-size: 18px;
+}
+
+.merchant-create-story-link {
+  display: block;
+  margin: auto auto 0;
+  padding: 10px 12px;
+  background: transparent;
+  color: #4b704d;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .action-card {
   width: 100%;
   min-height: 118px;
@@ -151,5 +231,386 @@
   .merchant-offer-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+}
+
+.merchant-products-page {
+  display: block;
+  min-height: calc(100vh - 90px);
+  padding: 0 14px 12px;
+  background: #f7faf8;
+}
+
+.merchant-products-header {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 0 10px;
+  margin: 0 -14px 10px;
+  overflow: hidden;
+  padding: 20px 18px 13px;
+  background: linear-gradient(145deg, #f4f8f4, #e9f5ec);
+}
+
+.merchant-products-header::after {
+  position: absolute;
+  right: -17px;
+  bottom: -45px;
+  width: 120px;
+  height: 85px;
+  border-radius: 50%;
+  background: rgb(179 225 188 / 25%);
+  content: "";
+  pointer-events: none;
+}
+
+.merchant-products-brand {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.merchant-products-brand img {
+  display: block;
+  width: 80px;
+  height: 34px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.merchant-store-shortcut {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 114px;
+  min-height: 40px;
+  align-items: center;
+  gap: 7px;
+  border-radius: 22px;
+  padding: 5px 10px;
+  background: #e2f1e6;
+  color: #174d28;
+  text-align: left;
+}
+
+.merchant-store-icon {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  place-items: center;
+  border-radius: 50%;
+  background: #d1ead8;
+}
+
+.merchant-store-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.merchant-store-copy {
+  display: grid;
+  gap: 1px;
+  line-height: 1.1;
+}
+
+.merchant-store-copy strong {
+  font-size: 9px;
+}
+
+.merchant-store-copy small {
+  color: #54725b;
+  font-size: 8px;
+}
+
+.merchant-store-chevron {
+  margin-left: auto;
+  color: #23753e;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.merchant-products-title {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  margin-top: 6px;
+}
+
+.merchant-products-title h1 {
+  margin: 0;
+  color: #143c2a;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.merchant-products-title p {
+  margin: 3px 0 0;
+  color: #5b7163;
+  font-size: 10px;
+}
+
+.merchant-add-product {
+  position: relative;
+  z-index: 1;
+  min-height: 70px;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 10px;
+  background: #eaf5ec;
+  box-shadow: none;
+}
+
+.merchant-add-product:hover {
+  background: #e3f1e6;
+  box-shadow: 0 3px 8px rgb(21 91 43 / 10%);
+}
+
+.merchant-add-product-icon {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  font-size: 0;
+}
+
+.merchant-add-product-icon::before,
+.merchant-add-product-icon::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 2px;
+  background: #fff;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.merchant-add-product-icon::before {
+  width: 16px;
+  height: 3px;
+}
+
+.merchant-add-product-icon::after {
+  width: 3px;
+  height: 16px;
+}
+
+.merchant-add-product-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.merchant-add-product-copy strong {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.merchant-add-product-copy small {
+  color: #55715e;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.merchant-add-product-chevron {
+  margin-left: auto;
+  padding: 0 2px 2px 8px;
+  color: #17763a;
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.merchant-products-list {
+  margin-top: 17px;
+}
+
+.merchant-products-list h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 0 0 8px;
+  color: #17432b;
+  font-size: 13px;
+}
+
+.merchant-products-list h2 span {
+  color: #7a8c80;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.merchant-products-message {
+  margin: 0;
+  border: 1px solid #e7eee8;
+  border-radius: 12px;
+  padding: 16px 13px;
+  background: #fff;
+  color: #68786e;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.merchant-products-list [role="alert"] {
+  color: #9e3434;
+}
+
+.merchant-products-page .merchant-offer {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 66px;
+  margin: 0 0 5px;
+  border-color: #e9eeea;
+  border-radius: 11px;
+  padding: 6px 7px;
+  box-shadow: 0 1px 4px rgb(28 61 38 / 4%);
+}
+
+.merchant-products-page .merchant-offer-image {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex-basis: 44px;
+  border-radius: 8px;
+  background: #f1f6f0;
+}
+
+.merchant-products-page .merchant-offer-placeholder {
+  font-size: 22px;
+}
+
+.merchant-products-page .merchant-offer-info {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.merchant-products-page .merchant-offer-info h3 {
+  margin: 0;
+  color: #183b28;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.merchant-products-page .merchant-offer-info .merchant-offer-category {
+  overflow: hidden;
+  color: #748278;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.merchant-products-page .merchant-offer-info .merchant-offer-price {
+  color: #188344;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.merchant-products-page .merchant-offer-status {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #36724a;
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+.merchant-products-page .merchant-offer-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #249b52;
+}
+
+.merchant-products-page .merchant-offer-status.is-paused {
+  color: #777;
+}
+
+.merchant-products-page .merchant-offer-status.is-paused i {
+  background: #9da49e;
+}
+
+.merchant-products-page .merchant-offer-actions {
+  gap: 4px;
+}
+
+.merchant-products-page .merchant-offer-actions button {
+  display: inline-flex;
+  min-width: 43px;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 16px;
+  padding: 4px 6px;
+  font-size: 8px;
+}
+
+.merchant-products-page .merchant-offer-actions svg {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.merchant-products-page .merchant-edit {
+  background: #eaf5ed;
+  color: #218747;
+}
+
+.merchant-products-page .merchant-delete {
+  background: #fff0ef;
+  color: #de4545;
+}
+
+.merchant-products-page .merchant-offer-actions button:focus-visible,
+.merchant-store-shortcut:focus-visible {
+  outline: 3px solid rgb(33 150 83 / 28%);
+  outline-offset: 2px;
+}
+
+@media (max-width: 360px) {
+  .merchant-products-page {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .merchant-products-header {
+    margin-right: -10px;
+    margin-left: -10px;
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .merchant-products-page .merchant-offer {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+
+  .merchant-products-page .merchant-offer-image {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    flex-basis: 40px;
+  }
+
+  .merchant-products-page .merchant-offer-actions {
+    gap: 3px;
+  }
+
+  .merchant-products-page .merchant-offer-actions button {
+    min-width: 37px;
+    padding-right: 4px;
+    padding-left: 4px;
+    font-size: 7px;
   }
 }

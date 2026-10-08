@@ -293,11 +293,190 @@ body {
   color: var(--xepa-text-muted);
   font-size: 13px;
 }
+.merchant-dashboard {
+  display: none;
+}
 .merchant-home .home-categories-section,
 .merchant-home #home-promo-banner,
 .merchant-home .home-markets-section,
-.merchant-home .home-recent-section {
+.merchant-home .home-recent-section,
+.merchant-home .home-header,
+.merchant-home .search-wrapper,
+.merchant-home .home-products-section {
   display: none;
+}
+.merchant-home #app {
+  max-width: 430px;
+}
+.merchant-home .page {
+  max-width: 430px;
+  min-height: 100dvh;
+  padding: 0 0 calc(92px + env(safe-area-inset-bottom));
+}
+.merchant-home .merchant-dashboard {
+  display: block;
+  width: 100%;
+}
+.merchant-dashboard-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.merchant-dashboard-cards {
+  display: grid;
+  gap: 12px;
+  padding: 12px 18px 0;
+}
+.merchant-summary-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 118px;
+  padding: 10px 8px 10px 6px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  text-align: left;
+  box-shadow: 0 3px 3px rgb(0 0 0 / 28%);
+  cursor: pointer;
+}
+.merchant-summary-orders {
+  border-color: #a7e3ae;
+  background: #eaf6eb;
+  color: #159d4a;
+}
+.merchant-summary-performance {
+  border-color: #ffc333;
+  background: #fff1cb;
+  color: #f5b400;
+}
+.merchant-summary-reviews {
+  border-color: #b7e1e4;
+  background: #e0f2f3;
+  color: #10a7b2;
+}
+.merchant-summary-icon {
+  display: grid;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  margin-right: 10px;
+  border-radius: 50%;
+}
+.merchant-summary-orders .merchant-summary-icon {
+  background: #cce8d0;
+}
+.merchant-summary-performance .merchant-summary-icon {
+  background: #ffe6a0;
+}
+.merchant-summary-reviews .merchant-summary-icon {
+  background: #bde6e9;
+}
+.merchant-summary-icon svg {
+  width: 39px;
+  height: 39px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.merchant-summary-orders .merchant-summary-icon svg {
+  fill: currentColor;
+}
+.merchant-summary-performance .merchant-summary-icon svg {
+  stroke: none;
+}
+.merchant-summary-reviews .merchant-summary-icon svg {
+  fill: none;
+  stroke-width: 2;
+}
+.merchant-summary-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  color: #111;
+}
+.merchant-summary-title {
+  color: #7b807c;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.merchant-summary-value {
+  color: #050505;
+  font-size: 31px;
+  font-weight: 900;
+  line-height: 1.05;
+}
+.merchant-summary-trend {
+  color: #159d4a;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.merchant-summary-note {
+  color: #414141;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.merchant-rating-star {
+  margin-left: 4px;
+  color: #ffd400;
+  font-size: 19px;
+  vertical-align: 4px;
+}
+.merchant-summary-chevron {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin: 0 0 0 4px;
+  fill: none;
+  stroke: #7b817e;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.merchant-mode .merchant-bottom-nav {
+  left: 50%;
+  right: auto;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  width: min(232px, calc(100% - 40px));
+  height: 60px;
+  padding: 4px 8px 2px;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 28%);
+}
+.merchant-bottom-nav .nav-item {
+  width: auto;
+  flex: 1;
+  gap: 0;
+}
+.merchant-bottom-nav .nav-icon-wrap {
+  width: 52px;
+  height: 42px;
+}
+.merchant-bottom-nav .nav-icon-wrap img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.merchant-bottom-nav .nav-icon-wrap svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.merchant-bottom-nav .nav-label {
+  font-size: 10px;
+  line-height: 1.2;
 }
 .product-info {
   padding: 6px;
@@ -391,6 +570,20 @@ body {
 .nav-label {
   font-size: 10.5px;
   font-weight: 900;
+}
+.buyer-bottom-nav .nav-icon-wrap img {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+.buyer-bottom-nav .nav-item[aria-label="Perfil"] .nav-icon-wrap img {
+  width: 44px;
+  height: 32px;
+}
+.buyer-bottom-nav .nav-label {
+  font-size: 9px;
+  line-height: 1;
 }
 /* Ativo no 'Feira' */
 .nav-item.active .nav-icon-wrap {

@@ -1,5 +1,7 @@
 let navigationSequence = 0;
 let activePageCleanup = null;
+let currentRoute = null;
+const routeHistory = [];
 
 const Router = {
   routes: {
@@ -21,7 +23,12 @@ const Router = {
     this.go(window.Auth?.user?.type === "comerciante" ? "minhasOfertas" : "ofertas");
   },
 
-  async go(route) {
+  back(fallbackRoute = "home") {
+    const previousRoute = routeHistory.pop() || fallbackRoute;
+    return this.go(previousRoute, { skipHistory: true });
+  },
+
+  async go(route, options = {}) {
     const navigationId = ++navigationSequence;
     const app = document.getElementById("app");
     const publicRoutes = new Set(["login", "cadastro"]);
@@ -41,6 +48,11 @@ const Router = {
       app.innerHTML = `<main class="page"><section class="card"><h2>Tela ainda não disponível</h2><p>Volte para a feira e continue navegando.</p><button class="btn btn-primary" onclick="Router.go('home')">Ir para a feira</button></section></main>`;
       return;
     }
+
+    if (!options.skipHistory && currentRoute && currentRoute !== route) {
+      routeHistory.push(currentRoute);
+    }
+    currentRoute = route;
 
     if (typeof activePageCleanup === "function") {
       activePageCleanup();

@@ -44,6 +44,53 @@ function homeMoney(value) {
     : "0,00";
 }
 
+function homeOrderDate(value) {
+  if (!value) return null;
+  const date =
+    typeof value.toDate === "function" ? value.toDate() : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function homeDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function homeOrderTotal(order) {
+  const hasTotal =
+    order?.total !== null &&
+    order?.total !== undefined &&
+    (typeof order.total !== "string" || order.total.trim() !== "");
+  if (hasTotal && Number.isFinite(Number(order.total))) {
+    return Number(order.total);
+  }
+
+  if (!Array.isArray(order?.items) || !order.items.length) return null;
+  const itemTotals = order.items.map((item) => {
+    const hasPrice =
+      item?.price !== null &&
+      item?.price !== undefined &&
+      (typeof item.price !== "string" || item.price.trim() !== "");
+    const hasQuantity =
+      item?.quantity !== null &&
+      item?.quantity !== undefined &&
+      (typeof item.quantity !== "string" || item.quantity.trim() !== "");
+    const price = Number(item?.price);
+    const quantity = Number(item?.quantity);
+    return hasPrice &&
+      hasQuantity &&
+      Number.isFinite(price) &&
+      Number.isFinite(quantity)
+      ? price * quantity
+      : null;
+  });
+  return itemTotals.every((total) => total !== null)
+    ? itemTotals.reduce((sum, total) => sum + total, 0)
+    : null;
+}
+
 function homeMessage(container, message, className = "home-empty") {
   if (!container) return;
   container.innerHTML = `<p class="${className}">${homeEscapeHtml(message)}</p>`;
@@ -203,7 +250,7 @@ window.HomePage = function () {
       "product-img",
     );
     const cartButton = withCart
-      ? `<button class="add-btn" data-add-offer="${id}" type="button" aria-label="Adicionar ${name} ao carrinho">+</button>`
+      ? `<button class="add-btn" data-add-offer="${id}" type="button" aria-label="Adicionar ${name} ao cesta">+</button>`
       : "";
     return `
       <article class="product-card" data-offer-id="${id}" tabindex="0" role="button" aria-label="Ver ${name}">
@@ -332,6 +379,182 @@ window.HomePage = function () {
     marketsContainer.innerHTML = stories.slice(0, 8).map(renderStory).join("");
   }
 
+  function setMerchantMetricsUnavailable() {
+    const todayOrders = document.querySelector(
+      '[data-merchant-metric="today-orders"]',
+    );
+    const ordersChange = document.querySelector(
+      '[data-merchant-metric="orders-change"]',
+    );
+    const ordersComparison = document.querySelector(
+      '[data-merchant-metric="orders-comparison"]',
+    );
+    const monthlySales = document.querySelector(
+      '[data-merchant-metric="monthly-sales"]',
+    );
+    const salesPeriod = document.querySelector(
+      '[data-merchant-metric="sales-period"]',
+    );
+
+    if (todayOrders) todayOrders.textContent = "—";
+    if (ordersChange) ordersChange.textContent = "Indisponível";
+    if (ordersChange) ordersChange.style.color = "#777";
+    if (ordersComparison) {
+      ordersComparison.textContent = "Não foi possível carregar os pedidos";
+    }
+    if (monthlySales) monthlySales.textContent = "—";
+    if (salesPeriod) {
+      salesPeriod.textContent = "Não foi possível carregar as vendas";
+    }
+    document
+      .querySelector(".merchant-summary-orders")
+      ?.setAttribute("aria-label", "Pedidos de hoje indisponíveis");
+    document
+      .querySelector(".merchant-summary-performance")
+      ?.setAttribute("aria-label", "Vendas concluídas indisponíveis");
+  }
+
+  function loadMerchantDashboardMetrics() {
+    const backend = window.Backend;
+    if (typeof backend?.getOrders !== "function") {
+      console.error(new Error("A consulta de pedidos não está disponível."));
+      setMerchantMetricsUnavailable();
+      return;
+    }
+
+    Promise.resolve()
+      .then(() => backend.getOrders())
+      .then((orders) => {
+        if (!Array.isArray(orders)) {
+          throw new TypeError(
+            "A consulta de pedidos retornou dados inválidos.",
+          );
+        }
+
+        const userId = window.Auth?.user?.uid;
+        const merchantOrders = orders.filter(
+          (order) => order?.merchantUid === userId,
+        );
+        const datedOrders = merchantOrders.map((order) => {
+          const date = homeOrderDate(order.createdAt);
+          if (!date) {
+            throw new TypeError("Um pedido não possui uma data válida.");
+          }
+          return { order, date };
+        });
+        const today = new Date();
+        const todayKey = homeDateKey(today);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = homeDateKey(yesterday);
+        const todayOrders = datedOrders.filter(
+          ({ date }) => homeDateKey(date) === todayKey,
+        ).length;
+        const yesterdayOrders = datedOrders.filter(
+          ({ date }) => homeDateKey(date) === yesterdayKey,
+        ).length;
+        const monthlyOrders = datedOrders.filter(({ order, date }) => {
+          return (
+            date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            ["completed", "delivered"].includes(
+              String(order.status || "").toLowerCase(),
+            )
+          );
+        });
+        const monthlyOrderTotals = monthlyOrders.map(({ order }) =>
+          homeOrderTotal(order),
+        );
+        const hasCompleteMonthlySales = monthlyOrderTotals.every(
+          (total) => total !== null,
+        );
+        const monthlySalesTotal = hasCompleteMonthlySales
+          ? monthlyOrderTotals.reduce(
+              (total, orderTotal) => total + orderTotal,
+              0,
+            )
+          : null;
+
+        const todayOrdersNode = document.querySelector(
+          '[data-merchant-metric="today-orders"]',
+        );
+        const ordersChangeNode = document.querySelector(
+          '[data-merchant-metric="orders-change"]',
+        );
+        const ordersComparisonNode = document.querySelector(
+          '[data-merchant-metric="orders-comparison"]',
+        );
+        const monthlySalesNode = document.querySelector(
+          '[data-merchant-metric="monthly-sales"]',
+        );
+        const salesPeriodNode = document.querySelector(
+          '[data-merchant-metric="sales-period"]',
+        );
+
+        if (todayOrdersNode) todayOrdersNode.textContent = String(todayOrders);
+        if (yesterdayOrders > 0) {
+          const percentage = Math.round(
+            ((todayOrders - yesterdayOrders) / yesterdayOrders) * 100,
+          );
+          if (ordersChangeNode) {
+            const arrow = percentage > 0 ? "↑ " : percentage < 0 ? "↓ " : "";
+            ordersChangeNode.textContent = `${arrow}${Math.abs(percentage)}%`;
+            ordersChangeNode.style.color = percentage < 0 ? "#c0392b" : "";
+          }
+          if (ordersComparisonNode) {
+            ordersComparisonNode.textContent = "Em relação a ontem";
+          }
+        } else {
+          if (ordersChangeNode) {
+            ordersChangeNode.textContent = "Sem comparação";
+            ordersChangeNode.style.color = "";
+          }
+          if (ordersComparisonNode) {
+            ordersComparisonNode.textContent = "Sem pedidos ontem";
+          }
+        }
+
+        if (monthlySalesNode) {
+          monthlySalesNode.textContent =
+            monthlySalesTotal === null
+              ? "—"
+              : `R$ ${homeMoney(monthlySalesTotal)}`;
+          monthlySalesNode.style.fontSize = "clamp(20px, 7vw, 31px)";
+        }
+        if (salesPeriodNode) {
+          salesPeriodNode.textContent = hasCompleteMonthlySales
+            ? `Neste mês · ${monthlyOrders.length} pedido${monthlyOrders.length === 1 ? "" : "s"} concluído${monthlyOrders.length === 1 ? "" : "s"}`
+            : "Dados incompletos para calcular as vendas";
+        }
+
+        const ordersCard = document.querySelector(".merchant-summary-orders");
+        if (ordersCard) {
+          ordersCard.setAttribute(
+            "aria-label",
+            `Pedidos recebidos hoje: ${todayOrders}${yesterdayOrders > 0 ? `, ${Math.abs(Math.round(((todayOrders - yesterdayOrders) / yesterdayOrders) * 100))}% em relação a ontem` : ""}`,
+          );
+        }
+        const salesCard = document.querySelector(
+          ".merchant-summary-performance",
+        );
+        if (salesCard) {
+          salesCard.setAttribute(
+            "aria-label",
+            monthlySalesTotal === null
+              ? "Não foi possível calcular as vendas concluídas neste mês"
+              : `Vendas concluídas neste mês: R$ ${homeMoney(monthlySalesTotal)}`,
+          );
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Não foi possível carregar os indicadores da banca:",
+          error,
+        );
+        setMerchantMetricsUnavailable();
+      });
+  }
+
   function loadMerchantOffers() {
     if (!nearbyContainer) return;
     if (typeof window.Backend?.getMyOffers !== "function") {
@@ -407,8 +630,10 @@ window.HomePage = function () {
     );
   }
 
-  if (isMerchant) loadMerchantOffers();
-  else loadClientData();
+  if (isMerchant) {
+    loadMerchantDashboardMetrics();
+    loadMerchantOffers();
+  } else loadClientData();
 
   document.querySelectorAll(".bottom-nav .nav-item").forEach((button) => {
     button.addEventListener("click", () => {
