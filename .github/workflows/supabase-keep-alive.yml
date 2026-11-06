@@ -1,0 +1,34 @@
+
+name: Supabase Keep Alive
+
+on:
+  # Executa três vezes por dia.
+  schedule:
+    - cron: "17 8,14,20 * * *"
+
+  # Permite executar manualmente pelo GitHub.
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Testar atividade do Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+        run: |
+          echo "Verificando conexão com Supabase..."
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            "${SUPABASE_URL}/rest/v1/rpc/keep_alive" \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{}'
+
+          echo ""
+          echo "Verificação concluída!"
