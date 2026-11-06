@@ -8,7 +8,6 @@ window.LoginPage = function () {
       btnGoogle.disabled = true;
       try {
         await window.Backend.loginWithGoogle();
-        Router.go("home");
       } catch (error) {
         console.error(error);
         alert(error.code === "auth/operation-not-allowed"

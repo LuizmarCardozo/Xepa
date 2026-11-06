@@ -1,7 +1,7 @@
 let navigationSequence = 0;
 let activePageCleanup = null;
 let currentRoute = null;
-const routeHistory = [];
+let currentHistoryIndex = 0;
 
 const Router = {
   routes: {
@@ -24,8 +24,11 @@ const Router = {
   },
 
   back(fallbackRoute = "home") {
-    const previousRoute = routeHistory.pop() || fallbackRoute;
-    return this.go(previousRoute, { skipHistory: true });
+    if (currentHistoryIndex > 0) {
+      window.history.back();
+      return;
+    }
+    return this.go(fallbackRoute, { replaceHistory: true });
   },
 
   async go(route, options = {}) {
@@ -36,11 +39,24 @@ const Router = {
     if (!app) return;
 
     if (!publicRoutes.has(route) && !window.Auth?.user) {
-      if (route !== "login") return this.go("login");
+      if (route !== "login") {
+        return this.go(
+          "login",
+          options.skipHistory ? { ...options, replaceHistory: true } : {},
+        );
+      }
     }
-    if (publicRoutes.has(route) && window.Auth?.user) return this.go("home");
+    if (publicRoutes.has(route) && window.Auth?.user) {
+      return this.go(
+        "home",
+        options.skipHistory ? { ...options, replaceHistory: true } : {},
+      );
+    }
     if (merchantRoutes.has(route) && window.Auth?.user?.type !== "comerciante") {
-      return this.go("home");
+      return this.go(
+        "home",
+        options.skipHistory ? { ...options, replaceHistory: true } : {},
+      );
     }
 
     const file = this.routes[route];
@@ -49,8 +65,26 @@ const Router = {
       return;
     }
 
-    if (!options.skipHistory && currentRoute && currentRoute !== route) {
-      routeHistory.push(currentRoute);
+    if (options.replaceHistory) {
+      window.history.replaceState(
+        { xepaRoute: route, xepaIndex: currentHistoryIndex },
+        "",
+        window.location.href,
+      );
+    } else if (!options.skipHistory && currentRoute && currentRoute !== route) {
+      currentHistoryIndex += 1;
+      window.history.pushState(
+        { xepaRoute: route, xepaIndex: currentHistoryIndex },
+        "",
+        window.location.href,
+      );
+    } else if (!currentRoute) {
+      currentHistoryIndex = 0;
+      window.history.replaceState(
+        { xepaRoute: route, xepaIndex: currentHistoryIndex },
+        "",
+        window.location.href,
+      );
     }
     currentRoute = route;
 
@@ -127,3 +161,11 @@ const Router = {
 };
 
 window.Router = Router;
+
+window.addEventListener("popstate", (event) => {
+  const { xepaRoute, xepaIndex } = event.state || {};
+  if (!Router.routes[xepaRoute]) return;
+
+  currentHistoryIndex = Number.isInteger(xepaIndex) ? xepaIndex : 0;
+  Router.go(xepaRoute, { skipHistory: true });
+});

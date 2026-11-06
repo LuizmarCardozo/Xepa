@@ -8,7 +8,8 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   updateProfile,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
@@ -53,6 +54,31 @@ let authStateVersion = 0;
 
 window.Auth = window.Auth || { user: null };
 window.Backend = {};
+
+async function ensureGoogleProfile(user) {
+  const existingProfile = await readProfile(user);
+  if (existingProfile.type) return;
+
+  const profile = {
+    name: user.displayName || "Usuário",
+    email: user.email || "",
+    type: "cliente",
+  };
+  try {
+    await setDoc(doc(db, "users", user.uid), profile, { merge: true });
+  } catch (error) {
+    console.warn("Perfil do Google mantido no armazenamento local:", error);
+    localStorage.setItem(`xepa-profile-${user.uid}`, JSON.stringify(profile));
+  }
+}
+
+const googleRedirectResult = getRedirectResult(auth)
+  .then(async (result) => {
+    if (result?.user) await ensureGoogleProfile(result.user);
+  })
+  .catch((error) => {
+    console.error("Não foi possível concluir o login com Google:", error);
+  });
 
 async function readProfile(user) {
   const localProfile =
@@ -181,28 +207,7 @@ window.Backend = {
   },
 
   loginWithGoogle: async () => {
-    const credential = await signInWithPopup(auth, new GoogleAuthProvider());
-    const existingProfile = await readProfile(credential.user);
-    if (!existingProfile.type) {
-      const profile = {
-        name: credential.user.displayName || "Usuário",
-        email: credential.user.email || "",
-        type: "cliente",
-      };
-      try {
-        await setDoc(doc(db, "users", credential.user.uid), profile, {
-          merge: true,
-        });
-      } catch (error) {
-        console.warn("Perfil do Google mantido no armazenamento local:", error);
-        localStorage.setItem(
-          `xepa-profile-${credential.user.uid}`,
-          JSON.stringify(profile),
-        );
-      }
-    }
-    await syncUser(credential.user);
-    return credential.user;
+    await signInWithRedirect(auth, new GoogleAuthProvider());
   },
 
   resetPassword: (email) => sendPasswordResetEmail(auth, email.trim()),
@@ -570,6 +575,7 @@ onAuthStateChanged(
     const stateVersion = ++authStateVersion;
     if (window.Auth.user?.uid !== user?.uid) window.Auth.user = null;
     try {
+      await googleRedirectResult;
       await syncUser(user, stateVersion);
     } catch (error) {
       console.error("Não foi possível carregar a sessão:", error);
