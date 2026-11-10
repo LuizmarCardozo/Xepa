@@ -1,20 +1,19 @@
 @font-face{font-family:XepaInter;src:url('../assets/Inter.ttf') format('truetype');font-weight:100 900;font-display:swap}
 .seller-account{width:100%;max-width:430px;min-height:932px;margin:0 auto;background:#fffefe;color:#000;font-family:XepaInter,Arial,sans-serif}
-.seller-profile{padding-bottom:32px}
+.seller-profile{min-height:100vh;min-height:100dvh;padding-bottom:100px}
 .seller-profile-banner{height:187px;background:#a7c4f2;text-align:center;padding-top:42px;font-size:24px;font-weight:800;color:#244772}
 .seller-profile-heading{text-align:center;margin-top:-67px}
 .seller-profile-avatar{display:block;width:90px;height:90px;object-fit:contain;margin:auto}
 .seller-profile-heading h1{font-size:24px;line-height:29px;font-weight:900;margin:0}
 .seller-profile-heading button{border:1px solid #e0e0e0;border-radius:18px;background:#fff;padding:0 13px 2px;min-width:112px;height:25px;box-shadow:0 3px 3px #0003;font-size:15px;font-weight:700;line-height:20px}
 .seller-profile-heading button span{font-size:23px;line-height:12px;vertical-align:-1px}
-.seller-account-menu{margin:34px 12px 0 5px;border:1px solid #e5e5e5;border-radius:23px;background:white;box-shadow:0 3px 3px #0003;overflow:hidden}
+.seller-account-menu{margin:34px 12px 0;border:1px solid #e5e5e5;border-radius:23px;background:white;box-shadow:0 3px 3px #0003;overflow:hidden}
 .seller-menu-row,.seller-account-menu summary{min-height:53px;display:flex;align-items:center;gap:14px;margin:0 4px;padding:7px 12px;border-bottom:1px solid #d2d2d2;list-style:none}
 .seller-menu-row:last-child{border-bottom:0;min-height:60px}.seller-account-menu summary::-webkit-details-marker{display:none}
 .seller-menu-icon{width:35px;height:35px;flex:none;display:grid;place-items:center;color:#858585}.seller-menu-icon svg{width:32px;height:32px}
 .seller-menu-row div,.seller-account-menu summary div{flex:1;min-width:0}.seller-menu-row strong,.seller-account-menu strong{display:block;font-size:14px;line-height:18px;font-weight:700}.seller-menu-row small,.seller-account-menu small{display:block;color:#777;font-size:10px;line-height:12px;font-weight:500}
 .seller-menu-row i,.seller-account-menu summary i{display:block;width:10px;height:10px;border-top:1.5px solid #222;border-right:1.5px solid #222;transform:rotate(45deg);margin-right:4px}.seller-account-menu summary{cursor:pointer}.seller-account-menu details[open] summary i{transform:rotate(135deg)}
-.seller-profile-form{display:grid;gap:8px;padding:15px;font-size:13px}.seller-profile-form input{border:1px solid #ccc;border-radius:8px;padding:10px}.seller-profile-form button{background:#249b37;color:white;border:0;padding:10px;border-radius:8px}.seller-profile-form .seller-logout{background:#fff;border:1px solid #249b37;color:#157329}
-.seller-profile~.bottom-nav{display:none}
+.seller-profile-form{display:grid;gap:8px;padding:15px;font-size:13px}.seller-profile-form input{border:1px solid #ccc;border-radius:8px;padding:10px}.seller-profile-form button{background:#249b37;color:white;border:0;padding:10px;border-radius:8px}
 .seller-wallet{padding:0 15px 110px}.seller-wallet-header{height:178px;position:relative}.seller-wallet-logo{position:absolute;left:6px;top:36px;width:107px;height:60px}.seller-wallet-logo img{width:107px;height:50px;object-fit:contain}.seller-wallet-logo small{position:absolute;right:0;bottom:0;color:#064223;font-size:13px;font-weight:900;font-style:italic}.seller-wallet-owner{position:absolute;right:0;top:25px;text-align:center;font-size:13px;font-weight:900;font-style:italic}.seller-wallet-owner img{display:block;width:90px;height:90px;object-fit:contain;margin:auto}.seller-wallet-owner strong{display:block;margin-top:5px}
 .seller-balance,.seller-activity{border:1px solid #d3d3d3;border-radius:20px;background:#fff;box-shadow:0 3px 3px #0004;overflow:hidden}.seller-balance{height:168px}.seller-balance p{font-size:15px;font-style:italic;font-weight:900;color:#666;margin:14px 14px 0}.seller-balance>strong{display:block;font-size:clamp(43px,12vw,64px);letter-spacing:-2px;font-weight:900;font-style:italic;color:#064223;margin:0 14px;white-space:nowrap}.seller-balance button{width:100%;height:50px;border:0;border-top:1px solid #d2d2d2;background:#fff;font-size:19px;font-weight:900;font-style:italic;color:#000;opacity:1;cursor:not-allowed}
 .seller-activity-title{height:54px;display:flex;align-items:end;justify-content:space-between;padding:0 3px 6px}.seller-activity-title h1{font-size:19px;line-height:23px;font-weight:900;font-style:italic}.seller-activity-title span{color:#208b31;font-size:15px;font-weight:700}.wallet-day{height:25px;padding:6px 12px;color:#555;font-size:11px;border-bottom:1px solid #d6d6d6}.wallet-transaction{height:68px;margin:0 4px;display:flex;align-items:center;gap:18px;padding:0 14px;border-bottom:1px solid #d6d6d6}.wallet-transaction:last-child{border-bottom:0}.wallet-transaction-icon{width:22px;height:22px;color:#808080;flex:none}.wallet-transaction-icon svg{width:100%;height:100%;fill:currentColor}.wallet-transaction-icon svg[fill=none]{fill:none}.wallet-transaction-label{font-size:11px;font-weight:700;color:#444;flex:1}.wallet-transaction-label small{display:block;font-size:10px;margin-top:7px}.wallet-transaction strong{font-size:20px;color:#278f37;white-space:nowrap}.wallet-arrow{width:10px;height:10px;border-top:3px solid #888;border-right:3px solid #888;transform:rotate(45deg);margin-left:10px}
@@ -24,9 +23,32 @@
 .seller-wallet-logo small,.seller-wallet-owner strong,.seller-balance p,.seller-balance>strong,.seller-balance button,.seller-activity-title h1{font-family:XepaOpenSans,Arial,sans-serif;font-weight:800;font-style:italic}
 .seller-avatar-wrap{width:90px;height:90px;position:relative;margin:auto}.seller-avatar-wrap .seller-edit-mark{position:absolute;right:-4px;bottom:1px;width:22px;height:22px;font-size:17px}.seller-edit-mark{display:grid;place-items:center;background:#4eac5b;color:#fff;border-radius:50%;line-height:1;font-size:13px}.seller-name-wrap{display:flex;justify-content:center;align-items:flex-start}.seller-name-wrap .seller-edit-mark{width:15px;height:15px;margin:0 -1px 0 0}
 .seller-menu-row strong,.seller-account-menu strong{font-size:15px;font-weight:600}.seller-account-menu summary{min-height:61px}.seller-menu-row:nth-child(2){min-height:52px}.seller-menu-row:nth-child(3){min-height:58px}.seller-menu-row:nth-child(4){min-height:51px}.seller-menu-row:nth-child(5){min-height:52px}.seller-menu-row:last-child{min-height:60px}
-.seller-profile~.bottom-nav{display:flex;position:static;max-width:430px;margin:0 auto}
+.seller-profile~.bottom-nav{display:flex;position:fixed;left:50%;right:auto;bottom:calc(8px + env(safe-area-inset-bottom));width:min(350px,calc(100% - 32px));max-width:430px;height:68px;transform:translateX(-50%);margin:0}
 .seller-avatar-wrap .seller-profile-avatar{width:100px;height:100px;margin:-5px}
 .seller-wallet-owner img{width:100px;height:100px;margin:-5px auto}
+.seller-profile-heading .seller-edit-mark{min-width:0;height:auto;border:0;border-radius:0;padding:0;background:transparent;box-shadow:none;cursor:pointer}
+.seller-avatar-wrap .seller-avatar-edit{display:grid;place-items:center}
+.seller-avatar-edit img{display:block;width:21px;height:23px}
+.seller-name-wrap .seller-name-edit{display:grid;place-items:center;flex:none}
+.seller-name-edit img{display:block;width:15px;height:16px}
+.seller-details-form{display:grid;gap:8px;margin:18px 12px 0;padding:16px;border:1px solid #e5e5e5;border-radius:16px;background:#fff;box-shadow:0 3px 8px #00000012;font-size:13px}
+.seller-details-form[hidden]{display:none!important}
+.seller-details-form>label{font-weight:700}
+.seller-details-form>input[type=text]{width:100%;min-height:42px;padding:9px 11px;border:1px solid #d5ddd3;border-radius:9px;font:inherit}
+.seller-details-form>input[type=text]:focus{outline:2px solid #9ebf26;outline-offset:1px}
+.seller-details-form p{min-height:16px;color:#626b62;font-size:12px}
+.seller-details-actions{display:flex;justify-content:flex-end;gap:8px}
+.seller-details-actions button{min-height:38px;padding:8px 12px;border:1px solid #249b37;border-radius:9px;background:#249b37;color:#fff;font-weight:700}
+.seller-details-actions .seller-edit-cancel{background:#fff;color:#157329}
+.seller-profile-logout{display:block;width:calc(100% - 24px);margin:16px 12px 0;padding:13px 17px;border-radius:13px;background:#fff;border:1px solid var(--verde-escuro);color:var(--verde-escuro);font-weight:700}
+.seller-profile-heading h1{max-width:100%;padding:0 20px;font-size:clamp(18px,5.4vw,21px);line-height:1.2;font-weight:750;overflow-wrap:anywhere}
+.seller-name-wrap{position:relative;display:block;width:100%;margin:2px auto 0;padding:0 12px}
+.seller-name-wrap .seller-name-edit{position:absolute;top:2px;right:12px;width:18px;height:18px;margin:0;padding:0}
+.seller-name-wrap .seller-name-edit img{width:15px;height:16px}
+.seller-profile-heading button#seller-profile-edit{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:auto;min-width:112px;height:30px;margin-top:7px;padding:2px 14px;border:1px solid #e0e0e0;border-radius:18px;background:#fff;font-size:14px;line-height:1;box-shadow:0 2px 5px #00000020}
+.seller-profile-heading button#seller-profile-edit span{font-size:18px;line-height:1}
+.seller-avatar-wrap .seller-avatar-edit{right:0;bottom:0}
+.seller-profile-heading{padding:0 10px}
 .seller-balance>strong{font-size:clamp(38px,14.88vw,64px)}
 .seller-menu-icon img{display:block;width:29px;height:29px;object-fit:contain}.seller-menu-icon img[src$="perfil-pin.svg"]{height:32px}.seller-menu-icon img[src$="perfil-card.svg"]{width:35px;height:25px}
 .wallet-transaction-icon{display:grid;place-items:center}.wallet-transaction-icon img{display:block;width:20px;height:20px;object-fit:contain}.wallet-transaction-icon img[src$="pay-card.svg"]{width:19px;height:14px}.wallet-arrow{width:10px;height:15px;border:0;transform:none;background:url('../assets/pay-arrow.svg') center/contain no-repeat}.wallet-nav .nav-item img{display:block;width:29px;height:27px;object-fit:contain}.wallet-nav .nav-item img[src$="nav-produtos.svg"]{width:39px}.wallet-nav .nav-item.active{flex:0 0 68px}.seller-activity .wallet-day:first-child{height:27px}.seller-activity .wallet-transaction:nth-child(2){height:69px}.seller-activity .wallet-transaction:nth-child(3){height:80px}.seller-activity .wallet-transaction:nth-child(4){height:71px}.seller-activity .wallet-day:nth-child(5){height:20px;padding-top:2px}.seller-activity .wallet-transaction:nth-child(6){height:59px}.seller-activity .wallet-transaction:nth-child(7){height:71px}

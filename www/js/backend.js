@@ -120,6 +120,9 @@ async function syncUser(user, expectedVersion) {
     email: user.email || profile.email || "",
     type: profile.type || "cliente",
     document: profile.document || "",
+    stallName: profile.stallName || "",
+    stallImage: profile.stallImage || "",
+    stallImagePath: profile.stallImagePath || "",
   };
   window.Auth.user = appUser;
   return appUser;
@@ -212,7 +215,7 @@ window.Backend = {
 
   resetPassword: (email) => sendPasswordResetEmail(auth, email.trim()),
 
-  register: async (name, email, password, type, documentNumber) => {
+  register: async (name, email, password, type, documentNumber, stallName = "") => {
     const credential = await createUserWithEmailAndPassword(
       auth,
       email.trim(),
@@ -224,6 +227,7 @@ window.Backend = {
       email: email.trim(),
       type,
       document: documentNumber,
+      ...(type === "comerciante" ? { stallName: stallName.trim() } : {}),
     };
     try {
       await setDoc(doc(db, "users", credential.user.uid), profile, {
@@ -258,6 +262,7 @@ window.Backend = {
         email: updated.email,
         document: updated.document || "",
         type: updated.type || "cliente",
+        stallName: updated.stallName || "",
       },
       { merge: true },
     );
@@ -275,6 +280,81 @@ window.Backend = {
     return updated;
   },
 
+  updateSellerProfile: async ({ stallName, profileImage }) => {
+    const user = currentUser();
+    const normalizedStallName = String(stallName || "").trim();
+    const previousProfile = window.Auth.user || {};
+    if (!normalizedStallName && !profileImage && !previousProfile.stallName) {
+      throw new Error("Informe o nome da banca ou escolha uma foto.");
+    }
+    let uploadedImage = null;
+    if (profileImage) {
+      if (!supabaseStorage) {
+        throw new Error(
+          "O armazenamento de imagens não está configurado. Não foi possível atualizar a foto.",
+        );
+      }
+      uploadedImage = await supabaseStorage.uploadProfileImage(
+        profileImage,
+        user.uid,
+      );
+    }
+
+    const updated = {
+      ...previousProfile,
+      stallName: normalizedStallName || previousProfile.stallName || "",
+      ...(uploadedImage
+        ? {
+            stallImage: uploadedImage.image,
+            stallImagePath: uploadedImage.imagePath,
+          }
+        : {}),
+    };
+
+    try {
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          stallName: updated.stallName,
+          stallImage: updated.stallImage || "",
+          stallImagePath: updated.stallImagePath || "",
+        },
+        { merge: true },
+      );
+    } catch (error) {
+      if (uploadedImage?.imagePath) {
+        try {
+          await supabaseStorage.deleteProfileImage(uploadedImage.imagePath);
+        } catch (cleanupError) {
+          console.warn(
+            "Não foi possível remover do Supabase a foto não salva:",
+            cleanupError,
+          );
+        }
+      }
+      throw error;
+    }
+
+    localStorage.setItem(`xepa-profile-${user.uid}`, JSON.stringify(updated));
+    window.Auth.user = updated;
+
+    if (
+      uploadedImage &&
+      previousProfile.stallImagePath &&
+      previousProfile.stallImagePath !== uploadedImage.imagePath
+    ) {
+      try {
+        await supabaseStorage.deleteProfileImage(
+          previousProfile.stallImagePath,
+        );
+      } catch (error) {
+        console.warn("Não foi possível remover a foto anterior da banca:", error);
+      }
+    }
+
+    return updated;
+  },
+
   createOffer: async (offer) => {
     const user = currentUser();
     const offerRef = doc(collection(db, "offers"));
@@ -287,6 +367,8 @@ window.Backend = {
     const offerData = {
       ownerUid: user.uid,
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
+      stallName:
+        window.Auth.user?.stallName || "Banca com nome não cadastrado",
       name: offer.name.trim(),
       category: offer.category,
       unit: offer.unit || "unidade",
@@ -327,6 +409,8 @@ window.Backend = {
     cacheImageLocally(`offer-${offerId}`, storedImage.image);
     const updatedOffer = {
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
+      stallName:
+        window.Auth.user?.stallName || "Banca com nome não cadastrado",
       name: offer.name.trim(),
       category: offer.category,
       unit: offer.unit || "unidade",
@@ -416,7 +500,7 @@ window.Backend = {
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
   },
 
-  createOrders: async (items, fulfillment, address, note) => {
+  createOrders: async (items, fulfillment, address, note, paymentMethod) => {
     const user = currentUser();
     const groups = new Map();
     for (const item of items) {
@@ -432,6 +516,7 @@ window.Backend = {
         quantity: Number(item.quantity),
         image: item.image || null,
         location: item.location || null,
+        stallName: item.stallName || "Banca com nome não cadastrado",
       });
       groups.set(item.ownerUid, group);
     }
@@ -450,6 +535,9 @@ window.Backend = {
         merchantName:
           items.find((item) => item.ownerUid === merchantUid)?.ownerName ||
           "Comerciante",
+        stallName:
+          items.find((item) => item.ownerUid === merchantUid)?.stallName ||
+          "Banca com nome não cadastrado",
         marketLocation:
           orderItems.find((item) => item.location)?.location || null,
         items: orderItems,
@@ -457,6 +545,7 @@ window.Backend = {
         fulfillment,
         address: fulfillment === "delivery" ? (address || "").trim() : "",
         note: (note || "").trim(),
+        paymentMethod: paymentMethod || "combinar-com-vendedor",
         status: "pending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

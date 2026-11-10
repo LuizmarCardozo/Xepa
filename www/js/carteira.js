@@ -3,7 +3,7 @@ window.CarteiraPage = function () {
   const card = '<img src="assets/pay-card.svg" alt="">';
   const row = (icon, label, amount, time) => `<div class="wallet-transaction"><span class="wallet-transaction-icon">${icon}</span><span class="wallet-transaction-label">${label}<small>${time}</small></span><strong>R$${amount}</strong><span class="wallet-arrow"></span></div>`;
   return `<main class="seller-account seller-wallet">
-    <header class="seller-wallet-header"><div class="seller-wallet-logo"><img src="assets/xepa-pay-logo.png" alt="Xepa"><small>pay</small></div><div class="seller-wallet-owner"><img src="assets/banca-figma.png" alt=""><strong id="wallet-owner">Banca Exemplo</strong></div></header>
+    <header class="seller-wallet-header"><div class="seller-wallet-logo"><img src="assets/xepa-pay-logo.png" alt="Xepa"><small>pay</small></div><div class="seller-wallet-owner"><img id="wallet-owner-image" src="assets/banca-figma.png" alt="Foto da banca"><strong id="wallet-owner">Banca com nome não cadastrado</strong></div></header>
     <section class="seller-balance"><p>Saldo Disponível</p><strong>R$ 1.000.00</strong><button type="button" disabled>Resgatar</button></section>
     <div class="seller-activity-title"><h1>Suas ultimas atividades</h1><span>Ver mais</span></div>
     <section class="seller-activity" aria-label="Exemplos de movimentações"><div class="wallet-day">Hoje</div>
@@ -14,5 +14,12 @@ window.CarteiraPage = function () {
 };
 window.CarteiraPageInit = function () {
   const owner = document.getElementById("wallet-owner");
-  if (owner) owner.textContent = window.Auth?.user?.name || "Banca Exemplo";
+  const ownerImage = document.getElementById("wallet-owner-image");
+  if (owner) {
+    owner.textContent =
+      window.Auth?.user?.stallName || "Banca com nome não cadastrado";
+  }
+  if (ownerImage && window.Auth?.user?.stallImage) {
+    ownerImage.src = window.Auth.user.stallImage;
+  }
 };

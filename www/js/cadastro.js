@@ -178,6 +178,7 @@ window.CadastroPage = function () {
       }
 
       const name = document.getElementById("seller-full-name").value.trim();
+      const stallName = document.getElementById("seller-stall-name").value.trim();
       const cpf = document
         .getElementById("seller-responsible-cpf")
         .value.replace(/\D/g, "");
@@ -221,7 +222,14 @@ window.CadastroPage = function () {
         if (!window.Backend || !window.Backend.register) {
           throw new Error("Backend não inicializado");
         }
-        await window.Backend.register(name, contact, password, "comerciante", cpf);
+        await window.Backend.register(
+          name,
+          contact,
+          password,
+          "comerciante",
+          cpf,
+          stallName,
+        );
         Router.go("home");
       } catch (error) {
         console.error(error);

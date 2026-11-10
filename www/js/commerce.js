@@ -50,12 +50,19 @@ window.Cart = {
     if (existing) {
       existing.quantity += quantity;
       if (!existing.location) existing.location = offer.location || null;
+      if (!existing.ownerName) existing.ownerName = offer.ownerName || "Comerciante";
+      if (!existing.stallName) {
+        existing.stallName =
+          offer.stallName || "Banca com nome não cadastrado";
+      }
     }
     else {
       items.push({
         offerId: offer.id,
         ownerUid: offer.ownerUid,
         ownerName: offer.ownerName || "Comerciante",
+        stallName:
+          offer.stallName || "Banca com nome não cadastrado",
         name: offer.name,
         unit: offer.unit || "unidade",
         price: Number(offer.price),
@@ -372,9 +379,21 @@ window.ProdutoPageInit = async function () {
 
 window.CarrinhoPage = function () {
   return `
-    <main class="page commerce-page">
-      <header class="page-heading"><div><h1>Cesta</h1><p>Confira os produtos antes de reservar o pedido.</p></div><button class="text-button" onclick="Router.go('ofertas')">Continuar comprando</button></header>
+    <main class="page commerce-page cart-page">
+      <header class="page-heading cart-page-heading">
+        <div><p class="eyebrow">Sua feira</p><h1>Minha sacola</h1></div>
+        <button class="text-button" data-clear-cart type="button">Limpar</button>
+      </header>
       <div id="cart-items" class="commerce-list"></div>
+      <section class="cart-recommendations" aria-labelledby="cart-recommendations-title">
+        <div class="cart-section-heading">
+          <h2 id="cart-recommendations-title">Precisa de mais alguma coisa?</h2>
+          <button class="text-button" type="button" onclick="Router.go('ofertas')">Ver ofertas</button>
+        </div>
+        <div id="cart-recommendation-list" class="cart-recommendation-list">
+          <p class="loading-state">Buscando produtos...</p>
+        </div>
+      </section>
       <section class="card checkout-card">
         <h2>Como receber?</h2>
         <label class="form-label" for="cart-fulfillment">Forma de recebimento</label>
@@ -382,42 +401,131 @@ window.CarrinhoPage = function () {
         <div id="cart-address-group" hidden><label class="form-label" for="cart-address">Endereço para combinar a entrega</label><textarea id="cart-address" class="form-input" rows="2" placeholder="Rua, número, bairro"></textarea></div>
         <label class="form-label" for="cart-note">Observação para o comerciante</label>
         <textarea id="cart-note" class="form-input" rows="2" maxlength="300" placeholder="Ex.: prefiro bananas mais maduras"></textarea>
-        <p class="checkout-note">Pagamento combinado diretamente com o comerciante na retirada ou entrega.</p>
-        <div class="cart-total-row"><strong>Total</strong><strong id="cart-total">R$ 0,00</strong></div>
-        <button id="checkout-button" class="btn btn-primary btn-full" type="button">Reservar pedido</button>
-        <p id="checkout-error" class="form-error" role="alert"></p>
       </section>
+      <section class="card cart-payment-card" aria-labelledby="cart-payment-title">
+        <div class="cart-payment-heading">
+          <h2 id="cart-payment-title">Pagamento</h2>
+          <button class="text-button" data-toggle-payment-options type="button" aria-expanded="true">Ver menos ‹</button>
+        </div>
+        <div class="cart-payment-selected">
+          <span class="cart-payment-icon" aria-hidden="true">▣</span>
+          <span><strong data-selected-payment-label>Selecione uma forma de pagamento</strong><small data-selected-payment-description>O botão Reservar será liberado após a escolha.</small></span>
+          <span class="cart-payment-check" data-payment-selected-indicator aria-hidden="true" hidden>●</span>
+        </div>
+        <fieldset class="cart-payment-options" data-payment-options>
+          <legend>Escolha uma preferência</legend>
+          <label class="cart-payment-unavailable-option"><input type="radio" name="cart-payment" value="credito" disabled> Cartão de crédito <small>Indisponível</small></label>
+          <label class="cart-payment-unavailable-option"><input type="radio" name="cart-payment" value="debito" disabled> Cartão de débito <small>Indisponível</small></label>
+          <label><input type="radio" name="cart-payment" value="pix"> Pix</label>
+          <label><input type="radio" name="cart-payment" value="dinheiro"> Dinheiro</label>
+        </fieldset>
+        <p class="checkout-note cart-payment-unavailable" role="status">Cartão de crédito e cartão de débito ainda não estão disponíveis. Pix e dinheiro podem ser selecionados.</p>
+      </section>
+      <div class="cart-checkout-bar">
+        <div class="cart-total-row"><strong>Total</strong><strong id="cart-total">R$ 0,00</strong></div>
+        <button id="checkout-button" class="btn btn-primary btn-full" type="button" disabled>Reservar pedido</button>
+        <p id="checkout-error" class="form-error" role="alert"></p>
+      </div>
     </main>`;
 };
 
 window.CarrinhoPageInit = function () {
   const list = document.getElementById("cart-items");
+  const recommendationList = document.getElementById("cart-recommendation-list");
   const total = document.getElementById("cart-total");
   const fulfillment = document.getElementById("cart-fulfillment");
   const addressGroup = document.getElementById("cart-address-group");
   const checkout = document.getElementById("checkout-button");
   const error = document.getElementById("checkout-error");
+  const paymentOptions = document.querySelector("[data-payment-options]");
+  const paymentToggle = document.querySelector("[data-toggle-payment-options]");
+  const paymentLabels = {
+    credito: "Crédito",
+    debito: "Débito",
+    pix: "Pix",
+    dinheiro: "Dinheiro",
+  };
+  const recommendations = new Map();
+  let isSubmitting = false;
+
+  function updateSelectedPayment() {
+    const selectedMethod = paymentOptions.querySelector(
+      'input[name="cart-payment"]:checked',
+    )?.value;
+    const selectedLabel = document.querySelector(
+      "[data-selected-payment-label]",
+    );
+    const description = document.querySelector(
+      "[data-selected-payment-description]",
+    );
+    const indicator = document.querySelector(
+      "[data-payment-selected-indicator]",
+    );
+
+    selectedLabel.textContent =
+      paymentLabels[selectedMethod] || "Selecione uma forma de pagamento";
+    description.textContent = selectedMethod
+      ? "Forma de pagamento selecionada"
+      : "O botão Reservar será liberado após a escolha.";
+    indicator.hidden = !selectedMethod;
+  }
+
+  function updateCheckoutAvailability() {
+    const selectedMethod = paymentOptions.querySelector(
+      'input[name="cart-payment"]:checked',
+    )?.value;
+    checkout.disabled =
+      isSubmitting ||
+      readCart().length === 0 ||
+      !["pix", "dinheiro"].includes(selectedMethod);
+  }
 
   function render() {
     const items = readCart();
     if (!items.length) {
       list.innerHTML =
         '<section class="empty-state card"><h2> Sua cesta está vazia</h2><p>Encontre uma oferta e adicione um produto.</p><button class="btn btn-primary" onclick="Router.go(\'ofertas\')">Ver ofertas</button></section>';
-      checkout.disabled = true;
+      updateCheckoutAvailability();
       total.textContent = window.formatMoney(0);
+      document.querySelector(".cart-recommendations").hidden = true;
+      document.querySelector(".cart-payment-card").hidden = true;
+      document.querySelector(".cart-checkout-bar").hidden = true;
       return;
     }
-    checkout.disabled = false;
-    list.innerHTML = items
-      .map(
-        (item) => `
-      <article class="card cart-item">
-        ${item.image ? `<img src="${item.image}" alt="${item.name}">` : '<div class="cart-item-placeholder">🥬</div>'}
-        <div class="cart-item-info"><strong>${item.name}</strong><span>${item.ownerName}</span><span>${window.formatMoney(item.price)} / ${item.unit}</span></div>
-        <label class="quantity-label">Qtd.<input data-quantity="${item.offerId}" type="number" min="1" max="99" value="${item.quantity}"></label>
-        <button class="text-button danger-text" data-remove-cart="${item.offerId}" type="button">Remover</button>
-      </article>`,
-      )
+    document.querySelector(".cart-recommendations").hidden = false;
+    document.querySelector(".cart-payment-card").hidden = false;
+    document.querySelector(".cart-checkout-bar").hidden = false;
+    updateSelectedPayment();
+    updateCheckoutAvailability();
+    const groups = new Map();
+    items.forEach((item) => {
+      const group = groups.get(item.ownerUid) || [];
+      group.push(item);
+      groups.set(item.ownerUid, group);
+    });
+    list.innerHTML = Array.from(groups.values())
+      .map((group) => {
+        const firstItem = group[0];
+        return `
+          <section class="cart-vendor-card">
+            <header class="cart-vendor-heading">
+              <img src="assets/banca-figma.png" alt="" aria-hidden="true">
+              <div><strong>${storyEscape(firstItem.stallName || "Banca com nome não cadastrado")}</strong><span>Vendedor: ${storyEscape(firstItem.ownerName || "Vendedor não cadastrado")}</span></div>
+            </header>
+            <div class="cart-vendor-items">
+              ${group.map((item) => `
+                <article class="cart-item">
+                  ${item.image ? `<img src="${storyEscape(item.image)}" alt="${storyEscape(item.name)}">` : '<div class="cart-item-placeholder" aria-hidden="true">🥬</div>'}
+                  <div class="cart-item-info">
+                    <strong>${storyEscape(item.name || "Produto")}</strong>
+                    <span>${window.formatMoney(item.price)} / ${storyEscape(item.unit || "unidade")}</span>
+                  </div>
+                  <label class="quantity-label">Qtd.<input data-quantity="${storyEscape(item.offerId)}" type="number" min="1" max="99" value="${item.quantity}"></label>
+                  <button class="text-button danger-text" data-remove-cart="${storyEscape(item.offerId)}" type="button">Remover</button>
+                </article>`).join("")}
+            </div>
+          </section>`;
+      })
       .join("");
     total.textContent = window.formatMoney(
       items.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -440,12 +548,62 @@ window.CarrinhoPageInit = function () {
         render();
       }),
     );
+    renderRecommendations();
+  }
+
+  function renderRecommendations() {
+    const cartOfferIds = new Set(readCart().map((item) => item.offerId));
+    const suggestions = Array.from(recommendations.values())
+      .filter((offer) => !cartOfferIds.has(offer.id))
+      .slice(0, 6);
+    if (!suggestions.length) {
+      recommendationList.innerHTML =
+        '<p class="cart-recommendation-empty">Não há outros produtos disponíveis no momento.</p>';
+      return;
+    }
+    recommendationList.innerHTML = suggestions.map((offer) => `
+      <article class="product-recommendation-card">
+        <div class="product-recommendation-open">
+          ${offer.image ? `<img src="${storyEscape(offer.image)}" alt="">` : '<span class="product-recommendation-placeholder" aria-hidden="true">🥬</span>'}
+          <strong>${storyEscape(offer.name || "Produto")}</strong>
+          <small>${storyEscape(offer.ownerName || "Vendedor")}</small>
+          <b>${window.formatMoney(offer.price)}<small>/${storyEscape(offer.unit || "unidade")}</small></b>
+        </div>
+        <button class="product-recommendation-add" type="button" data-add-cart-recommendation="${storyEscape(offer.id)}" aria-label="Adicionar ${storyEscape(offer.name || "produto")} à sacola">+</button>
+      </article>
+    `).join("");
+    recommendationList
+      .querySelectorAll("[data-add-cart-recommendation]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          const offer = recommendations.get(button.dataset.addCartRecommendation);
+          if (!offer) return;
+          window.Cart.add(offer, 1, { silent: true });
+          render();
+        });
+      });
   }
 
   fulfillment.addEventListener("change", () => {
     addressGroup.hidden = fulfillment.value !== "delivery";
   });
+  document.querySelector("[data-clear-cart]").addEventListener("click", () => {
+    if (!readCart().length || !window.confirm("Deseja remover todos os itens da sacola?")) return;
+    window.Cart.clear();
+    render();
+  });
+  paymentToggle.addEventListener("click", () => {
+    paymentOptions.hidden = !paymentOptions.hidden;
+    paymentToggle.setAttribute("aria-expanded", String(!paymentOptions.hidden));
+    paymentToggle.textContent = paymentOptions.hidden ? "Ver tudo ›" : "Ver menos ‹";
+  });
+  paymentOptions.addEventListener("change", (event) => {
+    if (event.target.name !== "cart-payment") return;
+    updateSelectedPayment();
+    updateCheckoutAvailability();
+  });
   checkout.addEventListener("click", async () => {
+    if (checkout.disabled) return;
     error.textContent = "";
     const items = readCart();
     if (!items.length) return;
@@ -454,6 +612,7 @@ window.CarrinhoPageInit = function () {
       error.textContent = "Informe um endereço para combinar a entrega.";
       return;
     }
+    isSubmitting = true;
     checkout.disabled = true;
     checkout.textContent = "Reservando pedido...";
     try {
@@ -462,6 +621,7 @@ window.CarrinhoPageInit = function () {
         fulfillment.value,
         address,
         document.getElementById("cart-note").value,
+        paymentOptions.querySelector('input[name="cart-payment"]:checked').value,
       );
       window.Cart.clear();
       alert("Pedido reservado! Você pode acompanhar o status na aba Pedidos.");
@@ -470,11 +630,32 @@ window.CarrinhoPageInit = function () {
       console.error(submitError);
       error.textContent =
         submitError.message || "Não foi possível reservar o pedido.";
-      checkout.disabled = false;
+      isSubmitting = false;
+      updateCheckoutAvailability();
       checkout.textContent = "Reservar pedido";
     }
   });
   render();
+  if (typeof window.Backend?.getOffers === "function") {
+    window.Backend.getOffers()
+      .then((offers) => {
+        offers
+          .filter(
+            (offer) =>
+              offer?.active && offer.ownerUid !== window.Auth?.user?.uid,
+          )
+          .forEach((offer) => recommendations.set(String(offer.id), offer));
+        renderRecommendations();
+      })
+      .catch((loadError) => {
+        console.error("Não foi possível carregar sugestões para a sacola:", loadError);
+        recommendationList.innerHTML =
+          '<p class="cart-recommendation-empty" role="status">Não foi possível carregar sugestões agora.</p>';
+      });
+  } else {
+    recommendationList.innerHTML =
+      '<p class="cart-recommendation-empty" role="status">Sugestões indisponíveis no momento.</p>';
+  }
 };
 
 window.CriarStoryPage = function () {

@@ -19,6 +19,28 @@ export function createSupabaseStorage(firebaseAuth) {
   );
 
   return {
+    uploadProfileImage: async (dataUrl, userId) => {
+      const client = await clientPromise;
+      const response = await fetch(dataUrl);
+      const image = await response.blob();
+      const extension =
+        { "image/png": "png", "image/webp": "webp" }[image.type] || "jpg";
+      const uniqueId =
+        window.crypto?.randomUUID?.() ||
+        `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const path = `${userId}/profile/${uniqueId}.${extension}`;
+      const { error } = await client.storage
+        .from(bucket)
+        .upload(path, image, { contentType: image.type, upsert: false });
+
+      if (error) throw error;
+
+      return {
+        image: client.storage.from(bucket).getPublicUrl(path).data.publicUrl,
+        imagePath: path,
+      };
+    },
+
     uploadOfferImage: async (dataUrl, userId, offerId) => {
       const client = await clientPromise;
       const response = await fetch(dataUrl);
@@ -42,6 +64,13 @@ export function createSupabaseStorage(firebaseAuth) {
     },
 
     deleteOfferImage: async (path) => {
+      if (!path) return;
+      const client = await clientPromise;
+      const { error } = await client.storage.from(bucket).remove([path]);
+      if (error) throw error;
+    },
+
+    deleteProfileImage: async (path) => {
       if (!path) return;
       const client = await clientPromise;
       const { error } = await client.storage.from(bucket).remove([path]);
