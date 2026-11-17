@@ -1,50 +1,73 @@
 window.ComerciantePage = async function () {
   const list = document.querySelector("[data-my-offers]");
   const offerCount = document.querySelector("[data-offer-count]");
+  const searchInput = document.querySelector("[data-my-offers-search]");
   const reservations = document.querySelector("[data-merchant-orders]");
   if (!list || !window.Backend || !window.Backend.getMyOffers) return;
 
-  try {
-    const offers = await window.Backend.getMyOffers();
+  let offers = [];
+  let offersLoaded = false;
+  const normalizeSearch = (value) =>
+    String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("pt-BR")
+      .trim();
+
+  const renderOffers = () => {
+    if (!offersLoaded) return;
+    const searchTerm = normalizeSearch(searchInput?.value);
+    const matchingOffers = offers.filter((offer) =>
+      [offer.name, offer.category, offer.desc, offer.unit]
+        .filter(Boolean)
+        .some((value) => normalizeSearch(value).includes(searchTerm)),
+    );
     if (offerCount) offerCount.textContent = `(${offers.length})`;
-    if (offers.length === 0) {
+    if (!offers.length) {
       list.innerHTML =
-        '<p class="merchant-products-message">Você ainda não publicou produtos. Toque em “Adicionar produto” para começar.</p>';
-    } else {
-      list.innerHTML = offers.map(renderMerchantOffer).join("");
-      list.querySelectorAll("[data-edit-offer]").forEach((button) => {
-        button.addEventListener("click", () => {
-          sessionStorage.setItem(
-            "xepa-edit-offer-id",
-            button.dataset.editOffer,
-          );
-          window.Router?.go("criarOferta");
-        });
-      });
-      list.querySelectorAll("[data-delete-offer]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          if (!window.confirm("Excluir esta oferta?")) return;
-          button.disabled = true;
-          try {
-            await window.Backend.deleteOffer(button.dataset.deleteOffer);
-            button.closest(".merchant-offer")?.remove();
-            if (!list.querySelector(".merchant-offer")) {
-              list.innerHTML =
-                '<p class="merchant-products-message">Você ainda não publicou produtos. Toque em “Adicionar produto” para começar.</p>';
-            }
-            const remainingOffers =
-              list.querySelectorAll(".merchant-offer").length;
-            if (offerCount) offerCount.textContent = `(${remainingOffers})`;
-          } catch (error) {
-            console.error(error);
-            button.disabled = false;
-            alert("Não foi possível excluir a oferta.");
-          }
-        });
-      });
+        '<p class="merchant-products-message">Você ainda não publicou produtos. Toque em “Adicionar” para começar.</p>';
+      return;
     }
+    if (!matchingOffers.length) {
+      list.innerHTML =
+        '<p class="merchant-products-message">Nenhum produto encontrado.</p>';
+      return;
+    }
+    list.innerHTML = matchingOffers.map(renderMerchantOffer).join("");
+  };
+
+  searchInput?.addEventListener("input", renderOffers);
+  list.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-edit-offer]");
+    if (editButton) {
+      sessionStorage.setItem("xepa-edit-offer-id", editButton.dataset.editOffer);
+      window.Router?.go("criarOferta");
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-delete-offer]");
+    if (!deleteButton || !window.confirm("Excluir esta oferta?")) return;
+    deleteButton.disabled = true;
+    try {
+      await window.Backend.deleteOffer(deleteButton.dataset.deleteOffer);
+      offers = offers.filter(
+        (offer) => offer.id !== deleteButton.dataset.deleteOffer,
+      );
+      renderOffers();
+    } catch (error) {
+      console.error(error);
+      renderOffers();
+      window.alert("Não foi possível excluir a oferta.");
+    }
+  });
+
+  try {
+    offers = await window.Backend.getMyOffers();
+    offersLoaded = true;
+    renderOffers();
   } catch (error) {
     console.error(error);
+    if (searchInput) searchInput.disabled = true;
     list.innerHTML =
       '<p class="merchant-products-message" role="alert">Não foi possível carregar seus produtos.</p>';
   }
@@ -90,7 +113,12 @@ window.ComerciantePage = async function () {
       : "Preço indisponível";
     const image = imageSource
       ? `<img src="${imageSource}" alt="${name}" class="merchant-offer-image">`
-      : '<div class="merchant-offer-image merchant-offer-placeholder">📦</div>';
+      : `<div class="merchant-offer-image merchant-offer-placeholder" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M24 39V19M24 28c-9 0-13-5-13-12 8 0 13 4 13 12Zm0-5c0-8 5-13 13-13 0 8-5 13-13 13Z" />
+            <path d="M13 38h22M17 34h14" />
+          </svg>
+        </div>`;
     const status = offer.active
       ? '<span class="merchant-offer-status is-active"><i aria-hidden="true"></i>Anunciado</span>'
       : '<span class="merchant-offer-status is-paused"><i aria-hidden="true"></i>Pausado</span>';
@@ -101,7 +129,7 @@ window.ComerciantePage = async function () {
         <div class="merchant-offer-info">
           <h3>${name}</h3>
           <p class="merchant-offer-category">${category}</p>
-          <p class="merchant-offer-price">${Number.isFinite(price) ? `R$ ${formattedPrice} / ${unit}` : formattedPrice}</p>
+          <p class="merchant-offer-price">${Number.isFinite(price) ? `R$ ${formattedPrice}/${unit}` : formattedPrice}</p>
           ${status}
         </div>
         <div class="merchant-offer-actions">

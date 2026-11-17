@@ -24,6 +24,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   setDoc,
   updateDoc,
   where,
@@ -95,6 +96,19 @@ async function readProfile(user) {
   }
 }
 
+async function syncPublicMarketEntry(userId, profile) {
+  const stallLocation = profile.stallLocation || {};
+  const normalizedImage = normalizeImageData(profile.stallImage);
+  const market = {
+    stallName: String(profile.stallName || "").trim() || "Banca cadastrada",
+    city: String(stallLocation.city || "").trim(),
+    state: String(stallLocation.state || "").trim(),
+    image: normalizedImage?.startsWith("https://") ? normalizedImage : "",
+    updatedAt: new Date().toISOString(),
+  };
+  await setDoc(doc(db, "markets", userId), market, { merge: true });
+}
+
 async function syncUser(user, expectedVersion) {
   if (!user) {
     if (expectedVersion !== undefined && expectedVersion !== authStateVersion) {
@@ -121,16 +135,43 @@ async function syncUser(user, expectedVersion) {
     type: profile.type || "cliente",
     document: profile.document || "",
     stallName: profile.stallName || "",
+    stallLocation: profile.stallLocation || null,
     stallImage: profile.stallImage || "",
     stallImagePath: profile.stallImagePath || "",
+    stallBanner: profile.stallBanner || "",
+    stallBannerPath: profile.stallBannerPath || "",
   };
   window.Auth.user = appUser;
+  if (appUser.type === "comerciante") {
+    try {
+      await syncPublicMarketEntry(user.uid, appUser);
+    } catch (error) {
+      console.error(
+        "Não foi possível atualizar a banca no diretório público:",
+        error,
+      );
+    }
+  }
   return appUser;
 }
 
 function currentUser() {
   if (!auth.currentUser) throw new Error("Faça login para continuar.");
   return auth.currentUser;
+}
+
+function generateOrderCode() {
+  if (!window.crypto?.getRandomValues) {
+    throw new Error("Não foi possível gerar o código do pedido com segurança.");
+  }
+
+  const randomValue = new Uint32Array(1);
+  const limit = Math.floor(0x100000000 / 1_000_000) * 1_000_000;
+  do {
+    window.crypto.getRandomValues(randomValue);
+  } while (randomValue[0] >= limit);
+
+  return String(randomValue[0] % 1_000_000).padStart(6, "0");
 }
 
 function normalizeImageData(image) {
@@ -215,7 +256,15 @@ window.Backend = {
 
   resetPassword: (email) => sendPasswordResetEmail(auth, email.trim()),
 
-  register: async (name, email, password, type, documentNumber, stallName = "") => {
+  register: async (
+    name,
+    email,
+    password,
+    type,
+    documentNumber,
+    stallName = "",
+    stallLocation = null,
+  ) => {
     const credential = await createUserWithEmailAndPassword(
       auth,
       email.trim(),
@@ -227,7 +276,19 @@ window.Backend = {
       email: email.trim(),
       type,
       document: documentNumber,
-      ...(type === "comerciante" ? { stallName: stallName.trim() } : {}),
+      ...(type === "comerciante"
+        ? {
+            stallName: stallName.trim(),
+            ...(stallLocation
+              ? {
+                  stallLocation: {
+                    city: String(stallLocation.city || "").trim(),
+                    state: String(stallLocation.state || "").trim(),
+                  },
+                }
+              : {}),
+          }
+        : {}),
     };
     try {
       await setDoc(doc(db, "users", credential.user.uid), profile, {
@@ -280,24 +341,53 @@ window.Backend = {
     return updated;
   },
 
-  updateSellerProfile: async ({ stallName, profileImage }) => {
+  updateSellerProfile: async ({ stallName, profileImage, bannerImage }) => {
     const user = currentUser();
     const normalizedStallName = String(stallName || "").trim();
     const previousProfile = window.Auth.user || {};
-    if (!normalizedStallName && !profileImage && !previousProfile.stallName) {
+    if (
+      !normalizedStallName &&
+      !profileImage &&
+      !bannerImage &&
+      !previousProfile.stallName
+    ) {
       throw new Error("Informe o nome da banca ou escolha uma foto.");
     }
     let uploadedImage = null;
-    if (profileImage) {
-      if (!supabaseStorage) {
-        throw new Error(
-          "O armazenamento de imagens não está configurado. Não foi possível atualizar a foto.",
-        );
+    let uploadedBanner = null;
+    const cleanupUploads = async () => {
+      for (const upload of [uploadedImage, uploadedBanner]) {
+        if (!upload?.imagePath) continue;
+        try {
+          await supabaseStorage.deleteProfileImage(upload.imagePath);
+        } catch (error) {
+          console.warn("Não foi possível remover uma imagem não salva:", error);
+        }
       }
-      uploadedImage = await supabaseStorage.uploadProfileImage(
-        profileImage,
-        user.uid,
-      );
+    };
+    try {
+      if (profileImage || bannerImage) {
+        if (!supabaseStorage) {
+          throw new Error(
+            "O armazenamento de imagens não está configurado. Não foi possível atualizar as imagens.",
+          );
+        }
+        if (profileImage) {
+          uploadedImage = await supabaseStorage.uploadProfileImage(
+            profileImage,
+            user.uid,
+          );
+        }
+        if (bannerImage) {
+          uploadedBanner = await supabaseStorage.uploadProfileImage(
+            bannerImage,
+            user.uid,
+          );
+        }
+      }
+    } catch (error) {
+      await cleanupUploads();
+      throw error;
     }
 
     const updated = {
@@ -309,6 +399,12 @@ window.Backend = {
             stallImagePath: uploadedImage.imagePath,
           }
         : {}),
+      ...(uploadedBanner
+        ? {
+            stallBanner: uploadedBanner.image,
+            stallBannerPath: uploadedBanner.imagePath,
+          }
+        : {}),
     };
 
     try {
@@ -318,37 +414,43 @@ window.Backend = {
           stallName: updated.stallName,
           stallImage: updated.stallImage || "",
           stallImagePath: updated.stallImagePath || "",
+          stallBanner: updated.stallBanner || "",
+          stallBannerPath: updated.stallBannerPath || "",
         },
         { merge: true },
       );
     } catch (error) {
-      if (uploadedImage?.imagePath) {
-        try {
-          await supabaseStorage.deleteProfileImage(uploadedImage.imagePath);
-        } catch (cleanupError) {
-          console.warn(
-            "Não foi possível remover do Supabase a foto não salva:",
-            cleanupError,
-          );
-        }
-      }
+      await cleanupUploads();
       throw error;
     }
 
     localStorage.setItem(`xepa-profile-${user.uid}`, JSON.stringify(updated));
     window.Auth.user = updated;
 
-    if (
+    try {
+      await syncPublicMarketEntry(user.uid, updated);
+    } catch (error) {
+      console.error(
+        "Perfil salvo, mas não foi possível atualizar a banca no diretório público:",
+        error,
+      );
+    }
+
+    const replacedImagePaths = [
       uploadedImage &&
-      previousProfile.stallImagePath &&
       previousProfile.stallImagePath !== uploadedImage.imagePath
-    ) {
+        ? previousProfile.stallImagePath
+        : null,
+      uploadedBanner &&
+      previousProfile.stallBannerPath !== uploadedBanner.imagePath
+        ? previousProfile.stallBannerPath
+        : null,
+    ].filter(Boolean);
+    for (const imagePath of replacedImagePaths) {
       try {
-        await supabaseStorage.deleteProfileImage(
-          previousProfile.stallImagePath,
-        );
+        await supabaseStorage.deleteProfileImage(imagePath);
       } catch (error) {
-        console.warn("Não foi possível remover a foto anterior da banca:", error);
+        console.warn("Não foi possível remover uma imagem anterior da banca:", error);
       }
     }
 
@@ -500,6 +602,18 @@ window.Backend = {
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
   },
 
+  getMarkets: async () => {
+    const snapshot = await getDocs(collection(db, "markets"));
+    return snapshot.docs
+      .map((marketDoc) => ({ id: marketDoc.id, ...marketDoc.data() }))
+      .sort((a, b) =>
+        String(a.stallName || "").localeCompare(
+          String(b.stallName || ""),
+          "pt-BR",
+        ),
+      );
+  },
+
   createOrders: async (items, fulfillment, address, note, paymentMethod) => {
     const user = currentUser();
     const groups = new Map();
@@ -546,6 +660,7 @@ window.Backend = {
         address: fulfillment === "delivery" ? (address || "").trim() : "",
         note: (note || "").trim(),
         paymentMethod: paymentMethod || "combinar-com-vendedor",
+        orderCode: generateOrderCode(),
         status: "pending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -645,9 +760,119 @@ window.Backend = {
 
   updateOrderStatus: async (orderId, status) => {
     currentUser();
+    if (status === "delivered") {
+      throw new Error("Informe o código do cliente para entregar o pedido.");
+    }
     await updateDoc(doc(db, "orders", orderId), {
       status,
       updatedAt: new Date().toISOString(),
+    });
+  },
+
+  deliverOrder: async (orderId, confirmationCode) => {
+    const user = currentUser();
+    const normalizedOrderId = String(orderId || "").trim();
+    const code = String(confirmationCode ?? "");
+    if (!normalizedOrderId) throw new Error("Pedido inválido.");
+    if (!/^\d{6}$/.test(code)) {
+      throw new Error("Digite o código de 6 dígitos.");
+    }
+
+    const orderRef = doc(db, "orders", normalizedOrderId);
+    await runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(orderRef);
+      if (!snapshot.exists()) throw new Error("Este pedido não existe mais.");
+
+      const order = snapshot.data();
+      if (order.merchantUid !== user.uid) {
+        throw new Error("Você não pode entregar este pedido.");
+      }
+      if (!["pending", "accepted", "ready"].includes(order.status)) {
+        throw new Error("Este pedido não pode ser entregue neste status.");
+      }
+      if (
+        !/^\d{6}$/.test(String(order.orderCode ?? "")) ||
+        code !== String(order.orderCode)
+      ) {
+        throw new Error("Código incorreto. Confira com o cliente.");
+      }
+
+      transaction.update(orderRef, {
+        status: "delivered",
+        updatedAt: new Date().toISOString(),
+      });
+    });
+  },
+
+  updateOrderPreparation: async (orderId, separated) => {
+    currentUser();
+    const normalizedOrderId = String(orderId || "").trim();
+    if (!normalizedOrderId) throw new Error("Pedido inválido.");
+    if (typeof separated !== "boolean") {
+      throw new Error("Informe se o pedido foi separado.");
+    }
+    await updateDoc(doc(db, "orders", normalizedOrderId), {
+      separated,
+      updatedAt: new Date().toISOString(),
+    });
+  },
+
+  submitOrderReview: async (orderId, rating, comment) => {
+    currentUser();
+    const normalizedOrderId = String(orderId || "").trim();
+    const normalizedRating = Number(rating);
+    const normalizedComment = String(comment ?? "").trim();
+    if (!normalizedOrderId) throw new Error("Pedido inválido para avaliação.");
+    if (
+      !Number.isInteger(normalizedRating) ||
+      normalizedRating < 1 ||
+      normalizedRating > 5
+    ) {
+      throw new Error("Selecione uma avaliação entre 1 e 5 estrelas.");
+    }
+    if (normalizedComment.length > 500) {
+      throw new Error("O comentário deve ter no máximo 500 caracteres.");
+    }
+
+    await updateDoc(doc(db, "orders", normalizedOrderId), {
+      review: {
+        rating: normalizedRating,
+        comment: normalizedComment,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  },
+
+  submitReviewResponse: async (orderId, comment) => {
+    const user = currentUser();
+    const normalizedOrderId = String(orderId || "").trim();
+    const normalizedComment = String(comment ?? "").trim();
+    if (!normalizedOrderId) throw new Error("Pedido inválido para resposta.");
+    if (!normalizedComment) throw new Error("Digite uma resposta.");
+    if (normalizedComment.length > 500) {
+      throw new Error("A resposta deve ter no máximo 500 caracteres.");
+    }
+
+    const orderRef = doc(db, "orders", normalizedOrderId);
+    const orderSnapshot = await getDoc(orderRef);
+    if (!orderSnapshot.exists()) throw new Error("Este pedido não existe mais.");
+    const order = orderSnapshot.data();
+    if (order.merchantUid !== user.uid) {
+      throw new Error("Você não pode responder a esta avaliação.");
+    }
+    if (
+      !Number.isInteger(Number(order.review?.rating)) ||
+      Number(order.review.rating) < 1 ||
+      Number(order.review.rating) > 5
+    ) {
+      throw new Error("Este pedido ainda não possui uma avaliação válida.");
+    }
+
+    await updateDoc(orderRef, {
+      "review.sellerResponse": {
+        comment: normalizedComment,
+        createdAt: new Date().toISOString(),
+      },
     });
   },
 

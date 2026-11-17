@@ -12,7 +12,9 @@ const Router = {
     pedidos: "pages/pedidos.html",
     produto: "pages/produto.html",
     feira: "pages/feira.html",
+    feiras: "pages/feiras.html",
     perfil: "pages/perfil.html",
+    avaliacoes: "pages/avaliacoes.html",
     carteira: "pages/carteira.html",
     criarOferta: "pages/criar-oferta.html",
     criarStory: "pages/criar-story.html",
@@ -36,7 +38,13 @@ const Router = {
     const navigationId = ++navigationSequence;
     const app = document.getElementById("app");
     const publicRoutes = new Set(["login", "cadastro"]);
-    const merchantRoutes = new Set(["criarOferta", "criarStory", "minhasOfertas", "carteira"]);
+    const merchantRoutes = new Set([
+      "criarOferta",
+      "criarStory",
+      "minhasOfertas",
+      "avaliacoes",
+      "carteira",
+    ]);
     if (!app) return;
 
     if (!publicRoutes.has(route) && !window.Auth?.user) {
@@ -120,6 +128,7 @@ const Router = {
         "merchant-home",
         route === "home" && window.Auth?.user?.type === "comerciante",
       );
+      document.body.classList.toggle("merchant-reviews", route === "avaliacoes");
 
       const pageNames = {
         criarStory: "CriarStoryPage",

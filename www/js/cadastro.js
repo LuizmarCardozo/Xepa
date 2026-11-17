@@ -15,13 +15,75 @@ window.CadastroPage = function () {
   const sellerScreens = Array.from(
     document.querySelectorAll("[data-seller-screen]"),
   );
+  const sellerCityInput = document.getElementById("seller-city");
+  const sellerCityOptions = document.getElementById("seller-city-options");
+  const sellerCityStatus = document.getElementById("seller-city-status");
+  const sellerLocations = new Map();
+  let sellerCitiesRequest = null;
   let sellerStep = 1;
+
+  const loadSellerCities = () => {
+    if (sellerLocations.size) return Promise.resolve();
+    if (sellerCitiesRequest) return sellerCitiesRequest;
+
+    sellerCityStatus.textContent = "Carregando cidades...";
+    sellerCityInput.disabled = true;
+    sellerCitiesRequest = fetch(
+      "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome",
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`IBGE respondeu com status ${response.status}.`);
+        }
+        return response.json();
+      })
+      .then((municipalities) => {
+        if (!Array.isArray(municipalities)) {
+          throw new Error("A resposta do IBGE não contém uma lista de cidades.");
+        }
+
+        const options = document.createDocumentFragment();
+        municipalities.forEach((municipality) => {
+          const state = municipality.microrregiao?.mesorregiao?.UF?.sigla;
+          if (!municipality.nome || !state) return;
+
+          const label = `${municipality.nome} / ${state}`;
+          sellerLocations.set(label, {
+            city: municipality.nome,
+            state,
+          });
+          const option = document.createElement("option");
+          option.value = label;
+          options.append(option);
+        });
+
+        if (!sellerLocations.size) {
+          throw new Error("A resposta do IBGE não contém cidades válidas.");
+        }
+
+        sellerCityOptions.replaceChildren(options);
+        sellerCityStatus.textContent = "Digite para buscar e selecione uma cidade.";
+      })
+      .catch((error) => {
+        sellerLocations.clear();
+        sellerCityStatus.textContent =
+          "Não foi possível carregar as cidades. Toque no campo para tentar novamente.";
+        console.error("Não foi possível carregar as cidades do IBGE:", error);
+      })
+      .finally(() => {
+        sellerCityInput.disabled = false;
+        sellerCitiesRequest = null;
+      });
+
+    return sellerCitiesRequest;
+  };
 
   const showSellerStep = (step) => {
     sellerStep = step;
     sellerScreens.forEach((screen) => {
       screen.hidden = Number(screen.dataset.sellerScreen) !== step;
     });
+    if (step === 3) void loadSellerCities();
     const activeScreen = sellerScreens.find(
       (screen) => Number(screen.dataset.sellerScreen) === step,
     );
@@ -114,6 +176,18 @@ window.CadastroPage = function () {
         return;
       }
 
+      if (sellerStep === 3 && sellerCityInput) {
+        const location = sellerLocations.get(sellerCityInput.value.trim());
+        if (!location) {
+          sellerCityInput.setCustomValidity(
+            "Selecione uma cidade e UF da lista de sugestões.",
+          );
+          sellerCityInput.reportValidity();
+          sellerCityInput.setCustomValidity("");
+          return;
+        }
+      }
+
       const cpfInput = document.getElementById("seller-responsible-cpf");
       if (sellerStep === 1 && cpfInput) {
         const digits = cpfInput.value.replace(/\D/g, "");
@@ -141,6 +215,19 @@ window.CadastroPage = function () {
       appContainer?.classList.remove("cadastro-vendedor");
       updateDocumentField();
     });
+  });
+
+  sellerCityInput?.addEventListener("input", () => {
+    sellerCityInput.setCustomValidity("");
+    if (sellerLocations.has(sellerCityInput.value.trim())) {
+      sellerCityStatus.textContent = "Cidade selecionada.";
+    } else if (sellerLocations.size) {
+      sellerCityStatus.textContent =
+        "Digite para buscar e selecione uma cidade.";
+    }
+  });
+  sellerCityInput?.addEventListener("focus", () => {
+    if (!sellerLocations.size) void loadSellerCities();
   });
 
   const sellerCpfInput = document.getElementById("seller-responsible-cpf");
@@ -179,6 +266,7 @@ window.CadastroPage = function () {
 
       const name = document.getElementById("seller-full-name").value.trim();
       const stallName = document.getElementById("seller-stall-name").value.trim();
+      const stallLocation = sellerLocations.get(sellerCityInput?.value.trim());
       const cpf = document
         .getElementById("seller-responsible-cpf")
         .value.replace(/\D/g, "");
@@ -195,6 +283,16 @@ window.CadastroPage = function () {
         cpfInput.setCustomValidity("Informe um CPF com 11 dígitos.");
         cpfInput.reportValidity();
         cpfInput.setCustomValidity("");
+        return;
+      }
+
+      if (!stallLocation) {
+        showSellerStep(3);
+        sellerCityInput?.setCustomValidity(
+          "Selecione uma cidade e UF da lista de sugestões.",
+        );
+        sellerCityInput?.reportValidity();
+        sellerCityInput?.setCustomValidity("");
         return;
       }
 
@@ -229,6 +327,7 @@ window.CadastroPage = function () {
           "comerciante",
           cpf,
           stallName,
+          stallLocation,
         );
         Router.go("home");
       } catch (error) {

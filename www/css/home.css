@@ -60,6 +60,31 @@ body {
   padding: 4px;
   cursor: pointer;
 }
+.home-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+.home-header-actions .cart-shortcut-wrap {
+  margin: 0;
+}
+.home-header-actions .cart-shortcut {
+  width: 32px;
+  min-height: 32px;
+  padding: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+.home-header-actions .cart-shortcut-icon {
+  width: 24px;
+  height: 24px;
+}
+.home-header-actions .cart-shortcut-label,
+.home-header-actions .cart-shortcut [data-cart-count] {
+  display: none;
+}
 .bell-badge {
   position: absolute;
   top: 2px;
@@ -224,6 +249,15 @@ body {
 .market-info {
   padding: 8px;
 }
+.market-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 12px;
+  padding: 0 16px 24px;
+}
+.market-directory-grid .market-card {
+  min-width: 0;
+}
 .market-info h4 {
   font-size: 13px;
   font-weight: 800;
@@ -303,6 +337,7 @@ body {
 }
 .merchant-home .home-categories-section,
 .merchant-home #home-promo-banner,
+.merchant-home .home-fairs-section,
 .merchant-home .home-markets-section,
 .merchant-home .home-recent-section,
 .merchant-home .home-header,

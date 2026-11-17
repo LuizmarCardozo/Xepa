@@ -714,6 +714,9 @@ body.auth-mode #app {
 .seller-screen-3 .seller-field:nth-of-type(2) { --field-x: 21px; --field-y: 290px; --label-inset: 5px; --input-y: 20px; }
 .seller-screen-3 .seller-field:nth-of-type(3) { --field-x: 17px; --field-y: 395px; --label-inset: 9px; --input-y: 23px; }
 .seller-screen-3 .seller-field:nth-of-type(3) .seller-field-label { font-size: 13px; font-weight: 600; letter-spacing: -.1px; line-height: 18px; }
+.seller-screen-3 .seller-location-status { position: absolute; top: 78px; left: 10px; color: #626b62; font-size: 11px; line-height: 14px; }
+.seller-screen-3 .seller-location-status:not(:empty) { max-width: 350px; }
+.seller-screen-3 #seller-city:disabled { opacity: .7; }
 .seller-screen-3 .seller-input-wrap { padding-left: 38px; }
 .seller-screen-3 .seller-select-wrap { padding-left: 10px; padding-right: 70px; }
 .seller-screen-3 input { font-size: 15.5px; font-weight: 700; top: 1px; }

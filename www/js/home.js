@@ -96,6 +96,99 @@ function homeMessage(container, message, className = "home-empty") {
   container.innerHTML = `<p class="${className}">${homeEscapeHtml(message)}</p>`;
 }
 
+function homeRenderMarket(market) {
+  const stallName = homeEscapeHtml(market.stallName || "Banca cadastrada");
+  const location = [market.city, market.state]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .map(homeEscapeHtml)
+    .join(", ");
+  const image = homeImageMarkup(
+    market.image,
+    market.stallName || "Feira cadastrada",
+    "market-img",
+    "🏪",
+  );
+  return `
+    <article class="market-card">
+      <div class="market-img-wrap">
+        ${image}
+        <span class="market-badge">Feira cadastrada</span>
+      </div>
+      <div class="market-info">
+        <h4>${stallName}</h4>
+        <p>${location || "Localização não informada"}</p>
+      </div>
+    </article>
+  `;
+}
+
+function homeRenderStories(container, stories) {
+  if (!container) return;
+  if (!stories.length) {
+    homeMessage(container, "Nenhuma novidade publicada pelas feiras.");
+    return;
+  }
+  container.innerHTML = stories
+    .slice(0, 8)
+    .map((story) => {
+      const ownerName = homeEscapeHtml(story.ownerName || "Feira local");
+      const text = homeEscapeHtml(
+        story.text || "Confira as novidades desta feira.",
+      );
+      const image = homeImageMarkup(
+        story.image,
+        story.ownerName || "Feira local",
+        "market-img",
+        "📸",
+      );
+      return `
+        <article class="market-card">
+          <div class="market-img-wrap">
+            ${image}
+            <span class="market-badge">Novidade</span>
+          </div>
+          <div class="market-info">
+            <h4>${ownerName}</h4>
+            <p>${text}</p>
+            <div class="rating"><span class="rating-count">Atualização recente</span></div>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function homeLoadMarkets(container, maxItems, emptyMessage) {
+  if (!container) return;
+  const backend = window.Backend;
+  if (typeof backend?.getMarkets !== "function") {
+    homeMessage(container, "Não foi possível carregar as feiras.");
+    console.error(new Error("A consulta de feiras não está disponível."));
+    return;
+  }
+
+  Promise.resolve()
+    .then(() => backend.getMarkets())
+    .then((markets) => {
+      if (!Array.isArray(markets)) {
+        throw new TypeError("A consulta de feiras retornou dados inválidos.");
+      }
+      if (!markets.length) {
+        homeMessage(container, emptyMessage);
+        return;
+      }
+      container.innerHTML = markets
+        .slice(0, maxItems)
+        .map(homeRenderMarket)
+        .join("");
+    })
+    .catch((error) => {
+      console.error("Não foi possível carregar as feiras:", error);
+      homeMessage(container, "Não foi possível carregar as feiras.");
+    });
+}
+
 window.HomePage = function () {
   const userName =
     (typeof window.Auth !== "undefined" &&
@@ -109,18 +202,20 @@ window.HomePage = function () {
 
   const isMerchant = window.Auth?.user?.type === "comerciante";
   const marketsContainer = document.querySelector("[data-markets]");
+  const fairsContainer = document.querySelector("[data-fairs]");
   const nearbyContainer = document.querySelector("[data-products-nearby]");
   const recentContainer = document.querySelector("[data-products-recent]");
   const searchInput = document.querySelector(".search-wrapper input");
+  const headerActions = document.querySelector("[data-home-header-actions]");
   let homeOffers = [];
   const offersById = new Map();
 
   if (
     !isMerchant &&
-    searchInput &&
+    headerActions &&
     typeof window.mountCartShortcut === "function"
   ) {
-    window.mountCartShortcut(searchInput.parentElement);
+    window.mountCartShortcut(headerActions, "prepend");
   }
 
   document
@@ -173,6 +268,15 @@ window.HomePage = function () {
       window.Router?.go("feira");
     });
   }
+  const fairsLink = document.querySelector(
+    ".home-fairs-section .link-green",
+  );
+  if (fairsLink) {
+    fairsLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.Router?.go("feiras");
+    });
+  }
   const moreOffersLink = document.querySelector(
     ".home-recent-section .link-green",
   );
@@ -210,6 +314,11 @@ window.HomePage = function () {
   }
 
   if (!isMerchant) {
+    homeMessage(
+      fairsContainer,
+      "Carregando feiras cadastradas...",
+      "loading-state home-empty",
+    );
     homeMessage(
       marketsContainer,
       "Carregando novidades das feiras...",
@@ -344,41 +453,6 @@ window.HomePage = function () {
     }
   }
 
-  function renderStory(story) {
-    const ownerName = homeEscapeHtml(story.ownerName || "Feira local");
-    const text = homeEscapeHtml(
-      story.text || "Confira as novidades desta feira.",
-    );
-    const image = homeImageMarkup(
-      story.image,
-      story.ownerName || "Feira local",
-      "market-img",
-      "📸",
-    );
-    return `
-      <article class="market-card">
-        <div class="market-img-wrap">
-          ${image}
-          <span class="market-badge">Novidade</span>
-        </div>
-        <div class="market-info">
-          <h4>${ownerName}</h4>
-          <p>${text}</p>
-          <div class="rating"><span class="rating-count">Atualização recente</span></div>
-        </div>
-      </article>
-    `;
-  }
-
-  function renderStories(stories) {
-    if (!marketsContainer) return;
-    if (!stories.length) {
-      homeMessage(marketsContainer, "Nenhuma novidade publicada pelas feiras.");
-      return;
-    }
-    marketsContainer.innerHTML = stories.slice(0, 8).map(renderStory).join("");
-  }
-
   function setMerchantMetricsUnavailable() {
     const todayOrders = document.querySelector(
       '[data-merchant-metric="today-orders"]',
@@ -406,12 +480,23 @@ window.HomePage = function () {
     if (salesPeriod) {
       salesPeriod.textContent = "Não foi possível carregar as vendas";
     }
+    const reviewRating = document.querySelector(
+      '[data-merchant-metric="review-rating"]',
+    );
+    const reviewCount = document.querySelector(
+      '[data-merchant-metric="review-count"]',
+    );
+    if (reviewRating) reviewRating.textContent = "—";
+    if (reviewCount) reviewCount.textContent = "Não foi possível carregar";
     document
       .querySelector(".merchant-summary-orders")
       ?.setAttribute("aria-label", "Pedidos de hoje indisponíveis");
     document
       .querySelector(".merchant-summary-performance")
       ?.setAttribute("aria-label", "Vendas concluídas indisponíveis");
+    document
+      .querySelector(".merchant-summary-reviews")
+      ?.setAttribute("aria-label", "Avaliações indisponíveis");
   }
 
   function loadMerchantDashboardMetrics() {
@@ -435,6 +520,39 @@ window.HomePage = function () {
         const merchantOrders = orders.filter(
           (order) => order?.merchantUid === userId,
         );
+        const ratings = merchantOrders
+          .map((order) => Number(order?.review?.rating))
+          .filter(
+            (rating) =>
+              Number.isInteger(rating) && rating >= 1 && rating <= 5,
+          );
+        const reviewRatingNode = document.querySelector(
+          '[data-merchant-metric="review-rating"]',
+        );
+        const reviewCountNode = document.querySelector(
+          '[data-merchant-metric="review-count"]',
+        );
+        if (reviewRatingNode) {
+          reviewRatingNode.textContent = ratings.length
+            ? (
+                ratings.reduce((sum, rating) => sum + rating, 0) /
+                ratings.length
+              ).toFixed(1)
+            : "—";
+        }
+        if (reviewCountNode) {
+          reviewCountNode.textContent = ratings.length
+            ? `${ratings.length} ${ratings.length === 1 ? "avaliação" : "avaliações"}`
+            : "Ainda sem avaliações";
+        }
+        document
+          .querySelector(".merchant-summary-reviews")
+          ?.setAttribute(
+            "aria-label",
+            ratings.length
+              ? `Ver ${ratings.length} avaliações dos clientes`
+              : "Ver avaliações dos clientes",
+          );
         const datedOrders = merchantOrders.map((order) => {
           const date = homeOrderDate(order.createdAt);
           if (!date) {
@@ -605,6 +723,7 @@ window.HomePage = function () {
         });
     }
 
+    homeLoadMarkets(fairsContainer, 8, "Ainda não há feiras cadastradas na Xepa.");
     if (typeof backend?.getStories !== "function") {
       homeMessage(
         marketsContainer,
@@ -613,7 +732,12 @@ window.HomePage = function () {
     } else {
       Promise.resolve()
         .then(() => backend.getStories())
-        .then((stories) => renderStories(Array.isArray(stories) ? stories : []))
+        .then((stories) =>
+          homeRenderStories(
+            marketsContainer,
+            Array.isArray(stories) ? stories : [],
+          ),
+        )
         .catch((error) => {
           console.error(error);
           homeMessage(
@@ -643,4 +767,12 @@ window.HomePage = function () {
       }
     });
   });
+};
+
+window.FeirasPageInit = function () {
+  homeLoadMarkets(
+    document.querySelector("[data-fairs-directory]"),
+    Number.POSITIVE_INFINITY,
+    "Ainda não há feiras cadastradas na Xepa.",
+  );
 };

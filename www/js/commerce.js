@@ -93,23 +93,27 @@ window.Cart = {
   },
 };
 
-window.mountCartShortcut = function (referenceElement) {
+window.mountCartShortcut = function (referenceElement, placement = "after") {
   if (window.Auth?.user?.type === "comerciante") return;
   if (
-    !referenceElement?.parentElement ||
+    !referenceElement ||
     document.querySelector("[data-cart-shortcut]")
   )
     return;
   const wrapper = document.createElement("div");
   wrapper.className = "cart-shortcut-wrap";
   wrapper.innerHTML =
-    '<button class="cart-shortcut" type="button" data-cart-shortcut>🧺 Cesta <span data-cart-count>' +
+    '<button class="cart-shortcut" type="button" data-cart-shortcut aria-label="Abrir carrinho"><img class="cart-shortcut-icon" src="assets/CARRINHO.png" alt=""><span class="cart-shortcut-label">Carrinho</span><span data-cart-count>' +
     window.Cart.count() +
     "</span></button>";
   wrapper
     .querySelector("button")
     .addEventListener("click", () => Router.go("carrinho"));
-  referenceElement.insertAdjacentElement("afterend", wrapper);
+  if (placement === "prepend") {
+    referenceElement.prepend(wrapper);
+  } else {
+    referenceElement.insertAdjacentElement("afterend", wrapper);
+  }
 };
 
 function storyEscape(value) {

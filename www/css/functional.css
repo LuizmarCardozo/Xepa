@@ -58,10 +58,14 @@
 }
 
 .cart-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 40px;
   border: 1px solid #176d2b;
   border-radius: 999px;
-  padding: 7px 14px;
+  padding: 6px 12px;
   background: #fff;
   color: #176d2b;
   font: inherit;
@@ -69,11 +73,21 @@
   cursor: pointer;
 }
 
-.cart-shortcut span {
+.cart-shortcut-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.cart-shortcut-label {
+  white-space: nowrap;
+}
+
+.cart-shortcut [data-cart-count] {
   display: inline-grid;
   min-width: 22px;
   min-height: 22px;
-  margin-left: 4px;
   place-items: center;
   border-radius: 999px;
   background: #176d2b;

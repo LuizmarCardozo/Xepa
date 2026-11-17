@@ -382,9 +382,11 @@
               <label class="seller-field" for="seller-city">
                 <span class="seller-field-label">CIDADE / UF <b>*</b></span>
                 <span class="seller-input-wrap seller-select-wrap">
-                  <input id="seller-city" name="seller-city" type="text" placeholder="Selecione sua Cidade" autocomplete="address-level2" required />
+                  <input id="seller-city" name="seller-city" type="text" placeholder="Selecione sua Cidade" autocomplete="address-level2" aria-autocomplete="list" aria-controls="seller-city-options" aria-describedby="seller-city-status" list="seller-city-options" required />
                   <svg class="seller-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 9 8 6 8-6"/></svg>
                 </span>
+                <datalist id="seller-city-options"></datalist>
+                <small id="seller-city-status" class="seller-location-status" role="status" aria-live="polite">Carregando cidades...</small>
               </label>
 
               <label class="seller-field" for="seller-market-name">

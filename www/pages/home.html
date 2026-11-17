@@ -70,8 +70,8 @@
             <button
               class="merchant-summary-card merchant-summary-reviews"
               type="button"
-              onclick="Router.go('perfil')"
-              aria-label="Avaliações indisponíveis"
+              onclick="Router.go('avaliacoes')"
+              aria-label="Ver avaliações dos clientes"
             >
               <span class="merchant-summary-icon" aria-hidden="true">
                 <svg viewBox="0 0 48 48">
@@ -80,8 +80,11 @@
               </span>
               <span class="merchant-summary-copy">
                 <span class="merchant-summary-title">Avaliações</span>
-                <strong class="merchant-summary-value">—</strong>
-                <span class="merchant-summary-note">Sistema de avaliações indisponível</span>
+                <strong class="merchant-summary-value">
+                  <span data-merchant-metric="review-rating">—</span>
+                  <span class="merchant-rating-star" aria-hidden="true">★</span>
+                </strong>
+                <span class="merchant-summary-note" data-merchant-metric="review-count">Carregando avaliações</span>
               </span>
               <svg class="merchant-summary-chevron" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m9 5 7 7-7 7" />
@@ -96,22 +99,24 @@
             <h1 id="user-greeting">Olá, usuário 👋</h1>
             <p>O que você procura hoje?</p>
           </div>
-          <button class="bell-btn">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#000"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span class="bell-badge">1</span>
-          </button>
+          <div class="home-header-actions" data-home-header-actions>
+            <button class="bell-btn">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#000"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span class="bell-badge">1</span>
+            </button>
+          </div>
         </header>
 
         <!-- ============ BUSCA ============ -->
@@ -201,7 +206,34 @@
           class="promo-banner"
         />
 
-        <!-- ============ FEIRAS PRÓXIMAS ============ -->
+        <!-- ============ FEIRAS CADASTRADAS ============ -->
+        <section class="section home-fairs-section">
+          <div class="section-header">
+            <h2>Feiras cadastradas</h2>
+            <a href="#" class="link-green"
+              >Ver todas
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </a>
+          </div>
+          <div class="markets-scroll hide-scrollbar" data-fairs>
+            <!-- Preenchido via JS -->
+          </div>
+        </section>
+
+        <!-- ============ NOVIDADES DAS FEIRAS ============ -->
         <section class="section home-markets-section">
           <div class="section-header">
             <h2>Novidades das feiras</h2>
