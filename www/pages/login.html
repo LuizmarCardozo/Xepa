@@ -35,7 +35,7 @@
         </h2>
         <p class="subtitle">Entre na sua conta para continuar</p>
 
-        <form id="login-form" action="#" method="POST">
+        <form id="login-form" action="#" method="POST" novalidate>
           <!-- Input Email -->
           <div class="input-group">
             <svg
@@ -79,6 +79,14 @@
             </svg>
             <input type="password" id="password" placeholder="Senha" required />
           </div>
+
+          <p
+            id="login-feedback"
+            class="auth-feedback"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
 
           <a href="#" class="forgot-password">Esqueci minha senha</a>
 

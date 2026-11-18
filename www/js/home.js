@@ -98,6 +98,10 @@ function homeMessage(container, message, className = "home-empty") {
 
 function homeRenderMarket(market) {
   const stallName = homeEscapeHtml(market.stallName || "Banca cadastrada");
+  const marketName = homeEscapeHtml(
+    market.marketName || market.stallName || "Feira cadastrada",
+  );
+  const reference = String(market.reference || "").trim();
   const location = [market.city, market.state]
     .map((value) => String(value || "").trim())
     .filter(Boolean)
@@ -116,8 +120,9 @@ function homeRenderMarket(market) {
         <span class="market-badge">Feira cadastrada</span>
       </div>
       <div class="market-info">
-        <h4>${stallName}</h4>
+        <h4>${marketName}</h4>
         <p>${location || "Localização não informada"}</p>
+        <p class="market-reference"><strong>Banca:</strong> ${stallName}${reference ? ` · ${homeEscapeHtml(reference)}` : ""}</p>
       </div>
     </article>
   `;
@@ -268,9 +273,7 @@ window.HomePage = function () {
       window.Router?.go("feira");
     });
   }
-  const fairsLink = document.querySelector(
-    ".home-fairs-section .link-green",
-  );
+  const fairsLink = document.querySelector(".home-fairs-section .link-green");
   if (fairsLink) {
     fairsLink.addEventListener("click", (event) => {
       event.preventDefault();
@@ -348,6 +351,21 @@ window.HomePage = function () {
     window.Router.go("produto");
   }
 
+  function renderOfferLocation(offer) {
+    const location = offer.stallLocation || {};
+    const city = [location.city, location.state]
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+      .join(", ");
+    const details = [
+      location.marketName,
+      city,
+      location.reference,
+    ].filter((value) => String(value || "").trim());
+    if (!details.length) return "";
+    return `<p class="product-market-location">${details.map(homeEscapeHtml).join(" · ")}</p>`;
+  }
+
   function renderOfferCard(offer, withCart = true) {
     const id = homeEscapeHtml(offer.id);
     const name = homeEscapeHtml(offer.name || "Oferta");
@@ -359,7 +377,7 @@ window.HomePage = function () {
       "product-img",
     );
     const cartButton = withCart
-      ? `<button class="add-btn" data-add-offer="${id}" type="button" aria-label="Adicionar ${name} ao cesta">+</button>`
+      ? `<button class="add-btn" data-add-offer="${id}" type="button" aria-label="Adicionar ${name} ao carrinho">+</button>`
       : "";
     return `
       <article class="product-card" data-offer-id="${id}" tabindex="0" role="button" aria-label="Ver ${name}">
@@ -367,6 +385,7 @@ window.HomePage = function () {
         <div class="product-info">
           <h4 class="product-name">${name}</h4>
           <p class="product-desc">${description}</p>
+          ${renderOfferLocation(offer)}
           <div class="product-bottom">
             <span class="new-price">R$ ${homeMoney(offer.price)}<span class="unit">/${unit}</span></span>
             ${cartButton}
@@ -523,8 +542,7 @@ window.HomePage = function () {
         const ratings = merchantOrders
           .map((order) => Number(order?.review?.rating))
           .filter(
-            (rating) =>
-              Number.isInteger(rating) && rating >= 1 && rating <= 5,
+            (rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5,
           );
         const reviewRatingNode = document.querySelector(
           '[data-merchant-metric="review-rating"]',
@@ -723,7 +741,11 @@ window.HomePage = function () {
         });
     }
 
-    homeLoadMarkets(fairsContainer, 8, "Ainda não há feiras cadastradas na Xepa.");
+    homeLoadMarkets(
+      fairsContainer,
+      8,
+      "Ainda não há feiras cadastradas na Xepa.",
+    );
     if (typeof backend?.getStories !== "function") {
       homeMessage(
         marketsContainer,

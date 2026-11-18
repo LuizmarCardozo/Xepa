@@ -22,6 +22,14 @@ window.PerfilPage = function () {
       <form id="seller-details-form" class="seller-details-form" hidden>
         <label for="seller-stall-name">Nome da banca</label>
         <input id="seller-stall-name" type="text" maxlength="80">
+        <label for="seller-market-name">Nome da feira</label>
+        <input id="seller-market-name" type="text" maxlength="100" required>
+        <label for="seller-market-city">Cidade</label>
+        <input id="seller-market-city" type="text" maxlength="100" required>
+        <label for="seller-market-state">UF</label>
+        <input id="seller-market-state" type="text" maxlength="2" required>
+        <label for="seller-market-reference">Número da banca / ponto de referência (opcional)</label>
+        <input id="seller-market-reference" type="text" maxlength="200">
         <input id="seller-photo-input" type="file" accept="image/jpeg,image/png,image/webp" hidden>
         <input id="seller-banner-input" type="file" accept="image/jpeg,image/png,image/webp" hidden>
         <p id="seller-details-message" role="status"></p>
@@ -203,6 +211,12 @@ window.PerfilPageInit = function () {
   );
   const sellerDetailsForm = document.getElementById("seller-details-form");
   const stallNameInput = document.getElementById("seller-stall-name");
+  const marketNameInput = document.getElementById("seller-market-name");
+  const marketCityInput = document.getElementById("seller-market-city");
+  const marketStateInput = document.getElementById("seller-market-state");
+  const marketReferenceInput = document.getElementById(
+    "seller-market-reference",
+  );
   const sellerPhotoInput = document.getElementById("seller-photo-input");
   const sellerBannerInput = document.getElementById("seller-banner-input");
   const sellerDetailsMessage = document.getElementById(
@@ -236,6 +250,22 @@ window.PerfilPageInit = function () {
     sellerBannerImage.hidden = false;
   }
   if (stallNameInput) stallNameInput.value = user.stallName || "";
+  const fillSellerLocationFields = () => {
+    if (
+      !marketNameInput ||
+      !marketCityInput ||
+      !marketStateInput ||
+      !marketReferenceInput
+    ) {
+      return;
+    }
+    const location = window.Auth.user?.stallLocation || {};
+    marketNameInput.value = location.marketName || "";
+    marketCityInput.value = location.city || "";
+    marketStateInput.value = location.state || "";
+    marketReferenceInput.value = location.reference || "";
+  };
+  fillSellerLocationFields();
 
   const openSellerDetails = (focusName = false) => {
     if (!sellerDetailsForm) return;
@@ -425,6 +455,7 @@ window.PerfilPageInit = function () {
       sellerPhotoInput.value = "";
       sellerBannerInput.value = "";
       stallNameInput.value = window.Auth.user?.stallName || "";
+      fillSellerLocationFields();
       sellerAvatar.src =
         window.Auth.user?.stallImage || "assets/banca-figma.png";
       if (sellerBannerImage) {
@@ -482,6 +513,12 @@ window.PerfilPageInit = function () {
     try {
       const updated = await window.Backend.updateSellerProfile({
         stallName: stallNameInput.value,
+        stallLocation: {
+          marketName: marketNameInput.value,
+          city: marketCityInput.value,
+          state: marketStateInput.value,
+          reference: marketReferenceInput.value,
+        },
         profileImage: selectedProfileImage,
         bannerImage: selectedBannerImage,
       });

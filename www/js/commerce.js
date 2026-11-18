@@ -27,6 +27,58 @@ function writeCart(items) {
   });
 }
 
+let cartAddedToastTimer = null;
+
+function hideCartAddedToast() {
+  const toast = document.querySelector("[data-cart-added-toast]");
+  if (!toast) return;
+
+  window.clearTimeout(cartAddedToastTimer);
+  toast.classList.remove("show");
+  window.setTimeout(() => {
+    if (!toast.classList.contains("show")) toast.hidden = true;
+  }, 250);
+}
+
+function showCartAddedToast(offer) {
+  let toast = document.querySelector("[data-cart-added-toast]");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.className = "cart-added-toast";
+    toast.dataset.cartAddedToast = "";
+    toast.hidden = true;
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    toast.setAttribute("aria-atomic", "true");
+    toast.innerHTML = `
+      <span class="cart-added-toast-check" aria-hidden="true">✓</span>
+      <span class="cart-added-toast-copy">
+        <strong>Adicionado ao carrinho</strong>
+        <span data-cart-added-name></span>
+      </span>
+      <button class="cart-added-toast-link" type="button" data-cart-added-view>Ver carrinho</button>
+      <button class="cart-added-toast-close" type="button" data-cart-added-close aria-label="Fechar">×</button>
+    `;
+    document.body.append(toast);
+    toast
+      .querySelector("[data-cart-added-view]")
+      .addEventListener("click", () => {
+        hideCartAddedToast();
+        window.Router.go("carrinho");
+      });
+    toast
+      .querySelector("[data-cart-added-close]")
+      .addEventListener("click", hideCartAddedToast);
+  }
+
+  toast.querySelector("[data-cart-added-name]").textContent =
+    offer.name || "Produto";
+  toast.hidden = false;
+  window.requestAnimationFrame(() => toast.classList.add("show"));
+  window.clearTimeout(cartAddedToastTimer);
+  cartAddedToastTimer = window.setTimeout(hideCartAddedToast, 4500);
+}
+
 window.formatMoney = (value) =>
   Number(value || 0).toLocaleString("pt-BR", {
     style: "currency",
@@ -50,29 +102,30 @@ window.Cart = {
     if (existing) {
       existing.quantity += quantity;
       if (!existing.location) existing.location = offer.location || null;
-      if (!existing.ownerName) existing.ownerName = offer.ownerName || "Comerciante";
+      if (!existing.stallLocation)
+        existing.stallLocation = offer.stallLocation || null;
+      if (!existing.ownerName)
+        existing.ownerName = offer.ownerName || "Comerciante";
       if (!existing.stallName) {
-        existing.stallName =
-          offer.stallName || "Banca com nome não cadastrado";
+        existing.stallName = offer.stallName || "Banca com nome não cadastrado";
       }
-    }
-    else {
+    } else {
       items.push({
         offerId: offer.id,
         ownerUid: offer.ownerUid,
         ownerName: offer.ownerName || "Comerciante",
-        stallName:
-          offer.stallName || "Banca com nome não cadastrado",
+        stallName: offer.stallName || "Banca com nome não cadastrado",
         name: offer.name,
         unit: offer.unit || "unidade",
         price: Number(offer.price),
         image: offer.image || null,
         location: offer.location || null,
+        stallLocation: offer.stallLocation || null,
         quantity,
       });
     }
     writeCart(items);
-    if (!silent) alert(`${offer.name} foi adicionado à cesta.`);
+    if (!silent) showCartAddedToast(offer);
   },
   setQuantity(offerId, quantity) {
     const items = readCart();
@@ -95,10 +148,7 @@ window.Cart = {
 
 window.mountCartShortcut = function (referenceElement, placement = "after") {
   if (window.Auth?.user?.type === "comerciante") return;
-  if (
-    !referenceElement ||
-    document.querySelector("[data-cart-shortcut]")
-  )
+  if (!referenceElement || document.querySelector("[data-cart-shortcut]"))
     return;
   const wrapper = document.createElement("div");
   wrapper.className = "cart-shortcut-wrap";
@@ -128,6 +178,34 @@ function storyEscape(value) {
         "'": "&#039;",
       })[character],
   );
+}
+
+function renderStallLocation(location, className) {
+  const city = [location?.city, location?.state]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(", ");
+  const details = [
+    ["Feira", location?.marketName],
+    ["Cidade", city],
+    ["Banca / referência", location?.reference],
+  ].filter(([, value]) => String(value || "").trim());
+
+  return `
+    <section class="${className}">
+      <strong>Localização da feira</strong>
+      ${
+        details.length
+          ? details
+              .map(
+                ([label, value]) =>
+                  `<span><b>${label}:</b> ${storyEscape(value)}</span>`,
+              )
+              .join("")
+          : "<span>Não informada pelo vendedor.</span>"
+      }
+    </section>
+  `;
 }
 
 window.FeiraPage = function () {
@@ -255,20 +333,18 @@ window.ProdutoPageInit = async function () {
         updateCartSummary();
       });
 
-    selection
-      .querySelectorAll("[data-quantity-change]")
-      .forEach((button) => {
-        button.addEventListener("click", () => {
-          const change = Number(button.dataset.quantityChange);
-          if (cartItem) {
-            window.Cart.setQuantity(offer.id, selectedQuantity + change);
-          } else {
-            draftQuantity = Math.max(1, Math.min(99, draftQuantity + change));
-          }
-          renderSelection(offer);
-          updateCartSummary();
-        });
+    selection.querySelectorAll("[data-quantity-change]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const change = Number(button.dataset.quantityChange);
+        if (cartItem) {
+          window.Cart.setQuantity(offer.id, selectedQuantity + change);
+        } else {
+          draftQuantity = Math.max(1, Math.min(99, draftQuantity + change));
+        }
+        renderSelection(offer);
+        updateCartSummary();
       });
+    });
   };
 
   const renderRecommendations = (offers, selectedOffer) => {
@@ -300,7 +376,7 @@ window.ProdutoPageInit = async function () {
               <small>${storyEscape(offer.ownerName || "Feira local")}</small>
               <b>${window.formatMoney(offer.price)}<small>/${storyEscape(offer.unit || "unidade")}</small></b>
             </button>
-            <button class="product-recommendation-add" type="button" data-add-recommendation="${storyEscape(offer.id)}" aria-label="Adicionar ${storyEscape(offer.name || "produto")} à sacola">+</button>
+            <button class="product-recommendation-add" type="button" data-add-recommendation="${storyEscape(offer.id)}" aria-label="Adicionar ${storyEscape(offer.name || "produto")} ao carrinho">+</button>
           </article>
         `,
       )
@@ -329,7 +405,7 @@ window.ProdutoPageInit = async function () {
           updateCartSummary();
           button.textContent = "✓";
           button.disabled = true;
-          button.setAttribute("aria-label", "Adicionado à sacola");
+          button.setAttribute("aria-label", "Adicionado ao carrinho");
         });
       });
   };
@@ -351,6 +427,7 @@ window.ProdutoPageInit = async function () {
           <h1>${storyEscape(offer.name || "Produto")}</h1>
           <p class="product-detail-description">${storyEscape(offer.desc || "Produto fresco à venda.")}</p>
           <p class="product-detail-seller">Vendido por ${storyEscape(offer.ownerName || "Comerciante")}</p>
+          ${renderStallLocation(offer.stallLocation, "product-detail-market")}
           <strong class="product-detail-price">${window.formatMoney(offer.price)}<span>/${storyEscape(offer.unit || "unidade")}</span></strong>
           <div data-product-selection></div>
         </article>
@@ -385,7 +462,7 @@ window.CarrinhoPage = function () {
   return `
     <main class="page commerce-page cart-page">
       <header class="page-heading cart-page-heading">
-        <div><p class="eyebrow">Sua feira</p><h1>Minha sacola</h1></div>
+        <div><p class="eyebrow">Sua feira</p><h1>Meu carrinho</h1></div>
         <button class="text-button" data-clear-cart type="button">Limpar</button>
       </header>
       <div id="cart-items" class="commerce-list"></div>
@@ -401,7 +478,7 @@ window.CarrinhoPage = function () {
       <section class="card checkout-card">
         <h2>Como receber?</h2>
         <label class="form-label" for="cart-fulfillment">Forma de recebimento</label>
-        <select id="cart-fulfillment" class="form-input"><option value="pickup">Retirar com o comerciante</option><option value="delivery">Combinar entrega</option></select>
+        <select id="cart-fulfillment" class="form-input"><option value="pickup">Retirar com o comerciante</option></select>
         <div id="cart-address-group" hidden><label class="form-label" for="cart-address">Endereço para combinar a entrega</label><textarea id="cart-address" class="form-input" rows="2" placeholder="Rua, número, bairro"></textarea></div>
         <label class="form-label" for="cart-note">Observação para o comerciante</label>
         <textarea id="cart-note" class="form-input" rows="2" maxlength="300" placeholder="Ex.: prefiro bananas mais maduras"></textarea>
@@ -435,7 +512,9 @@ window.CarrinhoPage = function () {
 
 window.CarrinhoPageInit = function () {
   const list = document.getElementById("cart-items");
-  const recommendationList = document.getElementById("cart-recommendation-list");
+  const recommendationList = document.getElementById(
+    "cart-recommendation-list",
+  );
   const total = document.getElementById("cart-total");
   const fulfillment = document.getElementById("cart-fulfillment");
   const addressGroup = document.getElementById("cart-address-group");
@@ -488,7 +567,7 @@ window.CarrinhoPageInit = function () {
     const items = readCart();
     if (!items.length) {
       list.innerHTML =
-        '<section class="empty-state card"><h2> Sua cesta está vazia</h2><p>Encontre uma oferta e adicione um produto.</p><button class="btn btn-primary" onclick="Router.go(\'ofertas\')">Ver ofertas</button></section>';
+        '<section class="empty-state card"><h2> Seu carrinho está vazio</h2><p>Encontre uma oferta e adicione um produto.</p><button class="btn btn-primary" onclick="Router.go(\'ofertas\')">Ver ofertas</button></section>';
       updateCheckoutAvailability();
       total.textContent = window.formatMoney(0);
       document.querySelector(".cart-recommendations").hidden = true;
@@ -514,10 +593,16 @@ window.CarrinhoPageInit = function () {
           <section class="cart-vendor-card">
             <header class="cart-vendor-heading">
               <img src="assets/banca-figma.png" alt="" aria-hidden="true">
-              <div><strong>${storyEscape(firstItem.stallName || "Banca com nome não cadastrado")}</strong><span>Vendedor: ${storyEscape(firstItem.ownerName || "Vendedor não cadastrado")}</span></div>
+              <div>
+                <strong>${storyEscape(firstItem.stallName || "Banca com nome não cadastrado")}</strong>
+                <span>Vendedor: ${storyEscape(firstItem.ownerName || "Vendedor não cadastrado")}</span>
+                ${renderStallLocation(firstItem.stallLocation, "cart-vendor-location")}
+              </div>
             </header>
             <div class="cart-vendor-items">
-              ${group.map((item) => `
+              ${group
+                .map(
+                  (item) => `
                 <article class="cart-item">
                   ${item.image ? `<img src="${storyEscape(item.image)}" alt="${storyEscape(item.name)}">` : '<div class="cart-item-placeholder" aria-hidden="true">🥬</div>'}
                   <div class="cart-item-info">
@@ -526,7 +611,9 @@ window.CarrinhoPageInit = function () {
                   </div>
                   <label class="quantity-label">Qtd.<input data-quantity="${storyEscape(item.offerId)}" type="number" min="1" max="99" value="${item.quantity}"></label>
                   <button class="text-button danger-text" data-remove-cart="${storyEscape(item.offerId)}" type="button">Remover</button>
-                </article>`).join("")}
+                </article>`,
+                )
+                .join("")}
             </div>
           </section>`;
       })
@@ -565,7 +652,9 @@ window.CarrinhoPageInit = function () {
         '<p class="cart-recommendation-empty">Não há outros produtos disponíveis no momento.</p>';
       return;
     }
-    recommendationList.innerHTML = suggestions.map((offer) => `
+    recommendationList.innerHTML = suggestions
+      .map(
+        (offer) => `
       <article class="product-recommendation-card">
         <div class="product-recommendation-open">
           ${offer.image ? `<img src="${storyEscape(offer.image)}" alt="">` : '<span class="product-recommendation-placeholder" aria-hidden="true">🥬</span>'}
@@ -573,14 +662,18 @@ window.CarrinhoPageInit = function () {
           <small>${storyEscape(offer.ownerName || "Vendedor")}</small>
           <b>${window.formatMoney(offer.price)}<small>/${storyEscape(offer.unit || "unidade")}</small></b>
         </div>
-        <button class="product-recommendation-add" type="button" data-add-cart-recommendation="${storyEscape(offer.id)}" aria-label="Adicionar ${storyEscape(offer.name || "produto")} à sacola">+</button>
+        <button class="product-recommendation-add" type="button" data-add-cart-recommendation="${storyEscape(offer.id)}" aria-label="Adicionar ${storyEscape(offer.name || "produto")} ao carrinho">+</button>
       </article>
-    `).join("");
+    `,
+      )
+      .join("");
     recommendationList
       .querySelectorAll("[data-add-cart-recommendation]")
       .forEach((button) => {
         button.addEventListener("click", () => {
-          const offer = recommendations.get(button.dataset.addCartRecommendation);
+          const offer = recommendations.get(
+            button.dataset.addCartRecommendation,
+          );
           if (!offer) return;
           window.Cart.add(offer, 1, { silent: true });
           render();
@@ -592,14 +685,20 @@ window.CarrinhoPageInit = function () {
     addressGroup.hidden = fulfillment.value !== "delivery";
   });
   document.querySelector("[data-clear-cart]").addEventListener("click", () => {
-    if (!readCart().length || !window.confirm("Deseja remover todos os itens da sacola?")) return;
+    if (
+      !readCart().length ||
+      !window.confirm("Deseja remover todos os itens do carrinho?")
+    )
+      return;
     window.Cart.clear();
     render();
   });
   paymentToggle.addEventListener("click", () => {
     paymentOptions.hidden = !paymentOptions.hidden;
     paymentToggle.setAttribute("aria-expanded", String(!paymentOptions.hidden));
-    paymentToggle.textContent = paymentOptions.hidden ? "Ver tudo ›" : "Ver menos ‹";
+    paymentToggle.textContent = paymentOptions.hidden
+      ? "Ver tudo ›"
+      : "Ver menos ‹";
   });
   paymentOptions.addEventListener("change", (event) => {
     if (event.target.name !== "cart-payment") return;
@@ -625,7 +724,8 @@ window.CarrinhoPageInit = function () {
         fulfillment.value,
         address,
         document.getElementById("cart-note").value,
-        paymentOptions.querySelector('input[name="cart-payment"]:checked').value,
+        paymentOptions.querySelector('input[name="cart-payment"]:checked')
+          .value,
       );
       window.Cart.clear();
       alert("Pedido reservado! Você pode acompanhar o status na aba Pedidos.");
@@ -652,7 +752,10 @@ window.CarrinhoPageInit = function () {
         renderRecommendations();
       })
       .catch((loadError) => {
-        console.error("Não foi possível carregar sugestões para a sacola:", loadError);
+        console.error(
+          "Não foi possível carregar sugestões para a sacola:",
+          loadError,
+        );
         recommendationList.innerHTML =
           '<p class="cart-recommendation-empty" role="status">Não foi possível carregar sugestões agora.</p>';
       });

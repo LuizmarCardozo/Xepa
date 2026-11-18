@@ -16,6 +16,7 @@ const Router = {
     perfil: "pages/perfil.html",
     avaliacoes: "pages/avaliacoes.html",
     carteira: "pages/carteira.html",
+    resgatar: "pages/resgatar.html",
     criarOferta: "pages/criar-oferta.html",
     criarStory: "pages/criar-story.html",
     minhasOfertas: "pages/minhas-ofertas.html",
@@ -44,6 +45,7 @@ const Router = {
       "minhasOfertas",
       "avaliacoes",
       "carteira",
+      "resgatar",
     ]);
     if (!app) return;
 

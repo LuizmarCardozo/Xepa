@@ -97,12 +97,14 @@ async function readProfile(user) {
 }
 
 async function syncPublicMarketEntry(userId, profile) {
-  const stallLocation = profile.stallLocation || {};
+  const stallLocation = normalizeStallLocation(profile.stallLocation) || {};
   const normalizedImage = normalizeImageData(profile.stallImage);
   const market = {
     stallName: String(profile.stallName || "").trim() || "Banca cadastrada",
+    marketName: stallLocation.marketName || "",
     city: String(stallLocation.city || "").trim(),
     state: String(stallLocation.state || "").trim(),
+    reference: stallLocation.reference || "",
     image: normalizedImage?.startsWith("https://") ? normalizedImage : "",
     updatedAt: new Date().toISOString(),
   };
@@ -237,6 +239,30 @@ function normalizeOfferLocation(location) {
   return { latitude, longitude };
 }
 
+function normalizeStallLocation(location) {
+  if (!location || typeof location !== "object") return null;
+  const normalized = {
+    marketName: String(location.marketName || "").trim(),
+    city: String(location.city || "").trim(),
+    state: String(location.state || "").trim(),
+    reference: String(location.reference || "").trim(),
+  };
+  return Object.values(normalized).some(Boolean) ? normalized : null;
+}
+
+function offerStallLocation(market, savedLocation) {
+  const marketHasLocationFields =
+    market &&
+    (Object.prototype.hasOwnProperty.call(market, "marketName") ||
+      Object.prototype.hasOwnProperty.call(market, "reference"));
+  if (marketHasLocationFields) {
+    return normalizeStallLocation(market);
+  }
+  return (
+    normalizeStallLocation(savedLocation) || normalizeStallLocation(market)
+  );
+}
+
 window.Backend = {
   ready: () => authReady,
 
@@ -281,10 +307,7 @@ window.Backend = {
             stallName: stallName.trim(),
             ...(stallLocation
               ? {
-                  stallLocation: {
-                    city: String(stallLocation.city || "").trim(),
-                    state: String(stallLocation.state || "").trim(),
-                  },
+                  stallLocation: normalizeStallLocation(stallLocation),
                 }
               : {}),
           }
@@ -341,10 +364,18 @@ window.Backend = {
     return updated;
   },
 
-  updateSellerProfile: async ({ stallName, profileImage, bannerImage }) => {
+  updateSellerProfile: async ({
+    stallName,
+    stallLocation,
+    profileImage,
+    bannerImage,
+  }) => {
     const user = currentUser();
     const normalizedStallName = String(stallName || "").trim();
     const previousProfile = window.Auth.user || {};
+    const normalizedStallLocation =
+      normalizeStallLocation(stallLocation) ||
+      normalizeStallLocation(previousProfile.stallLocation);
     if (
       !normalizedStallName &&
       !profileImage &&
@@ -352,6 +383,9 @@ window.Backend = {
       !previousProfile.stallName
     ) {
       throw new Error("Informe o nome da banca ou escolha uma foto.");
+    }
+    if (!normalizedStallLocation) {
+      throw new Error("Informe a localização da feira.");
     }
     let uploadedImage = null;
     let uploadedBanner = null;
@@ -393,6 +427,7 @@ window.Backend = {
     const updated = {
       ...previousProfile,
       stallName: normalizedStallName || previousProfile.stallName || "",
+      stallLocation: normalizedStallLocation,
       ...(uploadedImage
         ? {
             stallImage: uploadedImage.image,
@@ -412,6 +447,7 @@ window.Backend = {
         doc(db, "users", user.uid),
         {
           stallName: updated.stallName,
+          stallLocation: updated.stallLocation,
           stallImage: updated.stallImage || "",
           stallImagePath: updated.stallImagePath || "",
           stallBanner: updated.stallBanner || "",
@@ -450,7 +486,10 @@ window.Backend = {
       try {
         await supabaseStorage.deleteProfileImage(imagePath);
       } catch (error) {
-        console.warn("Não foi possível remover uma imagem anterior da banca:", error);
+        console.warn(
+          "Não foi possível remover uma imagem anterior da banca:",
+          error,
+        );
       }
     }
 
@@ -469,8 +508,7 @@ window.Backend = {
     const offerData = {
       ownerUid: user.uid,
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
-      stallName:
-        window.Auth.user?.stallName || "Banca com nome não cadastrado",
+      stallName: window.Auth.user?.stallName || "Banca com nome não cadastrado",
       name: offer.name.trim(),
       category: offer.category,
       unit: offer.unit || "unidade",
@@ -480,6 +518,7 @@ window.Backend = {
       image: storedImage.image,
       imagePath: storedImage.imagePath,
       location: normalizeOfferLocation(offer.location),
+      stallLocation: normalizeStallLocation(window.Auth.user?.stallLocation),
       active: true,
       createdAt: new Date().toISOString(),
     };
@@ -511,8 +550,7 @@ window.Backend = {
     cacheImageLocally(`offer-${offerId}`, storedImage.image);
     const updatedOffer = {
       ownerName: window.Auth.user?.name || user.displayName || "Comerciante",
-      stallName:
-        window.Auth.user?.stallName || "Banca com nome não cadastrado",
+      stallName: window.Auth.user?.stallName || "Banca com nome não cadastrado",
       name: offer.name.trim(),
       category: offer.category,
       unit: offer.unit || "unidade",
@@ -522,6 +560,7 @@ window.Backend = {
       image: storedImage.image,
       imagePath: storedImage.imagePath,
       location: normalizeOfferLocation(offer.location),
+      stallLocation: normalizeStallLocation(window.Auth.user?.stallLocation),
       updatedAt: new Date().toISOString(),
     };
     try {
@@ -542,15 +581,64 @@ window.Backend = {
     const snapshot = await getDocs(
       query(collection(db, "offers"), where("active", "==", true)),
     );
-    return snapshot.docs.map((offerDoc) => ({
+    const offers = snapshot.docs.map((offerDoc) => ({
       id: offerDoc.id,
       ...offerDoc.data(),
     }));
+    if (!offers.length) return offers;
+
+    try {
+      const marketSnapshot = await getDocs(collection(db, "markets"));
+      const marketsByOwner = new Map(
+        marketSnapshot.docs.map((marketDoc) => [
+          marketDoc.id,
+          marketDoc.data(),
+        ]),
+      );
+      return offers.map((offer) => ({
+        ...offer,
+        stallLocation: offerStallLocation(
+          marketsByOwner.get(offer.ownerUid),
+          offer.stallLocation,
+        ),
+      }));
+    } catch (error) {
+      console.warn(
+        "Não foi possível carregar a localização de algumas feiras:",
+        error,
+      );
+      return offers.map((offer) => ({
+        ...offer,
+        stallLocation: normalizeStallLocation(offer.stallLocation),
+      }));
+    }
   },
 
   getOffer: async (offerId) => {
     const snapshot = await getDoc(doc(db, "offers", offerId));
-    return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+    if (!snapshot.exists()) return null;
+    const offer = { id: snapshot.id, ...snapshot.data() };
+    try {
+      const marketSnapshot = offer.ownerUid
+        ? await getDoc(doc(db, "markets", offer.ownerUid))
+        : null;
+      return {
+        ...offer,
+        stallLocation: offerStallLocation(
+          marketSnapshot?.exists() ? marketSnapshot.data() : null,
+          offer.stallLocation,
+        ),
+      };
+    } catch (error) {
+      console.warn(
+        "Não foi possível carregar a localização da feira desta oferta:",
+        error,
+      );
+      return {
+        ...offer,
+        stallLocation: normalizeStallLocation(offer.stallLocation),
+      };
+    }
   },
 
   getMyOffers: async () => {
@@ -619,7 +707,7 @@ window.Backend = {
     const groups = new Map();
     for (const item of items) {
       if (!item.ownerUid || item.ownerUid === user.uid) {
-        throw new Error("Remova da cesta os produtos da sua própria conta.");
+        throw new Error("Remova do carrinho os produtos da sua própria conta.");
       }
       const group = groups.get(item.ownerUid) || [];
       group.push({
@@ -631,6 +719,7 @@ window.Backend = {
         image: item.image || null,
         location: item.location || null,
         stallName: item.stallName || "Banca com nome não cadastrado",
+        stallLocation: normalizeStallLocation(item.stallLocation),
       });
       groups.set(item.ownerUid, group);
     }
@@ -654,6 +743,8 @@ window.Backend = {
           "Banca com nome não cadastrado",
         marketLocation:
           orderItems.find((item) => item.location)?.location || null,
+        stallLocation:
+          orderItems.find((item) => item.stallLocation)?.stallLocation || null,
         items: orderItems,
         total,
         fulfillment,
@@ -855,7 +946,8 @@ window.Backend = {
 
     const orderRef = doc(db, "orders", normalizedOrderId);
     const orderSnapshot = await getDoc(orderRef);
-    if (!orderSnapshot.exists()) throw new Error("Este pedido não existe mais.");
+    if (!orderSnapshot.exists())
+      throw new Error("Este pedido não existe mais.");
     const order = orderSnapshot.data();
     if (order.merchantUid !== user.uid) {
       throw new Error("Você não pode responder a esta avaliação.");

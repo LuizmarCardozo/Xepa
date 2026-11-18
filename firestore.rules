@@ -14,7 +14,8 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(marketId))
           .data.type == 'comerciante'
         && request.resource.data.keys().hasOnly([
-          'stallName', 'city', 'state', 'image', 'updatedAt'
+          'stallName', 'marketName', 'city', 'state', 'reference', 'image',
+          'updatedAt'
         ])
         && request.resource.data.keys().hasAll([
           'stallName', 'city', 'state', 'image', 'updatedAt'
@@ -26,6 +27,12 @@ service cloud.firestore {
         && request.resource.data.city.size() <= 100
         && request.resource.data.state is string
         && request.resource.data.state.size() <= 100
+        && (!request.resource.data.keys().hasAny(['marketName'])
+          || (request.resource.data.marketName is string
+            && request.resource.data.marketName.size() <= 100))
+        && (!request.resource.data.keys().hasAny(['reference'])
+          || (request.resource.data.reference is string
+            && request.resource.data.reference.size() <= 200))
         && request.resource.data.image is string
         && request.resource.data.image.size() <= 2048
         && (request.resource.data.image == ''

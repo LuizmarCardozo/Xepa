@@ -1,22 +1,12 @@
 const Components = {
   bottomNav(active) {
-    if (window.Auth?.user?.type === "comerciante" && active === "carteira") {
-      return `
-        <nav class="bottom-nav wallet-nav" aria-label="Navegação principal">
-          <button class="nav-item" onclick="Router.go('home')"><img src="assets/nav-inicio.svg" alt=""><span>Início</span></button>
-          <button class="nav-item" onclick="Router.goOffers()"><img src="assets/nav-produtos.svg" alt=""><span>Produtos</span></button>
-          <button class="nav-item" onclick="Router.go('perfil')"><img src="assets/nav-banca.svg" alt=""><span>Banca</span></button>
-          <button class="nav-item active" onclick="Router.go('carteira')"><img src="assets/nav-xepapay.svg" alt=""><span>Xepa pay</span></button>
-        </nav>`;
-    }
-
     if (window.Auth?.user?.type === "comerciante") {
       const activeTab =
         active === "minhasOfertas" || active === "ofertas"
           ? "products"
           : active === "perfil"
             ? "stall"
-            : active === "carteira"
+            : active === "carteira" || active === "resgatar"
               ? "wallet"
               : "home";
       return `

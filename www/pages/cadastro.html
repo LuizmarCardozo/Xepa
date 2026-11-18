@@ -114,7 +114,7 @@
           Preencha seus dados para começar.
         </p>
 
-        <form id="cad-form">
+        <form id="cad-form" novalidate>
           <div class="input-group">
             <svg
               width="18"
@@ -135,9 +135,12 @@
               name="name"
               placeholder="Nome completo"
               autocomplete="name"
+              maxlength="100"
+              aria-describedby="name-feedback"
               required
             />
           </div>
+          <small class="input-feedback" id="name-feedback" data-feedback-for="name" role="status" aria-live="polite"></small>
 
           <div class="input-group">
             <svg
@@ -161,9 +164,12 @@
               name="email"
               placeholder="E-mail"
               autocomplete="email"
+              maxlength="254"
+              aria-describedby="email-feedback"
               required
             />
           </div>
+          <small class="input-feedback" id="email-feedback" data-feedback-for="email" role="status" aria-live="polite"></small>
 
           <div class="input-group">
             <svg
@@ -187,9 +193,11 @@
               placeholder="Telefone"
               inputmode="tel"
               autocomplete="off"
+              aria-describedby="document-feedback"
               required
             />
           </div>
+          <small class="input-feedback" id="document-feedback" data-feedback-for="document" role="status" aria-live="polite"></small>
 
           <div class="input-group">
             <svg
@@ -211,9 +219,13 @@
               name="password"
               placeholder="Crie uma senha"
               autocomplete="new-password"
+              minlength="6"
+              maxlength="128"
+              aria-describedby="password-feedback"
               required
             />
           </div>
+          <small class="input-feedback" id="password-feedback" data-feedback-for="password" role="status" aria-live="polite"></small>
 
           <div class="input-group">
             <svg
@@ -235,9 +247,13 @@
               name="password-confirm"
               placeholder="Confirme sua senha"
               autocomplete="new-password"
+              minlength="6"
+              maxlength="128"
+              aria-describedby="password-confirm-feedback"
               required
             />
           </div>
+          <small class="input-feedback" id="password-confirm-feedback" data-feedback-for="password-confirm" role="status" aria-live="polite"></small>
 
           <button
             type="submit"
@@ -301,16 +317,18 @@
                 <span class="seller-field-label">NOME COMPLETO <b>*</b></span>
                 <span class="seller-input-wrap">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="3.5"/><rect x="4" y="12" width="16" height="9" rx="3"/></svg>
-                  <input id="seller-full-name" name="seller-full-name" type="text" placeholder="Nome completo" autocomplete="name" required />
+                  <input id="seller-full-name" name="seller-full-name" type="text" placeholder="Nome completo" autocomplete="name" maxlength="100" aria-describedby="seller-full-name-feedback" required />
                 </span>
+                <small class="seller-field-feedback" id="seller-full-name-feedback" data-feedback-for="seller-full-name" role="status" aria-live="polite"></small>
               </label>
 
               <label class="seller-field" for="seller-responsible-cpf">
                 <span class="seller-field-label">CPF DO RESPONSÁVEL <b>*</b></span>
                 <span class="seller-input-wrap">
                   <svg class="seller-file-icon" viewBox="0 0 16 24" aria-hidden="true"><path d="M3 1h6l4 5v17H3z"/><path class="seller-file-lines" d="M8 2v5h4M5 11h6M5 14h6M5 17h4"/></svg>
-                  <input id="seller-responsible-cpf" name="seller-responsible-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required />
+                  <input id="seller-responsible-cpf" name="seller-responsible-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" aria-describedby="seller-responsible-cpf-feedback" required />
                 </span>
+                <small class="seller-field-feedback" id="seller-responsible-cpf-feedback" data-feedback-for="seller-responsible-cpf" role="status" aria-live="polite"></small>
               </label>
 
               <div class="seller-card-actions">
@@ -338,8 +356,9 @@
                 <span class="seller-field-label">NOME DA BANCA <b>*</b></span>
                 <span class="seller-input-wrap">
                   <svg class="seller-stall-icon" viewBox="0 0 24 28" aria-hidden="true"><path d="M6 3h12v6H6zM4 10h16v8H4zM8 10v8m4-8v8m4-8v8M3 18h18M5 19l14 8m0-8L5 27M3 11v8m18-8v8"/></svg>
-                  <input id="seller-stall-name" name="seller-stall-name" type="text" placeholder="Ex: Barraca do seu Zé" required />
+                  <input id="seller-stall-name" name="seller-stall-name" type="text" placeholder="Ex: Barraca do seu Zé" maxlength="80" aria-describedby="seller-stall-name-feedback" required />
                 </span>
+                <small class="seller-field-feedback" id="seller-stall-name-feedback" data-feedback-for="seller-stall-name" role="status" aria-live="polite"></small>
               </label>
 
               <label class="seller-field" for="seller-products">
@@ -356,6 +375,7 @@
                   </select>
                   <svg class="seller-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 9 8 6 8-6"/></svg>
                 </span>
+                <small class="seller-field-feedback" id="seller-products-feedback" data-feedback-for="seller-products" role="status" aria-live="polite"></small>
               </label>
 
               <div class="seller-card-actions">
@@ -382,7 +402,7 @@
               <label class="seller-field" for="seller-city">
                 <span class="seller-field-label">CIDADE / UF <b>*</b></span>
                 <span class="seller-input-wrap seller-select-wrap">
-                  <input id="seller-city" name="seller-city" type="text" placeholder="Selecione sua Cidade" autocomplete="address-level2" aria-autocomplete="list" aria-controls="seller-city-options" aria-describedby="seller-city-status" list="seller-city-options" required />
+                  <input id="seller-city" name="seller-market-location" type="text" placeholder="Selecione sua Cidade" autocomplete="off" autocorrect="off" spellcheck="false" aria-autocomplete="list" aria-controls="seller-city-options" aria-describedby="seller-city-status" list="seller-city-options" required />
                   <svg class="seller-select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 9 8 6 8-6"/></svg>
                 </span>
                 <datalist id="seller-city-options"></datalist>
@@ -393,16 +413,18 @@
                 <span class="seller-field-label">NOME DA FEIRA <b>*</b></span>
                 <span class="seller-input-wrap">
                   <svg class="seller-map-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 0 0-7-7Zm0 3.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z"/><path class="seller-map-base" d="M8 19c-5 0-5 3 4 3s9-3 4-3"/></svg>
-                  <input id="seller-market-name" name="seller-market-name" type="text" placeholder="Ex: Feira Permanente / Feira Verde" required />
+                  <input id="seller-market-name" name="seller-market-name" type="text" minlength="2" maxlength="100" placeholder="Ex: Feira Permanente / Feira Verde" aria-describedby="seller-market-name-feedback" required />
                 </span>
+                <small class="seller-field-feedback" id="seller-market-name-feedback" data-feedback-for="seller-market-name" role="status" aria-live="polite"></small>
               </label>
 
               <label class="seller-field" for="seller-reference">
                 <span class="seller-field-label">NÚMERO DA BANCA / PONTO DE REFERÊNCIA <small>(Opcional)</small></span>
                 <span class="seller-input-wrap">
                   <svg class="seller-pin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 2 7 7-3 2-3 6-3-3-8 8-2-2 8-8-3-3 6-3z"/></svg>
-                  <input id="seller-reference" name="seller-reference" type="text" placeholder="Ex: Banca Número 10 / Em frente a banca de peixes" />
+                  <input id="seller-reference" name="seller-reference" type="text" maxlength="200" placeholder="Ex: Banca Número 10 / Em frente a banca de peixes" aria-describedby="seller-reference-feedback" />
                 </span>
+                <small class="seller-field-feedback" id="seller-reference-feedback" data-feedback-for="seller-reference" role="status" aria-live="polite"></small>
               </label>
 
               <div class="seller-card-actions">
@@ -424,29 +446,32 @@
                 <small>Passo 4 de 4</small>
               </div>
               <h2 id="seller-step-4-title">Crie seu acesso</h2>
-              <p class="seller-card-description">Configure os dados de acesso para gerenciar sua banca,</p>
+              <p class="seller-card-description">Use um e-mail válido para acessar e gerenciar sua banca.</p>
 
               <label class="seller-field" for="seller-contact">
-                <span class="seller-field-label">E-MAIL OU TELEFONE</span>
+                <span class="seller-field-label">E-MAIL DE ACESSO <b>*</b></span>
                 <span class="seller-input-wrap">
-                  <input id="seller-contact" name="seller-contact" type="text" inputmode="email" autocomplete="email" placeholder="Ex:joão@gmail.com ou 6199887-4545" required />
+                  <input id="seller-contact" name="seller-contact" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="Ex: joao@gmail.com" aria-describedby="seller-contact-feedback" required />
                 </span>
+                <small class="seller-field-feedback" id="seller-contact-feedback" data-feedback-for="seller-contact" role="status" aria-live="polite"></small>
               </label>
 
               <label class="seller-field" for="seller-password">
                 <span class="seller-field-label">CRIE SUA SENHA <b>*</b></span>
                 <span class="seller-input-wrap seller-password-wrap">
-                  <input id="seller-password" name="seller-password" type="password" autocomplete="new-password" placeholder="*********" minlength="6" required />
+                  <input id="seller-password" name="seller-password" type="password" autocomplete="new-password" placeholder="*********" minlength="6" maxlength="128" aria-describedby="seller-password-feedback" required />
                   <button class="seller-password-toggle" type="button" aria-label="Mostrar senha" data-password-target="seller-password"><svg viewBox="0 0 24 12" aria-hidden="true"><path d="M2 6s4-4 10-4 10 4 10 4-4 4-10 4S2 6 2 6Z"/><circle cx="12" cy="6" r="2.5"/></svg></button>
                 </span>
+                <small class="seller-field-feedback" id="seller-password-feedback" data-feedback-for="seller-password" role="status" aria-live="polite"></small>
               </label>
 
               <label class="seller-field" for="seller-password-confirm">
                 <span class="seller-field-label">CONFIRME SUA SENHA <b>*</b></span>
                 <span class="seller-input-wrap seller-password-wrap">
-                  <input id="seller-password-confirm" name="seller-password-confirm" type="password" autocomplete="new-password" placeholder="*********" minlength="6" required />
+                  <input id="seller-password-confirm" name="seller-password-confirm" type="password" autocomplete="new-password" placeholder="*********" minlength="6" maxlength="128" aria-describedby="seller-password-confirm-feedback" required />
                   <button class="seller-password-toggle" type="button" aria-label="Mostrar senha" data-password-target="seller-password-confirm"><svg viewBox="0 0 24 12" aria-hidden="true"><path d="M2 6s4-4 10-4 10 4 10 4-4 4-10 4S2 6 2 6Z"/><circle cx="12" cy="6" r="2.5"/></svg></button>
                 </span>
+                <small class="seller-field-feedback" id="seller-password-confirm-feedback" data-feedback-for="seller-password-confirm" role="status" aria-live="polite"></small>
               </label>
 
               <div class="seller-card-actions seller-final-actions">

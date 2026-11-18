@@ -95,6 +95,19 @@ window.OfertasPage = async function () {
       `${offer.desc || "Produto fresco à venda."}${distanceLabel}`,
     );
     const seller = offer.ownerName ? ` · ${offersEscapeHtml(offer.ownerName)}` : "";
+    const stallLocation = offer.stallLocation || {};
+    const city = [stallLocation.city, stallLocation.state]
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+      .join(", ");
+    const marketLocation = [
+      stallLocation.marketName,
+      city,
+      stallLocation.reference,
+    ]
+      .filter((value) => String(value || "").trim())
+      .map(offersEscapeHtml)
+      .join(" · ");
     const hasOldPrice =
       offer.oldPrice !== null && offer.oldPrice !== undefined && offer.oldPrice !== "";
     const oldPriceNumber = hasOldPrice ? Number(offer.oldPrice) : NaN;
@@ -107,6 +120,7 @@ window.OfertasPage = async function () {
         <div class="product-info">
           <h4 class="product-name">${name}</h4>
           <p class="product-desc">${description}${seller}</p>
+          ${marketLocation ? `<p class="product-market-location">${marketLocation}</p>` : ""}
           <div class="product-bottom">
             <div class="price-container">
               ${oldPrice}

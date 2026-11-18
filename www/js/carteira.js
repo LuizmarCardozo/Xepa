@@ -4,7 +4,7 @@ window.CarteiraPage = function () {
   const row = (icon, label, amount, time) => `<div class="wallet-transaction"><span class="wallet-transaction-icon">${icon}</span><span class="wallet-transaction-label">${label}<small>${time}</small></span><strong>R$${amount}</strong><span class="wallet-arrow"></span></div>`;
   return `<main class="seller-account seller-wallet">
     <header class="seller-wallet-header"><div class="seller-wallet-logo"><img src="assets/xepa-pay-logo.png" alt="Xepa"><small>pay</small></div><div class="seller-wallet-owner"><img id="wallet-owner-image" src="assets/banca-figma.png" alt="Foto da banca"><strong id="wallet-owner">Banca com nome não cadastrado</strong></div></header>
-    <section class="seller-balance"><p>Saldo Disponível</p><strong>R$ 1.000.00</strong><button type="button" disabled>Resgatar</button></section>
+    <section class="seller-balance"><p>Saldo Disponível</p><strong>R$ 1.000.00</strong><button id="wallet-withdraw" type="button">Resgatar</button></section>
     <div class="seller-activity-title"><h1>Suas ultimas atividades</h1><span>Ver mais</span></div>
     <section class="seller-activity" aria-label="Exemplos de movimentações"><div class="wallet-day">Hoje</div>
       ${row(pix,'Pix recebido','54,00','15:12')}${row(pix,'Pix recebido','32,87','15:08')}${row(card,'Cartão/Debito','68,22','15:02')}
@@ -22,4 +22,7 @@ window.CarteiraPageInit = function () {
   if (ownerImage && window.Auth?.user?.stallImage) {
     ownerImage.src = window.Auth.user.stallImage;
   }
+  document
+    .getElementById("wallet-withdraw")
+    ?.addEventListener("click", () => Router.go("resgatar"));
 };

@@ -191,6 +191,21 @@ function orderMarketLocation(order) {
   return { latitude, longitude };
 }
 
+function orderStallLocation(order) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  const location =
+    order?.stallLocation ||
+    items.find((item) => item?.stallLocation)?.stallLocation;
+  if (!location || typeof location !== "object") return null;
+  const normalized = {
+    marketName: String(location.marketName || "").trim(),
+    city: String(location.city || "").trim(),
+    state: String(location.state || "").trim(),
+    reference: String(location.reference || "").trim(),
+  };
+  return Object.values(normalized).some(Boolean) ? normalized : null;
+}
+
 function renderOrderTracking(order) {
   const status = orderStatus(order);
   if (status === "cancelled" || status === "rejected") {
@@ -265,9 +280,24 @@ function renderOrderDetails(
 ) {
   const items = Array.isArray(order.items) ? order.items : [];
   const location = orderMarketLocation(order);
+  const stallLocation = orderStallLocation(order);
+  const city = [stallLocation?.city, stallLocation?.state]
+    .filter(Boolean)
+    .join(", ");
+  const stallLocationHtml = stallLocation
+    ? [
+        stallLocation.marketName
+          ? `<p><strong>Feira:</strong> ${escapeOrderHtml(stallLocation.marketName)}</p>`
+          : "",
+        city ? `<p><strong>Cidade / UF:</strong> ${escapeOrderHtml(city)}</p>` : "",
+        stallLocation.reference
+          ? `<p><strong>Banca / referência:</strong> ${escapeOrderHtml(stallLocation.reference)}</p>`
+          : "",
+      ].join("")
+    : "";
   const locationHtml = location
     ? `<a href="https://www.google.com/maps?q=${location.latitude},${location.longitude}" target="_blank" rel="noopener noreferrer">Ver localização da feira no mapa</a>`
-    : '<span class="market-location-unavailable">Localização da feira não cadastrada pelo vendedor</span>';
+    : `<span class="market-location-unavailable">${stallLocation ? "Ponto exato da feira não cadastrado no mapa" : "Localização da feira não cadastrada pelo vendedor"}</span>`;
   const deliveryDetails =
     order.fulfillment === "delivery" && order.address
       ? `<p><strong>Endereço combinado:</strong> ${escapeOrderHtml(order.address)}</p>`
@@ -292,6 +322,7 @@ function renderOrderDetails(
       <section class="pedido-detail-section">
         <h5>Feira e vendedor</h5>
         <p><strong>${escapeOrderHtml(fairSellerName)}</strong></p>
+        ${stallLocationHtml}
         ${locationHtml}
       </section>
       <section class="pedido-detail-section">
@@ -372,9 +403,23 @@ function renderOrderCard(order, role, userId) {
       ? `<div class="pedido-actions"><button class="btn-outline" type="button" data-order-id="${escapeOrderHtml(order.id)}" data-order-status="cancelled">Cancelar pedido</button></div>`
       : "";
   const marketLocation = orderMarketLocation(order);
+  const stallLocation = orderStallLocation(order);
+  const city = [stallLocation?.city, stallLocation?.state]
+    .filter(Boolean)
+    .join(", ");
+  const textualLocation = [
+    stallLocation?.marketName,
+    city,
+    stallLocation?.reference,
+  ]
+    .filter(Boolean)
+    .map(escapeOrderHtml)
+    .join(" · ");
   const marketSubtitle = marketLocation
-    ? `<a class="market-map-link" href="https://www.google.com/maps?q=${marketLocation.latitude},${marketLocation.longitude}" target="_blank" rel="noopener noreferrer">Ver ponto da feira no mapa</a>`
-    : '<span class="market-location-unavailable">Localização da feira não cadastrada</span>';
+    ? `<a class="market-map-link" href="https://www.google.com/maps?q=${marketLocation.latitude},${marketLocation.longitude}" target="_blank" rel="noopener noreferrer">Ver ponto da feira no mapa</a>${textualLocation ? `<span> · ${textualLocation}</span>` : ""}`
+    : textualLocation
+      ? `<span>${textualLocation}</span>`
+      : '<span class="market-location-unavailable">Localização da feira não cadastrada</span>';
   const cardHeader = `<header class="pedido-header">
     <div class="shop-info">
       <div class="shop-icon" aria-hidden="true">${isReceived

@@ -648,36 +648,6 @@
   white-space: nowrap;
 }
 
-.merchant-products-page + .bottom-nav.wallet-nav {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: min(100%, 520px);
-  height: 60px;
-  margin: 0 auto;
-  padding: 3px 8px;
-  transform: none;
-  border-top: 1px solid #e5e9e4;
-  border-radius: 0;
-  box-shadow: 0 -2px 6px rgb(0 0 0 / 8%);
-}
-
-.merchant-products-page + .bottom-nav.wallet-nav .nav-item,
-.merchant-products-page + .bottom-nav.wallet-nav .nav-item.active {
-  flex: 1;
-  border-radius: 0;
-  background: transparent;
-}
-
-.merchant-products-page + .bottom-nav.wallet-nav .nav-item img {
-  width: 23px;
-  height: 23px;
-}
-
-.merchant-products-page + .bottom-nav.wallet-nav .nav-item img[src$="nav-produtos.svg"] {
-  width: 27px;
-}
-
 .merchant-products-page .merchant-offer-actions button:focus-visible,
 .merchant-store-shortcut:focus-visible {
   outline: 3px solid rgb(33 150 83 / 28%);

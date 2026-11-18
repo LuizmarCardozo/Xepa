@@ -272,6 +272,14 @@ body {
   align-items: center;
   gap: 3px;
 }
+.market-info .market-reference {
+  display: block;
+  margin: 0;
+  line-height: 1.4;
+}
+.market-reference strong {
+  color: #555;
+}
 .rating {
   display: flex;
   align-items: center;
