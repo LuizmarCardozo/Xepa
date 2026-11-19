@@ -429,9 +429,9 @@ body.auth-mode #app {
 .btn-google {
   width: 100%;
   height: 44px;
-  background: #edf5e1;
+  background: #fff;
   color: #333;
-  border: none;
+  border: 1px solid #dadce0;
   border-radius: 12px;
   font-size: 14px;
   font-weight: 800;
@@ -440,6 +440,17 @@ body.auth-mode #app {
   justify-content: center;
   gap: 10px;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.btn-google:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-color: #c0c4c8;
+}
+
+.btn-google:active {
+  background: #f8f9fa;
 }
 
 .switch-auth-link {

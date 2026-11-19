@@ -137,6 +137,7 @@ function attachLiveValidation(input, feedback, validator) {
 
 window.CadastroPage = function () {
   let selectedType = "cliente";
+  let googleUser = null;
 
   const options = document.querySelectorAll(".type-card");
   const step1 = document.getElementById("step-1");
@@ -453,6 +454,135 @@ window.CadastroPage = function () {
     sellerPasswordConfirmValidation.refresh(),
   );
 
+  const applyGoogleAccount = (user, type) => {
+    googleUser = user;
+    selectedType = type;
+    const name = user.displayName || user.name || "";
+    const email = user.email || "";
+
+    if (type === "cliente") {
+      if (buyerNameInput) {
+        buyerNameInput.value = name;
+        buyerNameInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      if (buyerEmailInput) {
+        buyerEmailInput.value = email;
+        buyerEmailInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      buyerPasswordInput.closest(".input-group")?.remove();
+      buyerPasswordConfirmInput.closest(".input-group")?.remove();
+      document
+        .getElementById("password-feedback")
+        ?.remove();
+      document
+        .getElementById("password-confirm-feedback")
+        ?.remove();
+    } else {
+      if (sellerFullNameInput) {
+        sellerFullNameInput.value = name;
+        sellerFullNameInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      if (sellerContactInput) {
+        sellerContactInput.value = email;
+        sellerContactInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      sellerPasswordInput.closest(".seller-field")?.remove();
+      sellerPasswordConfirmInput.closest(".seller-field")?.remove();
+    }
+  };
+
+  const pendingGoogleType = sessionStorage.getItem(
+    "xepa-google-registration-type",
+  );
+  
+  // Wait for auth to be ready before checking for pending Google registration
+  const initGoogleRegistration = async () => {
+    if (!pendingGoogleType) return;
+    
+    try {
+      await window.Backend.ready(); // Wait for auth state to be fully restored
+      if (window.Auth?.user) {
+        applyGoogleAccount(window.Auth.user, pendingGoogleType);
+        options.forEach((option) => {
+          option.setAttribute(
+            "aria-pressed",
+            String(option.dataset.type === pendingGoogleType),
+          );
+        });
+        appContainer?.classList.toggle(
+          "cadastro-vendedor",
+          pendingGoogleType === "comerciante",
+        );
+        appContainer?.classList.toggle(
+          "cadastro-comprador",
+          pendingGoogleType === "cliente",
+        );
+        if (step1) step1.style.display = "none";
+        if (pendingGoogleType === "comerciante") {
+          if (step2) step2.style.display = "none";
+          if (sellerRegistration) sellerRegistration.hidden = false;
+          showSellerStep(1);
+        } else {
+          if (sellerRegistration) sellerRegistration.hidden = true;
+          if (step2) step2.style.display = "flex";
+          if (formSubtitle) {
+            formSubtitle.textContent =
+              "Conta Google conectada. Complete seu telefone.";
+          }
+          updateDocumentField();
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao restaurar registro Google:", error);
+    }
+  };
+  
+  initGoogleRegistration();
+
+  document
+    .getElementById("cadastro-google")
+    ?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "Conectando com Google...";
+      try {
+        const user = await window.Backend.registerWithGoogle("cliente");
+        applyGoogleAccount(user, "cliente");
+        button.innerHTML = "✓ Conta Google conectada";
+      } catch (error) {
+        console.error(error);
+        button.disabled = false;
+        button.innerHTML = "Criar conta com Google";
+        alert(
+          error.code === "auth/operation-not-allowed"
+            ? "Ative o provedor Google no Firebase Authentication."
+            : "Não foi possível conectar com o Google. Tente novamente.",
+        );
+      }
+    });
+
+  document
+    .getElementById("seller-cadastro-google")
+    ?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "Conectando com Google...";
+      try {
+        const user = await window.Backend.registerWithGoogle("comerciante");
+        applyGoogleAccount(user, "comerciante");
+        button.innerHTML = "✓ Conta Google conectada";
+      } catch (error) {
+        console.error(error);
+        button.disabled = false;
+        button.innerHTML = "Criar conta com Google";
+        alert(
+          error.code === "auth/operation-not-allowed"
+            ? "Ative o provedor Google no Firebase Authentication."
+            : "Não foi possível conectar com o Google. Tente novamente.",
+        );
+      }
+    });
+
   options.forEach((card) => {
     card.addEventListener("click", function () {
       selectedType = this.dataset.type;
@@ -546,6 +676,10 @@ window.CadastroPage = function () {
 
       const sellerFields = Array.from(
         sellerForm.querySelectorAll("input, select"),
+      ).filter(
+        (field) =>
+          !googleUser ||
+          !["seller-password", "seller-password-confirm"].includes(field.id),
       );
       const results = sellerFields.map((field) => ({
         field,
@@ -586,15 +720,31 @@ window.CadastroPage = function () {
         if (!window.Backend || !window.Backend.register) {
           throw new Error("Backend não inicializado");
         }
-        await window.Backend.register(
-          name,
-          contact,
-          password,
-          "comerciante",
-          cpf,
-          stallName,
-          stallLocation,
-        );
+        if (googleUser) {
+          await window.Backend.updateProfile({
+            name,
+            email: contact,
+            document: cpf,
+            type: "comerciante",
+            stallName,
+            stallLocation,
+          });
+          await window.Backend.updateSellerProfile({
+            stallName,
+            stallLocation,
+          });
+        } else {
+          await window.Backend.register(
+            name,
+            contact,
+            password,
+            "comerciante",
+            cpf,
+            stallName,
+            stallLocation,
+          );
+        }
+        sessionStorage.removeItem("xepa-google-registration-type");
         Router.go("home");
       } catch (error) {
         console.error(error);
@@ -622,8 +772,7 @@ window.CadastroPage = function () {
         buyerNameInput,
         buyerEmailInput,
         documentInput,
-        buyerPasswordInput,
-        buyerPasswordConfirmInput,
+        ...(googleUser ? [] : [buyerPasswordInput, buyerPasswordConfirmInput]),
       ];
       const results = buyerFields.map((field) => ({
         field,
@@ -638,7 +787,7 @@ window.CadastroPage = function () {
       const name = buyerNameInput.value.trim();
       const email = buyerEmailInput.value.trim();
       const digits = documentInput.value.replace(/\D/g, "");
-      const password = buyerPasswordInput.value;
+      const password = buyerPasswordInput?.value || "";
 
       const button = form.querySelector(".btn-primary");
       const originalContent = button?.innerHTML;
@@ -651,13 +800,23 @@ window.CadastroPage = function () {
         if (!window.Backend || !window.Backend.register) {
           throw new Error("Backend não inicializado");
         }
-        await window.Backend.register(
-          name,
-          email,
-          password,
-          selectedType,
-          digits,
-        );
+        if (googleUser) {
+          await window.Backend.updateProfile({
+            name,
+            email,
+            document: digits,
+            type: "cliente",
+          });
+        } else {
+          await window.Backend.register(
+            name,
+            email,
+            password,
+            selectedType,
+            digits,
+          );
+        }
+        sessionStorage.removeItem("xepa-google-registration-type");
         Router.go("home");
       } catch (error) {
         console.error(error);

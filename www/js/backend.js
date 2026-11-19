@@ -58,12 +58,17 @@ window.Backend = {};
 
 async function ensureGoogleProfile(user) {
   const existingProfile = await readProfile(user);
-  if (existingProfile.type) return;
+  const registrationType =
+    sessionStorage.getItem("xepa-google-registration-type") || "cliente";
+  const hasRegistrationIntent =
+    sessionStorage.getItem("xepa-google-registration-type") !== null;
+  if (existingProfile.type && !hasRegistrationIntent) return;
 
   const profile = {
-    name: user.displayName || "Usuário",
+    ...existingProfile,
+    name: existingProfile.name || user.displayName || "Usuário",
     email: user.email || "",
-    type: "cliente",
+    type: registrationType,
   };
   try {
     await setDoc(doc(db, "users", user.uid), profile, { merge: true });
@@ -277,6 +282,11 @@ window.Backend = {
   },
 
   loginWithGoogle: async () => {
+    await signInWithRedirect(auth, new GoogleAuthProvider());
+  },
+
+  registerWithGoogle: async (type = "cliente") => {
+    sessionStorage.setItem("xepa-google-registration-type", type);
     await signInWithRedirect(auth, new GoogleAuthProvider());
   },
 

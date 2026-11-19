@@ -13,5 +13,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  Router.go(window.Auth?.user ? "home" : "login");
+  if (window.Auth?.user) {
+    Router.go(
+      sessionStorage.getItem("xepa-google-registration-type")
+        ? "cadastro"
+        : "home",
+    );
+  } else {
+    Router.go("login");
+  }
 });
