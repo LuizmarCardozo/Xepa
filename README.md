@@ -15,7 +15,7 @@ O projeto usa Firebase Authentication para autenticação e Cloud Firestore para
 ### Clientes
 
 - Cadastro como cliente ou comerciante e login com e-mail e senha pelo Firebase.
-- Login com Google e recuperação de senha, quando o provedor Google estiver habilitado no Firebase.
+- Cadastro e login com Google e recuperação de senha, quando o provedor Google estiver habilitado no Firebase.
 - Consulta de ofertas, com pesquisa por texto e filtros por categoria.
 - Filtro de ofertas próximas: depende da permissão de localização do navegador e de ofertas com localização cadastrada.
 - Visualização de detalhes de uma oferta e montagem de cesta, armazenada localmente no navegador.

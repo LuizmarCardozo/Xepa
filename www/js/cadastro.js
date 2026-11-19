@@ -281,6 +281,29 @@ window.CadastroPage = function () {
   const sellerPasswordConfirmInput = document.getElementById(
     "seller-password-confirm",
   );
+  const buyerGoogleButton = document.getElementById("buyer-google-signup");
+  const sellerGoogleButton = document.getElementById("seller-google-signup");
+
+  const getGoogleSignupErrorMessage = (error) => {
+    if (error.code === "auth/operation-not-allowed") {
+      return "Ative o provedor Google no Firebase Authentication para usar esta opção.";
+    }
+    if (error.code === "auth/unauthorized-domain") {
+      return "Adicione o domínio deste site aos domínios autorizados do Firebase Authentication.";
+    }
+    if (error.code === "auth/invalid-oauth-client-id") {
+      return "Confira a configuração do provedor Google no Firebase Authentication.";
+    }
+    if (error.code === "auth/account-type-mismatch") {
+      return error.message;
+    }
+    if (error.code === "auth/redirect-cancelled-by-user") {
+      return "O cadastro com Google foi cancelado.";
+    }
+    return error.code
+      ? `Não foi possível criar a conta com Google (${error.code}).`
+      : "Não foi possível criar a conta com Google. Tente novamente.";
+  };
 
   updateDocumentField();
 
@@ -479,7 +502,8 @@ window.CadastroPage = function () {
         if (formTitle) formTitle.textContent = "Criar conta";
         if (submitButton) submitButton.textContent = "Criar conta";
         if (formSubtitle) {
-          formSubtitle.textContent = "Você está se cadastrando como Comprador.";
+          formSubtitle.textContent =
+            "Informe seu telefone e senha ou use Google para preencher nome e e-mail.";
         }
         updateDocumentField();
       }
@@ -500,6 +524,30 @@ window.CadastroPage = function () {
     .getElementById("btn-back-step")
     ?.addEventListener("click", returnToAccountType);
 
+  buyerGoogleButton?.addEventListener("click", async () => {
+    if (!validateField(documentInput)) {
+      documentInput.focus();
+      return;
+    }
+
+    buyerGoogleButton.disabled = true;
+    try {
+      if (!window.Backend?.registerWithGoogle) {
+        throw new Error("Backend não inicializado");
+      }
+      const digits = documentInput.value.replace(/\D/g, "");
+      await window.Backend.registerWithGoogle({
+        type: "cliente",
+        document: digits,
+      });
+    } catch (error) {
+      console.error(error);
+      alert(getGoogleSignupErrorMessage(error));
+    } finally {
+      buyerGoogleButton.disabled = false;
+    }
+  });
+
   sellerScreens.forEach((screen) => {
     const continueButton = screen.querySelector("[data-seller-continue]");
     const previousButton = screen.querySelector("[data-seller-previous]");
@@ -509,7 +557,10 @@ window.CadastroPage = function () {
       const fields = Array.from(screen.querySelectorAll("input, select"));
       const results = fields.map((field) => ({
         field,
-        valid: validateField(field),
+        valid:
+          field === sellerFullNameInput && !field.value.trim()
+            ? true
+            : validateField(field),
       }));
       const invalidField = results.find((result) => !result.valid)?.field;
       if (invalidField) {
@@ -541,6 +592,52 @@ window.CadastroPage = function () {
   });
 
   if (sellerForm) {
+    sellerGoogleButton?.addEventListener("click", async () => {
+      const sellerFields = sellerScreens
+        .filter((screen) => Number(screen.dataset.sellerScreen) < 4)
+        .flatMap((screen) =>
+          Array.from(screen.querySelectorAll("input, select")),
+        );
+      const invalidField = sellerFields.find(
+        (field) =>
+          field !== sellerFullNameInput && !validateField(field),
+      );
+      if (invalidField) {
+        const invalidScreen = invalidField.closest("[data-seller-screen]");
+        if (invalidScreen) {
+          showSellerStep(Number(invalidScreen.dataset.sellerScreen));
+        }
+        invalidField.focus();
+        return;
+      }
+
+      sellerGoogleButton.disabled = true;
+      try {
+        if (!window.Backend?.registerWithGoogle) {
+          throw new Error("Backend não inicializado");
+        }
+        const selectedLocation = sellerLocations.get(
+          sellerCityInput.value.trim(),
+        );
+        const stallLocation = {
+          ...selectedLocation,
+          marketName: sellerMarketNameInput.value.trim(),
+          reference: sellerReferenceInput.value.trim(),
+        };
+        await window.Backend.registerWithGoogle({
+          type: "comerciante",
+          document: sellerCpfInput.value.replace(/\D/g, ""),
+          stallName: sellerStallNameInput.value.trim(),
+          stallLocation,
+        });
+      } catch (error) {
+        console.error(error);
+        alert(getGoogleSignupErrorMessage(error));
+      } finally {
+        sellerGoogleButton.disabled = false;
+      }
+    });
+
     sellerForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 

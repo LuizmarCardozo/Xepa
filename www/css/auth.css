@@ -442,6 +442,16 @@ body.auth-mode #app {
   cursor: pointer;
 }
 
+.cadastro-comprador #buyer-google-signup {
+  margin-top: 12px;
+}
+
+.btn-google:disabled,
+.seller-google-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .switch-auth-link {
   text-align: center;
   font-size: 13px;
@@ -877,5 +887,6 @@ body.auth-mode #app {
 .seller-back-solid img { filter: brightness(0) saturate(100%) invert(92%) sepia(8%) saturate(356%) hue-rotate(77deg) brightness(100%) contrast(88%); }
 .seller-card-actions .seller-finish-button { left: 173px; top: 3px; width: 196px; height: 36px; background: #fff; color: #2a9c37; font-size: 14px; font-weight: 600; gap: 12px; border-radius: 10px; box-shadow: 0 4px 4px rgb(0 0 0 / 25%); }
 .seller-finish-button .seller-action-icon { width: 24px; }
+.seller-card-actions .seller-google-button { left: 173px; top: 46px; width: 196px; height: 36px; border: 1px solid #d5d5d5; background: #fff; color: #333; font-size: 12px; font-weight: 700; gap: 7px; border-radius: 10px; box-shadow: 0 2px 4px rgb(0 0 0 / 16%); }
 .seller-card-actions button:disabled { cursor: wait; opacity: .65; }
 .seller-card-actions button:focus-visible, .seller-password-toggle:focus-visible { outline: 2px solid #155f2a; outline-offset: 3px; }

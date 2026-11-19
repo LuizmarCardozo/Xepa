@@ -47,6 +47,7 @@ const auth = initializeAuth(app, {
 });
 const db = getFirestore(app);
 const supabaseStorage = createSupabaseStorage(auth);
+const googleSignupSessionKey = "xepa-google-signup";
 let resolveAuthReady;
 const authReady = new Promise((resolve) => {
   resolveAuthReady = resolve;
@@ -75,9 +76,33 @@ async function ensureGoogleProfile(user) {
 
 const googleRedirectResult = getRedirectResult(auth)
   .then(async (result) => {
-    if (result?.user) await ensureGoogleProfile(result.user);
+    if (!result?.user) {
+      sessionStorage.removeItem(googleSignupSessionKey);
+      return;
+    }
+
+    const pendingSignup = sessionStorage.getItem(googleSignupSessionKey);
+    if (!pendingSignup) {
+      await ensureGoogleProfile(result.user);
+      return;
+    }
+
+    try {
+      await completeGoogleRegistration(
+        result.user,
+        JSON.parse(pendingSignup),
+      );
+    } catch (error) {
+      if (auth.currentUser?.uid === result.user.uid) {
+        await signOut(auth);
+      }
+      throw error;
+    } finally {
+      sessionStorage.removeItem(googleSignupSessionKey);
+    }
   })
   .catch((error) => {
+    sessionStorage.removeItem(googleSignupSessionKey);
     console.error("Não foi possível concluir o login com Google:", error);
   });
 
@@ -94,6 +119,54 @@ async function readProfile(user) {
     console.warn("Perfil carregado do armazenamento local:", error);
     return localProfile;
   }
+}
+
+async function completeGoogleRegistration(user, signup) {
+  const {
+    type,
+    document: documentNumber = "",
+    stallName = "",
+    stallLocation = null,
+  } = signup || {};
+  if (type !== "cliente" && type !== "comerciante") {
+    throw new Error("Selecione um perfil válido para criar sua conta.");
+  }
+  if (!user.email) {
+    throw new Error("Não foi possível obter o e-mail da conta Google.");
+  }
+
+  const existingProfile = await readProfile(user);
+  if (existingProfile.type && existingProfile.type !== type) {
+    const error = new Error(
+      "Esta conta Google já está cadastrada com outro perfil.",
+    );
+    error.code = "auth/account-type-mismatch";
+    throw error;
+  }
+
+  const profile = {
+    name: user.displayName || user.email.split("@")[0],
+    email: user.email,
+    type,
+    document: documentNumber,
+    ...(type === "comerciante"
+      ? {
+          stallName: String(stallName).trim(),
+          ...(stallLocation
+            ? {
+                stallLocation: normalizeStallLocation(stallLocation),
+              }
+            : {}),
+        }
+      : {}),
+  };
+
+  try {
+    await setDoc(doc(db, "users", user.uid), profile, { merge: true });
+  } catch (error) {
+    console.warn("Perfil mantido no armazenamento local:", error);
+  }
+  localStorage.setItem(`xepa-profile-${user.uid}`, JSON.stringify(profile));
 }
 
 async function syncPublicMarketEntry(userId, profile) {
@@ -278,6 +351,36 @@ window.Backend = {
 
   loginWithGoogle: async () => {
     await signInWithRedirect(auth, new GoogleAuthProvider());
+  },
+
+  registerWithGoogle: async ({
+    type,
+    document: documentNumber = "",
+    stallName = "",
+    stallLocation = null,
+  }) => {
+    if (type !== "cliente" && type !== "comerciante") {
+      throw new Error("Selecione um perfil válido para criar sua conta.");
+    }
+
+    const signup = {
+      type,
+      document: documentNumber,
+      ...(type === "comerciante"
+        ? {
+            stallName: String(stallName).trim(),
+            stallLocation,
+          }
+        : {}),
+    };
+
+    sessionStorage.setItem(googleSignupSessionKey, JSON.stringify(signup));
+    try {
+      await signInWithRedirect(auth, new GoogleAuthProvider());
+    } catch (error) {
+      sessionStorage.removeItem(googleSignupSessionKey);
+      throw error;
+    }
   },
 
   resetPassword: (email) => sendPasswordResetEmail(auth, email.trim()),
