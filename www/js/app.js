@@ -5,7 +5,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       await Promise.race([
         backendReady(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Tempo esgotado ao conectar ao Firebase.")), 10000),
+          setTimeout(
+            () => reject(new Error("Tempo esgotado ao conectar ao Firebase.")),
+            10000,
+          ),
         ),
       ]);
     } catch (error) {
@@ -14,11 +17,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (window.Auth?.user) {
-    Router.go(
-      sessionStorage.getItem("xepa-google-registration-type")
-        ? "cadastro"
-        : "home",
-    );
+    // Vendedor que voltou do Google no passo 1: falta CPF, banca e localização.
+    Router.go(window.Auth.user.needsCompletion ? "cadastro" : "home");
   } else {
     Router.go("login");
   }

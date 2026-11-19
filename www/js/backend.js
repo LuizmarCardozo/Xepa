@@ -59,17 +59,13 @@ window.Backend = {};
 
 async function ensureGoogleProfile(user) {
   const existingProfile = await readProfile(user);
-  const registrationType =
-    sessionStorage.getItem("xepa-google-registration-type") || "cliente";
-  const hasRegistrationIntent =
-    sessionStorage.getItem("xepa-google-registration-type") !== null;
-  if (existingProfile.type && !hasRegistrationIntent) return;
+  if (existingProfile.type) return;
 
   const profile = {
     ...existingProfile,
     name: existingProfile.name || user.displayName || "Usuário",
     email: user.email || "",
-    type: registrationType,
+    type: "cliente",
   };
   try {
     await setDoc(doc(db, "users", user.uid), profile, { merge: true });
@@ -93,10 +89,7 @@ const googleRedirectResult = getRedirectResult(auth)
     }
 
     try {
-      await completeGoogleRegistration(
-        result.user,
-        JSON.parse(pendingSignup),
-      );
+      await completeGoogleRegistration(result.user, JSON.parse(pendingSignup));
     } catch (error) {
       if (auth.currentUser?.uid === result.user.uid) {
         await signOut(auth);
@@ -149,19 +142,20 @@ async function completeGoogleRegistration(user, signup) {
     throw error;
   }
 
+  // Só grava o que veio preenchido: no cadastro rápido com Google (passo 1)
+  // CPF, banca e localização ainda não existem e serão pedidos depois.
+  // Assim, uma conta já completa nunca é sobrescrita com valores vazios.
+  const trimmedStallName = String(stallName).trim();
+  const normalizedLocation = normalizeStallLocation(stallLocation);
   const profile = {
-    name: user.displayName || user.email.split("@")[0],
+    name: existingProfile.name || user.displayName || user.email.split("@")[0],
     email: user.email,
     type,
-    document: documentNumber,
+    ...(documentNumber ? { document: documentNumber } : {}),
     ...(type === "comerciante"
       ? {
-          stallName: String(stallName).trim(),
-          ...(stallLocation
-            ? {
-                stallLocation: normalizeStallLocation(stallLocation),
-              }
-            : {}),
+          ...(trimmedStallName ? { stallName: trimmedStallName } : {}),
+          ...(normalizedLocation ? { stallLocation: normalizedLocation } : {}),
         }
       : {}),
   };
@@ -171,7 +165,10 @@ async function completeGoogleRegistration(user, signup) {
   } catch (error) {
     console.warn("Perfil mantido no armazenamento local:", error);
   }
-  localStorage.setItem(`xepa-profile-${user.uid}`, JSON.stringify(profile));
+  localStorage.setItem(
+    `xepa-profile-${user.uid}`,
+    JSON.stringify({ ...existingProfile, ...profile }),
+  );
 }
 
 async function syncPublicMarketEntry(userId, profile) {
@@ -221,8 +218,18 @@ async function syncUser(user, expectedVersion) {
     stallBanner: profile.stallBanner || "",
     stallBannerPath: profile.stallBannerPath || "",
   };
+  // Vendedor que entrou com Google no passo 1 ainda precisa informar
+  // CPF, nome da banca e localização.
+  appUser.needsCompletion =
+    appUser.type === "comerciante" &&
+    !(
+      appUser.document &&
+      appUser.stallName &&
+      appUser.stallLocation?.city &&
+      appUser.stallLocation?.state
+    );
   window.Auth.user = appUser;
-  if (appUser.type === "comerciante") {
+  if (appUser.type === "comerciante" && !appUser.needsCompletion) {
     try {
       await syncPublicMarketEntry(user.uid, appUser);
     } catch (error) {
@@ -386,6 +393,54 @@ window.Backend = {
       sessionStorage.removeItem(googleSignupSessionKey);
       throw error;
     }
+  },
+
+  // Conclui o cadastro de quem entrou com Google no passo 1: nome e e-mail
+  // já vieram da conta Google, aqui entram CPF, banca e localização.
+  completeSellerProfile: async ({
+    name = "",
+    document: documentNumber = "",
+    stallName = "",
+    stallLocation = null,
+  }) => {
+    const user = currentUser();
+    const existingProfile = await readProfile(user);
+    if (existingProfile.type !== "comerciante") {
+      throw new Error("Esta conta não é de vendedor.");
+    }
+
+    const normalizedLocation = normalizeStallLocation(stallLocation);
+    const cpf = String(documentNumber).replace(/\D/g, "");
+    const trimmedStallName = String(stallName).trim();
+    if (cpf.length !== 11 || !trimmedStallName || !normalizedLocation?.city) {
+      throw new Error("Preencha CPF, nome da banca e localização.");
+    }
+
+    const profile = {
+      name:
+        String(name).trim() ||
+        existingProfile.name ||
+        user.displayName ||
+        user.email?.split("@")[0] ||
+        "Usuário",
+      email: user.email || existingProfile.email || "",
+      type: "comerciante",
+      document: cpf,
+      stallName: trimmedStallName,
+      stallLocation: normalizedLocation,
+    };
+
+    try {
+      await setDoc(doc(db, "users", user.uid), profile, { merge: true });
+    } catch (error) {
+      console.warn("Perfil mantido no armazenamento local:", error);
+    }
+    localStorage.setItem(
+      `xepa-profile-${user.uid}`,
+      JSON.stringify({ ...existingProfile, ...profile }),
+    );
+    await syncUser(user);
+    return window.Auth.user;
   },
 
   resetPassword: (email) => sendPasswordResetEmail(auth, email.trim()),

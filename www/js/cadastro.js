@@ -1,10 +1,71 @@
 const VALID_BRAZILIAN_DDDS = new Set([
-  "11", "12", "13", "14", "15", "16", "17", "18", "19", "21", "22", "24",
-  "27", "28", "31", "32", "33", "34", "35", "37", "38", "41", "42", "43",
-  "44", "45", "46", "47", "48", "49", "51", "53", "54", "55", "61", "62",
-  "63", "64", "65", "66", "67", "68", "69", "71", "73", "74", "75", "77",
-  "79", "81", "82", "83", "84", "85", "86", "87", "88", "89", "91", "92",
-  "93", "94", "95", "96", "97", "98", "99",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "21",
+  "22",
+  "24",
+  "27",
+  "28",
+  "31",
+  "32",
+  "33",
+  "34",
+  "35",
+  "37",
+  "38",
+  "41",
+  "42",
+  "43",
+  "44",
+  "45",
+  "46",
+  "47",
+  "48",
+  "49",
+  "51",
+  "53",
+  "54",
+  "55",
+  "61",
+  "62",
+  "63",
+  "64",
+  "65",
+  "66",
+  "67",
+  "68",
+  "69",
+  "71",
+  "73",
+  "74",
+  "75",
+  "77",
+  "79",
+  "81",
+  "82",
+  "83",
+  "84",
+  "85",
+  "86",
+  "87",
+  "88",
+  "89",
+  "91",
+  "92",
+  "93",
+  "94",
+  "95",
+  "96",
+  "97",
+  "98",
+  "99",
 ]);
 
 function validateFullName(value) {
@@ -42,7 +103,8 @@ function validateEmail(value) {
 
 function validateBrazilianPhone(value) {
   const digits = String(value).replace(/\D/g, "");
-  if (!digits) return { valid: false, message: "Informe seu telefone com DDD." };
+  if (!digits)
+    return { valid: false, message: "Informe seu telefone com DDD." };
   if (digits.length !== 10 && digits.length !== 11) {
     return {
       valid: false,
@@ -137,7 +199,6 @@ function attachLiveValidation(input, feedback, validator) {
 
 window.CadastroPage = function () {
   let selectedType = "cliente";
-  let googleUser = null;
 
   const options = document.querySelectorAll(".type-card");
   const step1 = document.getElementById("step-1");
@@ -196,7 +257,9 @@ window.CadastroPage = function () {
       })
       .then((municipalities) => {
         if (!Array.isArray(municipalities)) {
-          throw new Error("A resposta do IBGE não contém uma lista de cidades.");
+          throw new Error(
+            "A resposta do IBGE não contém uma lista de cidades.",
+          );
         }
 
         const options = document.createDocumentFragment();
@@ -284,6 +347,12 @@ window.CadastroPage = function () {
   );
   const buyerGoogleButton = document.getElementById("buyer-google-signup");
   const sellerGoogleButton = document.getElementById("seller-google-signup");
+  const sellerGoogleStartButton = document.getElementById(
+    "seller-google-start",
+  );
+  // true quando o vendedor voltou do Google pelo passo 1 e só falta
+  // completar CPF, banca e localização (nome e e-mail já vieram do Google).
+  let sellerCompletionMode = false;
 
   const getGoogleSignupErrorMessage = (error) => {
     if (error.code === "auth/operation-not-allowed") {
@@ -477,135 +546,6 @@ window.CadastroPage = function () {
     sellerPasswordConfirmValidation.refresh(),
   );
 
-  const applyGoogleAccount = (user, type) => {
-    googleUser = user;
-    selectedType = type;
-    const name = user.displayName || user.name || "";
-    const email = user.email || "";
-
-    if (type === "cliente") {
-      if (buyerNameInput) {
-        buyerNameInput.value = name;
-        buyerNameInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      if (buyerEmailInput) {
-        buyerEmailInput.value = email;
-        buyerEmailInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      buyerPasswordInput.closest(".input-group")?.remove();
-      buyerPasswordConfirmInput.closest(".input-group")?.remove();
-      document
-        .getElementById("password-feedback")
-        ?.remove();
-      document
-        .getElementById("password-confirm-feedback")
-        ?.remove();
-    } else {
-      if (sellerFullNameInput) {
-        sellerFullNameInput.value = name;
-        sellerFullNameInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      if (sellerContactInput) {
-        sellerContactInput.value = email;
-        sellerContactInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      sellerPasswordInput.closest(".seller-field")?.remove();
-      sellerPasswordConfirmInput.closest(".seller-field")?.remove();
-    }
-  };
-
-  const pendingGoogleType = sessionStorage.getItem(
-    "xepa-google-registration-type",
-  );
-  
-  // Wait for auth to be ready before checking for pending Google registration
-  const initGoogleRegistration = async () => {
-    if (!pendingGoogleType) return;
-    
-    try {
-      await window.Backend.ready(); // Wait for auth state to be fully restored
-      if (window.Auth?.user) {
-        applyGoogleAccount(window.Auth.user, pendingGoogleType);
-        options.forEach((option) => {
-          option.setAttribute(
-            "aria-pressed",
-            String(option.dataset.type === pendingGoogleType),
-          );
-        });
-        appContainer?.classList.toggle(
-          "cadastro-vendedor",
-          pendingGoogleType === "comerciante",
-        );
-        appContainer?.classList.toggle(
-          "cadastro-comprador",
-          pendingGoogleType === "cliente",
-        );
-        if (step1) step1.style.display = "none";
-        if (pendingGoogleType === "comerciante") {
-          if (step2) step2.style.display = "none";
-          if (sellerRegistration) sellerRegistration.hidden = false;
-          showSellerStep(1);
-        } else {
-          if (sellerRegistration) sellerRegistration.hidden = true;
-          if (step2) step2.style.display = "flex";
-          if (formSubtitle) {
-            formSubtitle.textContent =
-              "Conta Google conectada. Complete seu telefone.";
-          }
-          updateDocumentField();
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao restaurar registro Google:", error);
-    }
-  };
-  
-  initGoogleRegistration();
-
-  document
-    .getElementById("cadastro-google")
-    ?.addEventListener("click", async (event) => {
-      const button = event.currentTarget;
-      button.disabled = true;
-      button.textContent = "Conectando com Google...";
-      try {
-        const user = await window.Backend.registerWithGoogle("cliente");
-        applyGoogleAccount(user, "cliente");
-        button.innerHTML = "✓ Conta Google conectada";
-      } catch (error) {
-        console.error(error);
-        button.disabled = false;
-        button.innerHTML = "Criar conta com Google";
-        alert(
-          error.code === "auth/operation-not-allowed"
-            ? "Ative o provedor Google no Firebase Authentication."
-            : "Não foi possível conectar com o Google. Tente novamente.",
-        );
-      }
-    });
-
-  document
-    .getElementById("seller-cadastro-google")
-    ?.addEventListener("click", async (event) => {
-      const button = event.currentTarget;
-      button.disabled = true;
-      button.textContent = "Conectando com Google...";
-      try {
-        const user = await window.Backend.registerWithGoogle("comerciante");
-        applyGoogleAccount(user, "comerciante");
-        button.innerHTML = "✓ Conta Google conectada";
-      } catch (error) {
-        console.error(error);
-        button.disabled = false;
-        button.innerHTML = "Criar conta com Google";
-        alert(
-          error.code === "auth/operation-not-allowed"
-            ? "Ative o provedor Google no Firebase Authentication."
-            : "Não foi possível conectar com o Google. Tente novamente.",
-        );
-      }
-    });
-
   options.forEach((card) => {
     card.addEventListener("click", function () {
       selectedType = this.dataset.type;
@@ -683,7 +623,7 @@ window.CadastroPage = function () {
     const previousButton = screen.querySelector("[data-seller-previous]");
     const backButton = screen.querySelector("[data-seller-back]");
 
-    continueButton?.addEventListener("click", () => {
+    continueButton?.addEventListener("click", async () => {
       const fields = Array.from(screen.querySelectorAll("input, select"));
       const results = fields.map((field) => ({
         field,
@@ -697,6 +637,10 @@ window.CadastroPage = function () {
         invalidField.focus();
         return;
       }
+      if (sellerCompletionMode && sellerStep === 3) {
+        await completeGoogleSeller(continueButton);
+        return;
+      }
       if (sellerStep < 4) showSellerStep(sellerStep + 1);
     });
 
@@ -704,7 +648,19 @@ window.CadastroPage = function () {
       if (sellerStep > 1) showSellerStep(sellerStep - 1);
     });
 
-    backButton?.addEventListener("click", returnToAccountType);
+    backButton?.addEventListener("click", async () => {
+      if (!sellerCompletionMode) {
+        returnToAccountType();
+        return;
+      }
+      // Entrou com a conta Google errada? Sai e volta para o login.
+      try {
+        await window.Backend?.logout?.();
+      } catch (error) {
+        console.error(error);
+      }
+      Router.go("login");
+    });
   });
 
   sellerCityInput?.addEventListener("focus", () => {
@@ -717,7 +673,10 @@ window.CadastroPage = function () {
       if (!input) return;
       const shouldShow = input.type === "password";
       input.type = shouldShow ? "text" : "password";
-      toggle.setAttribute("aria-label", shouldShow ? "Ocultar senha" : "Mostrar senha");
+      toggle.setAttribute(
+        "aria-label",
+        shouldShow ? "Ocultar senha" : "Mostrar senha",
+      );
     });
   });
 
@@ -729,8 +688,7 @@ window.CadastroPage = function () {
           Array.from(screen.querySelectorAll("input, select")),
         );
       const invalidField = sellerFields.find(
-        (field) =>
-          field !== sellerFullNameInput && !validateField(field),
+        (field) => field !== sellerFullNameInput && !validateField(field),
       );
       if (invalidField) {
         const invalidScreen = invalidField.closest("[data-seller-screen]");
@@ -771,12 +729,16 @@ window.CadastroPage = function () {
     sellerForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
+      if (sellerCompletionMode) {
+        sellerScreens
+          .find((screen) => Number(screen.dataset.sellerScreen) === sellerStep)
+          ?.querySelector("[data-seller-continue]")
+          ?.click();
+        return;
+      }
+
       const sellerFields = Array.from(
         sellerForm.querySelectorAll("input, select"),
-      ).filter(
-        (field) =>
-          !googleUser ||
-          !["seller-password", "seller-password-confirm"].includes(field.id),
       );
       const results = sellerFields.map((field) => ({
         field,
@@ -794,7 +756,9 @@ window.CadastroPage = function () {
 
       const name = sellerFullNameInput.value.trim();
       const stallName = sellerStallNameInput.value.trim();
-      const selectedLocation = sellerLocations.get(sellerCityInput.value.trim());
+      const selectedLocation = sellerLocations.get(
+        sellerCityInput.value.trim(),
+      );
       const marketName = sellerMarketNameInput.value.trim();
       const reference = sellerReferenceInput.value.trim();
       const cpf = sellerCpfInput.value.replace(/\D/g, "");
@@ -817,31 +781,15 @@ window.CadastroPage = function () {
         if (!window.Backend || !window.Backend.register) {
           throw new Error("Backend não inicializado");
         }
-        if (googleUser) {
-          await window.Backend.updateProfile({
-            name,
-            email: contact,
-            document: cpf,
-            type: "comerciante",
-            stallName,
-            stallLocation,
-          });
-          await window.Backend.updateSellerProfile({
-            stallName,
-            stallLocation,
-          });
-        } else {
-          await window.Backend.register(
-            name,
-            contact,
-            password,
-            "comerciante",
-            cpf,
-            stallName,
-            stallLocation,
-          );
-        }
-        sessionStorage.removeItem("xepa-google-registration-type");
+        await window.Backend.register(
+          name,
+          contact,
+          password,
+          "comerciante",
+          cpf,
+          stallName,
+          stallLocation,
+        );
         Router.go("home");
       } catch (error) {
         console.error(error);
@@ -860,6 +808,104 @@ window.CadastroPage = function () {
     });
   }
 
+  // Botão Google do passo 1: não exige nada preenchido. Nome e e-mail vêm
+  // da conta Google; o restante é pedido quando o usuário voltar do login.
+  sellerGoogleStartButton?.addEventListener("click", async () => {
+    sellerGoogleStartButton.disabled = true;
+    try {
+      if (!window.Backend?.registerWithGoogle) {
+        throw new Error("Backend não inicializado");
+      }
+      await window.Backend.registerWithGoogle({ type: "comerciante" });
+    } catch (error) {
+      console.error(error);
+      alert(getGoogleSignupErrorMessage(error));
+    } finally {
+      sellerGoogleStartButton.disabled = false;
+    }
+  });
+
+  async function completeGoogleSeller(button) {
+    const originalContent = button?.innerHTML;
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Concluindo...";
+    }
+    try {
+      if (!window.Backend?.completeSellerProfile) {
+        throw new Error("Backend não inicializado");
+      }
+      await window.Backend.completeSellerProfile({
+        name: sellerFullNameInput.value.trim(),
+        document: sellerCpfInput.value.replace(/\D/g, ""),
+        stallName: sellerStallNameInput.value.trim(),
+        stallLocation: {
+          ...sellerLocations.get(sellerCityInput.value.trim()),
+          marketName: sellerMarketNameInput.value.trim(),
+          reference: sellerReferenceInput.value.trim(),
+        },
+      });
+      Router.go("home");
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao concluir o cadastro. Tente novamente.");
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = originalContent;
+      }
+    }
+  }
+
+  const enterGoogleCompletionMode = (user) => {
+    sellerCompletionMode = true;
+    selectedType = "comerciante";
+    appContainer?.classList.add("cadastro-vendedor");
+    appContainer?.classList.remove("cadastro-comprador");
+    if (step1) step1.style.display = "none";
+    if (step2) step2.style.display = "none";
+    if (sellerRegistration) sellerRegistration.hidden = false;
+
+    // Nome já preenchido (continua editável); e-mail aparece na descrição.
+    if (sellerFullNameInput) {
+      sellerFullNameInput.value = user.name || "";
+      fieldValidations.get(sellerFullNameInput)?.refresh();
+    }
+    const description = document.querySelector(
+      ".seller-screen-1 .seller-card-description",
+    );
+    if (description && user.email) {
+      description.textContent = `Conectado como ${user.email}`;
+      description.title = user.email;
+      description.classList.add("is-google");
+    }
+    if (sellerGoogleStartButton) sellerGoogleStartButton.hidden = true;
+
+    // Sem etapa de senha: o fluxo termina no passo 3.
+    sellerScreens.forEach((screen) => {
+      const stepNumber = Number(screen.dataset.sellerScreen);
+      if (stepNumber > 3) return;
+      const track = screen.querySelector(".seller-progress-track");
+      track
+        ?.querySelector("span")
+        ?.style.setProperty("width", `${(stepNumber / 3) * 100}%`);
+      track?.setAttribute("aria-valuemax", "3");
+      track?.setAttribute("aria-label", `Etapa ${stepNumber} de 3`);
+      const label = screen.querySelector(".seller-card-progress small");
+      if (label) label.textContent = `Passo ${stepNumber} de 3`;
+    });
+    const lastStepLabel = sellerScreens
+      .find((screen) => Number(screen.dataset.sellerScreen) === 3)
+      ?.querySelector("[data-seller-continue] span");
+    if (lastStepLabel) lastStepLabel.textContent = "Concluir";
+
+    showSellerStep(1);
+  };
+
+  const pendingUser = window.Auth?.user;
+  if (pendingUser?.type === "comerciante" && pendingUser.needsCompletion) {
+    enterGoogleCompletionMode(pendingUser);
+  }
+
   const form = document.getElementById("cad-form");
   if (form) {
     form.addEventListener("submit", async (event) => {
@@ -869,7 +915,8 @@ window.CadastroPage = function () {
         buyerNameInput,
         buyerEmailInput,
         documentInput,
-        ...(googleUser ? [] : [buyerPasswordInput, buyerPasswordConfirmInput]),
+        buyerPasswordInput,
+        buyerPasswordConfirmInput,
       ];
       const results = buyerFields.map((field) => ({
         field,
@@ -884,7 +931,7 @@ window.CadastroPage = function () {
       const name = buyerNameInput.value.trim();
       const email = buyerEmailInput.value.trim();
       const digits = documentInput.value.replace(/\D/g, "");
-      const password = buyerPasswordInput?.value || "";
+      const password = buyerPasswordInput.value;
 
       const button = form.querySelector(".btn-primary");
       const originalContent = button?.innerHTML;
@@ -897,23 +944,13 @@ window.CadastroPage = function () {
         if (!window.Backend || !window.Backend.register) {
           throw new Error("Backend não inicializado");
         }
-        if (googleUser) {
-          await window.Backend.updateProfile({
-            name,
-            email,
-            document: digits,
-            type: "cliente",
-          });
-        } else {
-          await window.Backend.register(
-            name,
-            email,
-            password,
-            selectedType,
-            digits,
-          );
-        }
-        sessionStorage.removeItem("xepa-google-registration-type");
+        await window.Backend.register(
+          name,
+          email,
+          password,
+          selectedType,
+          digits,
+        );
         Router.go("home");
       } catch (error) {
         console.error(error);
@@ -942,7 +979,10 @@ window.CadastroPageInit = function () {
   // Preserve the Figma frame proportions on narrower phones. Short viewports
   // scroll the complete screen instead of squeezing the artwork and fields.
   const resize = () => {
-    registration.style.setProperty("--seller-scale", container.clientWidth / 430);
+    registration.style.setProperty(
+      "--seller-scale",
+      container.clientWidth / 430,
+    );
   };
   resize();
   const observer = new ResizeObserver(resize);
