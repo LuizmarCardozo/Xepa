@@ -49,6 +49,16 @@ const Router = {
     ]);
     if (!app) return;
 
+    // Wait for auth to be ready before checking user state
+    // This prevents redirect loops after Google OAuth redirect
+    if (window.Backend?.ready) {
+      try {
+        await window.Backend.ready();
+      } catch (error) {
+        console.warn("Auth ready check failed:", error);
+      }
+    }
+
     if (!publicRoutes.has(route) && !window.Auth?.user) {
       if (route !== "login") {
         return this.go(
