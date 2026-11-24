@@ -142,9 +142,12 @@
     display: flex !important;
     position: fixed !important;
     z-index: 900 !important;
-    bottom: calc(
-      8px + var(--xepa-system-bottom, 0px) + var(--xepa-keyboard-inset, 0px)
-    ) !important;
+    bottom: calc(8px + var(--xepa-system-bottom, 0px)) !important;
+    /* camada própria: o menu não treme nem desliza durante a rolagem */
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style;
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -261,7 +264,7 @@
 /* Sem rolagem "fantasma": o body e o #app tinham padding-bottom (80px + 90px)
    somado ao min-height: 100vh das telas, então toda tela rolava ~170px mesmo
    vazia. Agora a altura da tela é exatamente a área visível do WebView
-   (--xepa-app-height, medida em JS) e o espaço do menu fica dentro do .page. */
+   (100dvh) e o espaço do menu fica dentro do .page. */
 @media (max-width: 520px) {
   body:not(.auth-mode) {
     padding-bottom: 0 !important;
@@ -272,9 +275,8 @@
   body:not(.auth-mode) #app > main,
   body:not(.auth-mode) #app > .page {
     box-sizing: border-box;
-    min-height: calc(
-      var(--xepa-app-height, 100dvh) - var(--xepa-system-bottom, 0px)
-    ) !important;
+    min-height: calc(100vh - var(--xepa-system-bottom, 0px)) !important;
+    min-height: calc(100dvh - var(--xepa-system-bottom, 0px)) !important;
   }
   /* área escondida atrás da barra do sistema (WebView sem safe-area) */
   body:not(.auth-mode) #app::after {

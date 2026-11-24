@@ -789,6 +789,16 @@ window.HomePage = function () {
   });
 };
 
+window.HomePageInit = function () {
+  // Sininho de notificações (status dos pedidos) ao lado do carrinho.
+  const headerActions = document.querySelector("[data-home-header-actions]");
+  if (typeof window.mountNotificationBell === "function") {
+    const cleanup = window.mountNotificationBell(headerActions);
+    if (typeof cleanup === "function") return cleanup;
+  }
+  return null;
+};
+
 window.FeirasPageInit = function () {
   homeLoadMarkets(
     document.querySelector("[data-fairs-directory]"),

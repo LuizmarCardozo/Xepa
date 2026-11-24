@@ -77,25 +77,13 @@ function systemBottomInset() {
   return isAndroidWebView ? 44 : 0;
 }
 
+// Só atualiza a barra do sistema. NÃO acompanha a rolagem nem o teclado:
+// recalcular medidas a cada evento de scroll/resize do visualViewport fazia
+// o menu fixo "andar" (e as telas mudarem de altura) enquanto a página rolava.
+// A altura das telas agora usa 100dvh direto no CSS.
 function syncMobileNavigationViewport() {
-  const viewport = window.visualViewport;
   const root = document.documentElement;
-  // Se o WebView redimensiona o layout com o teclado, o inset é 0 (o menu já
-  // sobe junto); se só o visual viewport encolher, o inset empurra o menu.
-  const layoutHeight = root.clientHeight || window.innerHeight;
-  const inset = viewport
-    ? Math.max(
-        0,
-        Math.round(layoutHeight - viewport.height - viewport.offsetTop),
-      )
-    : 0;
-  root.style.setProperty("--xepa-keyboard-inset", `${inset}px`);
-  root.style.setProperty("--xepa-app-height", `${window.innerHeight}px`);
-  // com o teclado aberto o menu já fica acima dele: não soma a barra do sistema
-  root.style.setProperty(
-    "--xepa-system-bottom",
-    `${inset > 80 ? 0 : systemBottomInset()}px`,
-  );
+  root.style.setProperty("--xepa-system-bottom", `${systemBottomInset()}px`);
 }
 
 // ---- Menu persistente -------------------------------------------------
@@ -136,28 +124,10 @@ function startNavGuard() {
 if (document.body) startNavGuard();
 else document.addEventListener("DOMContentLoaded", startNavGuard);
 
-if (window.visualViewport) {
-  window.visualViewport.addEventListener(
-    "resize",
-    syncMobileNavigationViewport,
-  );
-  window.visualViewport.addEventListener(
-    "scroll",
-    syncMobileNavigationViewport,
-  );
-}
 window.addEventListener("resize", syncMobileNavigationViewport);
 window.addEventListener("orientationchange", () =>
   setTimeout(syncMobileNavigationViewport, 300),
 );
-// Teclado abrindo/fechando: a animação leva tempo, então reajusta algumas vezes.
-["focusin", "focusout"].forEach((evt) => {
-  document.addEventListener(evt, () => {
-    [0, 100, 300, 600].forEach((t) =>
-      setTimeout(syncMobileNavigationViewport, t),
-    );
-  });
-});
 syncMobileNavigationViewport();
 
 // ---- Esconde o menu inferior enquanto o teclado está aberto -----------

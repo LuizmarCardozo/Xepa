@@ -1105,10 +1105,13 @@ window.Backend = {
         .toLowerCase();
       if (currentStatus === normalizedStatus) return false;
 
-      transaction.update(orderRef, {
+      const update = {
         status: normalizedStatus,
         updatedAt: new Date().toISOString(),
-      });
+      };
+      if (normalizedStatus === "ready") update.separated = true;
+      if (normalizedStatus === "accepted") update.separated = false;
+      transaction.update(orderRef, update);
       return true;
     });
   },
@@ -1149,15 +1152,41 @@ window.Backend = {
   },
 
   updateOrderPreparation: async (orderId, separated) => {
-    currentUser();
+    const user = currentUser();
     const normalizedOrderId = String(orderId || "").trim();
     if (!normalizedOrderId) throw new Error("Pedido inválido.");
     if (typeof separated !== "boolean") {
       throw new Error("Informe se o pedido foi separado.");
     }
-    await updateDoc(doc(db, "orders", normalizedOrderId), {
-      separated,
-      updatedAt: new Date().toISOString(),
+    const orderRef = doc(db, "orders", normalizedOrderId);
+    return runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(orderRef);
+      if (!snapshot.exists()) throw new Error("Este pedido não existe mais.");
+
+      const order = snapshot.data();
+      if (order.merchantUid !== user.uid) {
+        throw new Error("Você não pode alterar este pedido.");
+      }
+      const currentStatus = String(order.status || "pending")
+        .trim()
+        .toLowerCase();
+      if (!["pending", "accepted", "ready"].includes(currentStatus)) {
+        throw new Error("Este pedido não pode mais ser alterado.");
+      }
+
+      // Separado => o status do pedido passa a "ready" (o cliente vê na hora).
+      // Desmarcou => volta para "accepted" (em preparação).
+      const nextStatus = separated
+        ? "ready"
+        : currentStatus === "ready"
+          ? "accepted"
+          : currentStatus;
+      transaction.update(orderRef, {
+        separated,
+        status: nextStatus,
+        updatedAt: new Date().toISOString(),
+      });
+      return nextStatus;
     });
   },
 

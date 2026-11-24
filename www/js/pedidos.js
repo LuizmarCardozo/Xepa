@@ -94,7 +94,7 @@ const ORDER_STATUS = {
   },
   accepted: { label: "Aceito", next: "ready", action: "Marcar como pronto" },
   ready: {
-    label: "Pronto para retirar",
+    label: "Pedido separado",
     next: "completed",
     action: "Concluir pedido",
   },
@@ -214,7 +214,7 @@ function renderOrderTracking(order) {
   const stages = [
     ["pending", "Pedido enviado"],
     ["accepted", "Confirmado pelo vendedor"],
-    ["ready", "Pronto para retirada/entrega"],
+    ["ready", "Pedido separado — pronto para retirada"],
     ["completed", "Concluído"],
   ];
   const currentStage =
@@ -544,7 +544,7 @@ function renderMerchantOrderDetail(order, userId) {
               <label class="merchant-order-separated">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20 6v5.3c0 5-3.4 8.5-8 10.2-4.6-1.7-8-5.2-8-10.2V6l8-3.5Z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></svg>
                 <span><strong>Pedido separado?</strong><small>Marque quando estiver separado</small></span>
-                <input type="checkbox" data-order-separated="${escapeOrderHtml(order.id)}"${order.separated ? " checked" : ""}>
+                <input type="checkbox" data-order-separated="${escapeOrderHtml(order.id)}"${order.separated || status === "ready" ? " checked" : ""}>
                 <span class="merchant-order-switch" aria-hidden="true"></span>
               </label>
               <button type="button" class="merchant-order-cancel" data-detail-status="cancelled">
