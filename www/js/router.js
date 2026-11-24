@@ -125,6 +125,11 @@ const Router = {
       activePageCleanup = null;
     }
 
+    // Ao trocar de tela, limpa estados de "tela cheia" que ficaram pendurados no
+    // body (ex.: voltar pelo botão do Android com o detalhe do pedido aberto).
+    // Eles escondem o menu e travam a rolagem; cada tela os liga de novo se precisar.
+    document.body.classList.remove("has-merchant-order-detail", "seller-image-editing");
+
     const keepScroll = options.silent ? window.scrollY : null;
     if (options.silent) {
       app.style.minHeight = `${app.offsetHeight}px`;

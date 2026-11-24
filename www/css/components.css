@@ -141,14 +141,21 @@
   body:not(.auth-mode) #nav-root .bottom-nav {
     display: flex !important;
     position: fixed !important;
-    z-index: 2147483647 !important;
+    z-index: 900 !important;
     bottom: calc(
-      8px + env(safe-area-inset-bottom, 0px) +
+      8px + var(--xepa-system-bottom, 0px) +
         var(--xepa-keyboard-inset, 0px)
     ) !important;
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+  }
+
+  /* Telas cheias (detalhe do pedido, editor de imagem) cobrem o menu em vez
+     de ficarem por baixo dele: o menu tem z-index 900 e essas telas 1000+. */
+  body.has-merchant-order-detail #nav-root .bottom-nav,
+  body.seller-image-editing #nav-root .bottom-nav {
+    display: none !important;
   }
 
   body.route-perfil:not(.merchant-mode) #nav-root .bottom-nav {
@@ -252,6 +259,32 @@
   font-weight: 800;
 }
 
+/* Sem rolagem "fantasma": o body e o #app tinham padding-bottom (80px + 90px)
+   somado ao min-height: 100vh das telas, então toda tela rolava ~170px mesmo
+   vazia. Agora a altura da tela é exatamente a área visível do WebView
+   (--xepa-app-height, medida em JS) e o espaço do menu fica dentro do .page. */
+@media (max-width: 520px) {
+  body:not(.auth-mode) {
+    padding-bottom: 0 !important;
+  }
+  body:not(.auth-mode) #app {
+    padding-bottom: 0 !important;
+  }
+  body:not(.auth-mode) #app > main,
+  body:not(.auth-mode) #app > .page {
+    box-sizing: border-box;
+    min-height: calc(
+      var(--xepa-app-height, 100dvh) - var(--xepa-system-bottom, 0px)
+    ) !important;
+  }
+  /* área escondida atrás da barra do sistema (WebView sem safe-area) */
+  body:not(.auth-mode) #app::after {
+    content: "";
+    display: block;
+    height: var(--xepa-system-bottom, 0px);
+  }
+}
+
 /* Puxar para atualizar */
 html,
 body {
@@ -294,4 +327,117 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Tela de pedido reservado */
+.order-success {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  padding: 24px 20px calc(24px + var(--xepa-system-bottom, 0px));
+  overflow-y: auto;
+  background: linear-gradient(180deg, #e6f4ea 0%, #f7faf8 55%);
+  animation: order-success-in 0.25s ease;
+}
+.order-success-card {
+  width: 100%;
+  max-width: 420px;
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+.order-success-check {
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 4px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #2a9c37;
+  box-shadow: 0 8px 22px rgba(42, 156, 55, 0.35);
+  animation: order-success-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.order-success-check svg {
+  width: 50px;
+  height: 50px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: order-success-draw 0.4s 0.25s ease forwards;
+}
+.order-success h1 {
+  margin: 0;
+  color: var(--verde-escuro, #08400b);
+  font-size: 26px;
+}
+.order-success-text {
+  margin: 0 0 6px;
+  color: #5b665c;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.order-success-summary {
+  margin: 0 0 8px;
+  padding: 6px 16px;
+  border: 1px solid #e4e8df;
+  border-radius: 16px;
+  background: #fff;
+  text-align: left;
+}
+.order-success-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef1ea;
+  font-size: 14px;
+}
+.order-success-summary div:last-child {
+  border-bottom: 0;
+}
+.order-success-summary dt {
+  color: #5b665c;
+}
+.order-success-summary dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+.order-success-total dd {
+  color: var(--verde-escuro, #08400b);
+  font-size: 18px;
+}
+@keyframes order-success-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes order-success-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+@keyframes order-success-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Elementos flutuantes que ficam logo acima do menu sobem junto com ele
+   quando o WebView esconde uma parte de baixo atrás da barra do Android. */
+.cart-added-toast {
+  bottom: calc(94px + var(--xepa-system-bottom, 0px)) !important;
+}
+.product-cart-summary {
+  bottom: calc(102px + var(--xepa-system-bottom, 0px)) !important;
+}
+.co-toast {
+  bottom: calc(90px + var(--xepa-system-bottom, 0px)) !important;
 }

@@ -51,21 +51,50 @@ const Components = {
 
 window.Components = Components;
 
+// Quanto da parte de baixo do WebView fica escondido atrás da barra do
+// sistema do Android (botões voltar/início). O Kodular não repassa o
+// safe-area para o WebView, então env(safe-area-inset-bottom) vem 0 e o menu
+// fixo cai atrás da barra. Se o app tiver esse problema e o valor real for
+// diferente, defina window.XEPA_BOTTOM_INSET (em px) no js/config.js.
+function readSafeAreaBottom() {
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;" +
+    "padding-bottom:env(safe-area-inset-bottom,0px)";
+  document.body.appendChild(probe);
+  const value = parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+  probe.remove();
+  return value;
+}
+
+function systemBottomInset() {
+  if (typeof window.XEPA_BOTTOM_INSET === "number") {
+    return Math.max(0, window.XEPA_BOTTOM_INSET);
+  }
+  const real = readSafeAreaBottom();
+  if (real > 0) return real;
+  const isAndroidWebView = /; wv\)/.test(navigator.userAgent);
+  return isAndroidWebView ? 44 : 0;
+}
+
 function syncMobileNavigationViewport() {
   const viewport = window.visualViewport;
+  const root = document.documentElement;
   // Se o WebView redimensiona o layout com o teclado, o inset é 0 (o menu já
   // sobe junto); se só o visual viewport encolher, o inset empurra o menu.
-  const layoutHeight =
-    document.documentElement.clientHeight || window.innerHeight;
+  const layoutHeight = root.clientHeight || window.innerHeight;
   const inset = viewport
     ? Math.max(
         0,
         Math.round(layoutHeight - viewport.height - viewport.offsetTop),
       )
     : 0;
-  document.documentElement.style.setProperty(
-    "--xepa-keyboard-inset",
-    `${inset}px`,
+  root.style.setProperty("--xepa-keyboard-inset", `${inset}px`);
+  root.style.setProperty("--xepa-app-height", `${window.innerHeight}px`);
+  // com o teclado aberto o menu já fica acima dele: não soma a barra do sistema
+  root.style.setProperty(
+    "--xepa-system-bottom",
+    `${inset > 80 ? 0 : systemBottomInset()}px`,
   );
 }
 
