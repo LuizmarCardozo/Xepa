@@ -221,6 +221,8 @@ window.CadastroPage = function () {
   let sellerCitiesRequest = null;
   let sellerCityValidation = null;
   let sellerStep = 1;
+  let sellerCityActiveIndex = -1;
+  let sellerCityRenderedLabels = [];
 
   const registerValidation = (input, validator, feedbackId) => {
     const feedback = document.getElementById(feedbackId);
@@ -245,7 +247,6 @@ window.CadastroPage = function () {
     if (sellerCitiesRequest) return sellerCitiesRequest;
 
     setSellerCityStatus("Carregando cidades...");
-    if (sellerCityInput) sellerCityInput.disabled = true;
     sellerCitiesRequest = fetch(
       "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome",
     )
@@ -262,7 +263,6 @@ window.CadastroPage = function () {
           );
         }
 
-        const options = document.createDocumentFragment();
         municipalities.forEach((municipality) => {
           const state = municipality.microrregiao?.mesorregiao?.UF?.sigla;
           if (!municipality.nome || !state) return;
@@ -272,16 +272,12 @@ window.CadastroPage = function () {
             city: municipality.nome,
             state,
           });
-          const option = document.createElement("option");
-          option.value = label;
-          options.append(option);
         });
 
         if (!sellerLocations.size) {
           throw new Error("A resposta do IBGE não contém cidades válidas.");
         }
 
-        sellerCityOptions.replaceChildren(options);
         if (sellerCityInput?.value.trim()) {
           sellerCityValidation?.refresh();
         } else {
@@ -299,15 +295,144 @@ window.CadastroPage = function () {
         console.error("Não foi possível carregar as cidades do IBGE:", error);
       })
       .finally(() => {
-        if (sellerCityInput) sellerCityInput.disabled = false;
         sellerCitiesRequest = null;
       });
 
     return sellerCitiesRequest;
   };
 
+  const normalizeCitySearch = (value) =>
+    String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const closeSellerCityOptions = () => {
+    if (!sellerCityOptions) return;
+    sellerCityOptions.hidden = true;
+    sellerCityOptions.replaceChildren();
+    sellerCityOptions.closest(".seller-field")?.classList.remove("city-options-open");
+    sellerCityInput?.setAttribute("aria-expanded", "false");
+    sellerCityActiveIndex = -1;
+    sellerCityRenderedLabels = [];
+  };
+
+  const selectSellerCity = (label) => {
+    if (!sellerCityInput || !sellerLocations.has(label)) return;
+    sellerCityInput.value = label;
+    sellerCityValidation?.refresh();
+    closeSellerCityOptions();
+    sellerCityInput.focus();
+  };
+
+  const renderSellerCityOptions = () => {
+    if (!sellerCityInput || !sellerCityOptions) return;
+
+    if (!sellerLocations.size) {
+      closeSellerCityOptions();
+      void loadSellerCities();
+      return;
+    }
+
+    const query = normalizeCitySearch(sellerCityInput.value);
+    const matches = [];
+
+    for (const label of sellerLocations.keys()) {
+      if (!query || normalizeCitySearch(label).includes(query)) {
+        matches.push(label);
+        if (matches.length >= 60) break;
+      }
+    }
+
+    sellerCityOptions.replaceChildren();
+    sellerCityRenderedLabels = matches;
+    sellerCityActiveIndex = -1;
+    sellerCityOptions.closest(".seller-field")?.classList.add("city-options-open");
+    sellerCityInput.setAttribute("aria-expanded", "true");
+
+    if (!matches.length) {
+      const empty = document.createElement("div");
+      empty.className = "seller-city-option-empty";
+      empty.textContent = "Nenhuma cidade encontrada";
+      sellerCityOptions.append(empty);
+      sellerCityOptions.hidden = false;
+      return;
+    }
+
+    matches.forEach((label, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "seller-city-option";
+      button.setAttribute("role", "option");
+      button.dataset.cityIndex = String(index);
+      button.textContent = label;
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        selectSellerCity(label);
+      });
+      button.addEventListener("click", () => selectSellerCity(label));
+      sellerCityOptions.append(button);
+    });
+
+    sellerCityOptions.hidden = false;
+  };
+
+  if (sellerCityInput) {
+    sellerCityInput.addEventListener("focus", () => {
+      void loadSellerCities().finally(() => renderSellerCityOptions());
+    });
+    sellerCityInput.addEventListener("input", () => {
+      sellerCityValidation?.refresh();
+      renderSellerCityOptions();
+    });
+    sellerCityInput.addEventListener("click", renderSellerCityOptions);
+    sellerCityInput.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        renderSellerCityOptions();
+        const buttons = Array.from(
+          sellerCityOptions?.querySelectorAll(".seller-city-option") || [],
+        );
+        if (!buttons.length) return;
+        const direction = event.key === "ArrowDown" ? 1 : -1;
+        sellerCityActiveIndex =
+          (sellerCityActiveIndex + direction + buttons.length) %
+          buttons.length;
+        buttons.forEach((button, index) => {
+          button.classList.toggle(
+            "is-active",
+            index === sellerCityActiveIndex,
+          );
+        });
+        buttons[sellerCityActiveIndex]?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+      if (event.key === "Enter" && sellerCityActiveIndex >= 0) {
+        event.preventDefault();
+        const label =
+          sellerCityRenderedLabels[sellerCityActiveIndex];
+        if (label) selectSellerCity(label);
+        return;
+      }
+      if (event.key === "Escape") closeSellerCityOptions();
+    });
+  }
+
+  document.addEventListener("pointerdown", (event) => {
+    if (
+      sellerCityOptions &&
+      !sellerCityOptions.hidden &&
+      !sellerCityInput?.contains(event.target) &&
+      !sellerCityOptions.contains(event.target)
+    ) {
+      closeSellerCityOptions();
+    }
+  });
+
   const showSellerStep = (step) => {
     sellerStep = step;
+    closeSellerCityOptions();
     sellerScreens.forEach((screen) => {
       screen.hidden = Number(screen.dataset.sellerScreen) !== step;
     });

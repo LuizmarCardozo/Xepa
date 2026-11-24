@@ -245,16 +245,6 @@ window.HomePage = function () {
       });
     });
 
-  const notificationButton = document.querySelector(".bell-btn");
-  if (notificationButton) {
-    notificationButton.setAttribute("aria-label", "Ver pedidos");
-    notificationButton.addEventListener("click", () =>
-      window.Router?.go("pedidos"),
-    );
-    const badge = notificationButton.querySelector(".bell-badge");
-    if (badge) badge.hidden = true;
-  }
-
   const categoriesLink = document.querySelector(
     ".home-categories-section .link-green",
   );

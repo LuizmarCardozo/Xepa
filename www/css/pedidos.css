@@ -1058,7 +1058,7 @@
 }
 
 .pedidos-page-merchant ~ .bottom-nav {
-  display: none;
+  display: flex;
 }
 
 @media (max-width: 380px) {

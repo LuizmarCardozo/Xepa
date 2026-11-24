@@ -50,3 +50,77 @@ const Components = {
 };
 
 window.Components = Components;
+
+function syncMobileNavigationViewport() {
+  const viewport = window.visualViewport;
+  // Se o WebView redimensiona o layout com o teclado, o inset é 0 (o menu já
+  // sobe junto); se só o visual viewport encolher, o inset empurra o menu.
+  const layoutHeight =
+    document.documentElement.clientHeight || window.innerHeight;
+  const inset = viewport
+    ? Math.max(
+        0,
+        Math.round(layoutHeight - viewport.height - viewport.offsetTop),
+      )
+    : 0;
+  document.documentElement.style.setProperty(
+    "--xepa-keyboard-inset",
+    `${inset}px`,
+  );
+}
+
+// ---- Menu persistente -------------------------------------------------
+// O menu fica em #nav-root, irmão do #app. Assim nenhuma tela que faça
+// app.innerHTML = ... (erro, "Carregando...", re-render) apaga o menu, e
+// ancestrais com transform/animation não quebram o position: fixed.
+Components.navRoot = function () {
+  let root = document.getElementById("nav-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "nav-root";
+    document.body.appendChild(root);
+  }
+  return root;
+};
+
+Components.mountNav = function (active, visible = true) {
+  const root = Components.navRoot();
+  root.innerHTML = visible ? Components.bottomNav(active) : "";
+  Components.lastActive = active;
+};
+
+// Remove qualquer menu duplicado que uma tela escreva dentro do #app.
+function removeStrayNavs() {
+  const app = document.getElementById("app");
+  if (app) app.querySelectorAll(".bottom-nav").forEach((n) => n.remove());
+}
+
+function startNavGuard() {
+  const app = document.getElementById("app");
+  if (!app) return;
+  Components.navRoot();
+  new MutationObserver(removeStrayNavs).observe(app, {
+    childList: true,
+    subtree: true,
+  });
+}
+if (document.body) startNavGuard();
+else document.addEventListener("DOMContentLoaded", startNavGuard);
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", syncMobileNavigationViewport);
+  window.visualViewport.addEventListener("scroll", syncMobileNavigationViewport);
+}
+window.addEventListener("resize", syncMobileNavigationViewport);
+window.addEventListener("orientationchange", () =>
+  setTimeout(syncMobileNavigationViewport, 300),
+);
+// Teclado abrindo/fechando: a animação leva tempo, então reajusta algumas vezes.
+["focusin", "focusout"].forEach((evt) => {
+  document.addEventListener(evt, () => {
+    [0, 100, 300, 600].forEach((t) =>
+      setTimeout(syncMobileNavigationViewport, t),
+    );
+  });
+});
+syncMobileNavigationViewport();

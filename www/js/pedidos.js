@@ -781,15 +781,19 @@ window.PedidosPageInit = async function () {
                 ) {
                   throw new Error("Não foi possível atualizar o pedido.");
                 }
-                await window.Backend.updateOrderStatus(
+                const changed = await window.Backend.updateOrderStatus(
                   selectedOrderId,
                   nextStatus,
                 );
-                setDetailFeedback(
-                  nextStatus === "delivered"
-                    ? "Pedido marcado como entregue."
-                    : "Pedido cancelado.",
-                );
+                if (changed !== false) {
+                  setDetailFeedback(
+                    nextStatus === "delivered"
+                      ? "Pedido marcado como entregue."
+                      : "Pedido cancelado.",
+                  );
+                } else {
+                  setDetailFeedback("O status deste pedido não mudou.");
+                }
               } catch (error) {
                 console.error(error);
                 detailContainer
@@ -1024,8 +1028,12 @@ window.PedidosPageInit = async function () {
         });
         setFeedback("Atualizando pedido...");
         try {
-          await window.Backend.updateOrderStatus(orderId, nextStatus);
-          setFeedback("Status do pedido atualizado.");
+          const changed = await window.Backend.updateOrderStatus(orderId, nextStatus);
+          setFeedback(
+            changed === false
+              ? "O status deste pedido não mudou."
+              : "Status do pedido atualizado.",
+          );
         } catch (error) {
           console.error(error);
           card.querySelectorAll("button").forEach((item) => {

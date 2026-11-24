@@ -1054,6 +1054,59 @@ body.auth-mode #app {
 .seller-screen-3 #seller-city:disabled {
   opacity: 0.7;
 }
+.seller-city-options {
+  position: absolute;
+  z-index: 100;
+  top: 76px;
+  left: 0;
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #bfc8b9;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 22%);
+}
+.seller-city-options[hidden] {
+  display: none;
+}
+.seller-field.city-options-open .seller-location-status {
+  visibility: hidden;
+}
+.seller-city-option {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid #edf0ea;
+  background: #fff;
+  color: #313b31;
+  font:
+    700 14px/20px "Xepa Inter",
+    Arial,
+    sans-serif;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.seller-city-option:last-child {
+  border-bottom: 0;
+}
+.seller-city-option:hover,
+.seller-city-option.is-active,
+.seller-city-option:active {
+  background: #edf7ec;
+  color: #1b7a32;
+}
+.seller-city-option-empty {
+  min-height: 44px;
+  padding: 12px;
+  color: #707770;
+  font-size: 13px;
+  text-align: center;
+}
 .seller-screen-3 .seller-input-wrap {
   padding-left: 38px;
 }

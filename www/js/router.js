@@ -23,6 +23,17 @@ const Router = {
     carrinho: "pages/carrinho.html",
   },
 
+  current() {
+    return currentRoute;
+  },
+
+  // Recarrega a tela atual (busca os dados de novo) sem mexer no histórico.
+  // silent: mantém a posição da rolagem e não mostra "Carregando...".
+  refresh(options = {}) {
+    if (!currentRoute) return Promise.resolve();
+    return this.go(currentRoute, { ...options, skipHistory: true });
+  },
+
   goOffers() {
     this.go(window.Auth?.user?.type === "comerciante" ? "minhasOfertas" : "ofertas");
   },
@@ -114,7 +125,12 @@ const Router = {
       activePageCleanup = null;
     }
 
-    app.innerHTML = '<main class="page"><p class="loading-state">Carregando...</p></main>';
+    const keepScroll = options.silent ? window.scrollY : null;
+    if (options.silent) {
+      app.style.minHeight = `${app.offsetHeight}px`;
+    } else {
+      app.innerHTML = '<main class="page"><p class="loading-state">Carregando...</p></main>';
+    }
     try {
       const response = await fetch(file);
       if (navigationId !== navigationSequence) return;
@@ -169,14 +185,23 @@ const Router = {
       if (typeof cleanup === "function") activePageCleanup = cleanup;
 
       const activeRoute = route === "carrinho" || route === "produto" ? "ofertas" : route;
-      const nav = app.querySelector(".bottom-nav");
-      if (nav) nav.outerHTML = Components.bottomNav(activeRoute);
-      else if (!publicRoutes.has(route)) app.insertAdjacentHTML("beforeend", Components.bottomNav(activeRoute));
+      document.body.className = document.body.className
+        .split(/\s+/)
+        .filter((c) => c && !c.startsWith("route-"))
+        .concat(`route-${route}`)
+        .join(" ");
+      app.querySelectorAll(".bottom-nav").forEach((n) => n.remove());
+      Components.mountNav(activeRoute, !publicRoutes.has(route));
 
-      window.scrollTo(0, 0);
+      app.style.minHeight = "";
+      window.scrollTo(0, keepScroll ?? 0);
     } catch (error) {
+      app.style.minHeight = "";
       if (navigationId !== navigationSequence) return;
       console.error(error);
+      if (!publicRoutes.has(route)) {
+        Components.mountNav(route === "carrinho" || route === "produto" ? "ofertas" : route, true);
+      }
       app.innerHTML = `<main class="page"><section class="card error-state"><h2>Não foi possível abrir esta tela</h2><p>${error.message}</p><button class="btn btn-primary" onclick="Router.go('home')">Tentar novamente</button></section></main>`;
     }
   },

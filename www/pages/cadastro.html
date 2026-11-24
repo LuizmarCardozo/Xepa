@@ -714,7 +714,8 @@
                     aria-autocomplete="list"
                     aria-controls="seller-city-options"
                     aria-describedby="seller-city-status"
-                    list="seller-city-options"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
                     required
                   />
                   <svg
@@ -725,7 +726,13 @@
                     <path d="m4 9 8 6 8-6" />
                   </svg>
                 </span>
-                <datalist id="seller-city-options"></datalist>
+                <div
+                  id="seller-city-options"
+                  class="seller-city-options"
+                  role="listbox"
+                  aria-label="Cidades disponíveis"
+                  hidden
+                ></div>
                 <small
                   id="seller-city-status"
                   class="seller-location-status"

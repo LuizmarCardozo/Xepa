@@ -53,13 +53,6 @@ body {
   color: #555;
   margin: 2px 0 0;
 }
-.bell-btn {
-  background: none;
-  border: none;
-  position: relative;
-  padding: 4px;
-  cursor: pointer;
-}
 .home-header-actions {
   display: flex;
   flex: 0 0 auto;
@@ -85,23 +78,6 @@ body {
 .home-header-actions .cart-shortcut [data-cart-count] {
   display: none;
 }
-.bell-badge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  background: red;
-  color: #fff;
-  border-radius: 50%;
-  width: 14px;
-  height: 14px;
-  font-size: 9px;
-  font-weight: 800;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1.5px solid #fff;
-}
-
 /* ==========================================================================
    BUSCA
    ========================================================================== */

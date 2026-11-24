@@ -63,7 +63,6 @@ window.PerfilPage = function () {
         </details>
         ${sellerProfileRow("pin", "Endereço de entrega", "Gerencia seus endereços")}
         ${sellerProfileRow("card", "Formas de pagamento", "Cartões, Pix e carteiras digitais")}
-        ${sellerProfileRow("bell", "Notificações", "Promoçoes, pedidos e novidades")}
         ${sellerProfileRow("shield", "Privacidade e segurança", "Seus dados protegidos")}
         ${sellerProfileRow("support", "Ajuda e suporte", "Fale conosco")}
       </section>
@@ -112,7 +111,6 @@ window.PerfilPage = function () {
         </details>
         ${sellerProfileRow("pin", "Endereço de entrega", "Gerencie seus endereços")}
         ${sellerProfileRow("card", "Formas de pagamento", "Cartões, Pix e carteiras digitais")}
-        ${sellerProfileRow("bell", "Notificações", "Promoções, pedidos e novidades")}
         ${sellerProfileRow("shield", "Privacidade e segurança", "Seus dados protegidos")}
         ${sellerProfileRow("support", "Ajuda e suporte", "Fale conosco")}
       </section>

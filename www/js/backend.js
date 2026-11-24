@@ -351,6 +351,13 @@ function offerStallLocation(market, savedLocation) {
 window.Backend = {
   ready: () => authReady,
 
+  // Relê o perfil do usuário no servidor (nome da banca, tipo de conta etc.).
+  refreshUser: async () => {
+    if (!auth.currentUser) return window.Auth.user;
+    await syncUser(auth.currentUser);
+    return window.Auth.user;
+  },
+
   login: async (email, password) => {
     const credential = await signInWithEmailAndPassword(
       auth,
@@ -1013,13 +1020,32 @@ window.Backend = {
   },
 
   updateOrderStatus: async (orderId, status) => {
-    currentUser();
-    if (status === "delivered") {
+    const user = currentUser();
+    const normalizedStatus = String(status || "").trim().toLowerCase();
+    if (normalizedStatus === "delivered") {
       throw new Error("Informe o código do cliente para entregar o pedido.");
     }
-    await updateDoc(doc(db, "orders", orderId), {
-      status,
-      updatedAt: new Date().toISOString(),
+
+    const normalizedOrderId = String(orderId || "").trim();
+    if (!normalizedOrderId) throw new Error("Pedido inválido.");
+
+    const orderRef = doc(db, "orders", normalizedOrderId);
+    return runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(orderRef);
+      if (!snapshot.exists()) throw new Error("Este pedido não existe mais.");
+
+      const order = snapshot.data();
+      if (order.merchantUid !== user.uid) {
+        throw new Error("Você não pode alterar este pedido.");
+      }
+      const currentStatus = String(order.status || "pending").trim().toLowerCase();
+      if (currentStatus === normalizedStatus) return false;
+
+      transaction.update(orderRef, {
+        status: normalizedStatus,
+        updatedAt: new Date().toISOString(),
+      });
+      return true;
     });
   },
 
