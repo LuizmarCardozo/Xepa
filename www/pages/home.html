@@ -27,18 +27,36 @@
             >
               <span class="merchant-summary-icon" aria-hidden="true">
                 <svg viewBox="0 0 48 48">
-                  <path d="M7 9h5l4.2 21.2a4 4 0 0 0 3.9 3.2h15.2a4 4 0 0 0 3.8-2.8L44 17H14" />
+                  <path
+                    d="M7 9h5l4.2 21.2a4 4 0 0 0 3.9 3.2h15.2a4 4 0 0 0 3.8-2.8L44 17H14"
+                  />
                   <circle cx="21" cy="39" r="3.5" />
                   <circle cx="35" cy="39" r="3.5" />
                 </svg>
               </span>
               <span class="merchant-summary-copy">
                 <span class="merchant-summary-title">Pedidos de hoje</span>
-                <strong class="merchant-summary-value" data-merchant-metric="today-orders">—</strong>
-                <span class="merchant-summary-trend" data-merchant-metric="orders-change">Carregando...</span>
-                <span class="merchant-summary-note" data-merchant-metric="orders-comparison">Aguardando dados</span>
+                <strong
+                  class="merchant-summary-value"
+                  data-merchant-metric="today-orders"
+                  >—</strong
+                >
+                <span
+                  class="merchant-summary-trend"
+                  data-merchant-metric="orders-change"
+                  >Carregando...</span
+                >
+                <span
+                  class="merchant-summary-note"
+                  data-merchant-metric="orders-comparison"
+                  >Aguardando dados</span
+                >
               </span>
-              <svg class="merchant-summary-chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                class="merchant-summary-chevron"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path d="m9 5 7 7-7 7" />
               </svg>
             </button>
@@ -46,7 +64,7 @@
             <button
               class="merchant-summary-card merchant-summary-performance"
               type="button"
-              onclick="Router.go('minhasOfertas')"
+              onclick="Router.go('desempenho')"
               aria-label="Vendas concluídas neste mês"
             >
               <span class="merchant-summary-icon" aria-hidden="true">
@@ -59,10 +77,22 @@
               </span>
               <span class="merchant-summary-copy">
                 <span class="merchant-summary-title">Vendas concluídas</span>
-                <strong class="merchant-summary-value" data-merchant-metric="monthly-sales">—</strong>
-                <span class="merchant-summary-note" data-merchant-metric="sales-period">Neste mês</span>
+                <strong
+                  class="merchant-summary-value"
+                  data-merchant-metric="monthly-sales"
+                  >—</strong
+                >
+                <span
+                  class="merchant-summary-note"
+                  data-merchant-metric="sales-period"
+                  >Neste mês</span
+                >
               </span>
-              <svg class="merchant-summary-chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                class="merchant-summary-chevron"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path d="m9 5 7 7-7 7" />
               </svg>
             </button>
@@ -75,7 +105,9 @@
             >
               <span class="merchant-summary-icon" aria-hidden="true">
                 <svg viewBox="0 0 48 48">
-                  <path d="m24 4 6.2 12.6L44 18.7 34 28.5l2.4 13.8L24 35.8l-12.4 6.5L14 28.5 4 18.7l13.8-2.1L24 4Z" />
+                  <path
+                    d="m24 4 6.2 12.6L44 18.7 34 28.5l2.4 13.8L24 35.8l-12.4 6.5L14 28.5 4 18.7l13.8-2.1L24 4Z"
+                  />
                 </svg>
               </span>
               <span class="merchant-summary-copy">
@@ -84,9 +116,17 @@
                   <span data-merchant-metric="review-rating">—</span>
                   <span class="merchant-rating-star" aria-hidden="true">★</span>
                 </strong>
-                <span class="merchant-summary-note" data-merchant-metric="review-count">Carregando avaliações</span>
+                <span
+                  class="merchant-summary-note"
+                  data-merchant-metric="review-count"
+                  >Carregando avaliações</span
+                >
               </span>
-              <svg class="merchant-summary-chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                class="merchant-summary-chevron"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path d="m9 5 7 7-7 7" />
               </svg>
             </button>
@@ -99,8 +139,7 @@
             <h1 id="user-greeting">Olá, usuário 👋</h1>
             <p>O que você procura hoje?</p>
           </div>
-          <div class="home-header-actions" data-home-header-actions>
-          </div>
+          <div class="home-header-actions" data-home-header-actions></div>
         </header>
 
         <!-- ============ BUSCA ============ -->
@@ -154,10 +193,7 @@
             </div>
             <div class="category-item">
               <div class="category-img-wrap" style="background: #fcebeb">
-                <img
-                  src="assets/carnes.jpg"
-                  alt="Carnes"
-                />
+                <img src="assets/carnes.jpg" alt="Carnes" />
               </div>
               <span class="category-label">Carnes</span>
             </div>

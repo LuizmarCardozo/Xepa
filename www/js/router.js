@@ -15,6 +15,7 @@ const Router = {
     feiras: "pages/feiras.html",
     perfil: "pages/perfil.html",
     avaliacoes: "pages/avaliacoes.html",
+    desempenho: "pages/desempenho.html",
     carteira: "pages/carteira.html",
     resgatar: "pages/resgatar.html",
     criarOferta: "pages/criar-oferta.html",
@@ -35,7 +36,9 @@ const Router = {
   },
 
   goOffers() {
-    this.go(window.Auth?.user?.type === "comerciante" ? "minhasOfertas" : "ofertas");
+    this.go(
+      window.Auth?.user?.type === "comerciante" ? "minhasOfertas" : "ofertas",
+    );
   },
 
   back(fallbackRoute = "home") {
@@ -55,6 +58,7 @@ const Router = {
       "criarStory",
       "minhasOfertas",
       "avaliacoes",
+      "desempenho",
       "carteira",
       "resgatar",
     ]);
@@ -84,7 +88,10 @@ const Router = {
         options.skipHistory ? { ...options, replaceHistory: true } : {},
       );
     }
-    if (merchantRoutes.has(route) && window.Auth?.user?.type !== "comerciante") {
+    if (
+      merchantRoutes.has(route) &&
+      window.Auth?.user?.type !== "comerciante"
+    ) {
       return this.go(
         "home",
         options.skipHistory ? { ...options, replaceHistory: true } : {},
@@ -128,18 +135,23 @@ const Router = {
     // Ao trocar de tela, limpa estados de "tela cheia" que ficaram pendurados no
     // body (ex.: voltar pelo botão do Android com o detalhe do pedido aberto).
     // Eles escondem o menu e travam a rolagem; cada tela os liga de novo se precisar.
-    document.body.classList.remove("has-merchant-order-detail", "seller-image-editing");
+    document.body.classList.remove(
+      "has-merchant-order-detail",
+      "seller-image-editing",
+    );
 
     const keepScroll = options.silent ? window.scrollY : null;
     if (options.silent) {
       app.style.minHeight = `${app.offsetHeight}px`;
     } else {
-      app.innerHTML = '<main class="page"><p class="loading-state">Carregando...</p></main>';
+      app.innerHTML =
+        '<main class="page"><p class="loading-state">Carregando...</p></main>';
     }
     try {
       const response = await fetch(file);
       if (navigationId !== navigationSequence) return;
-      if (!response.ok) throw new Error(`Não foi possível abrir a tela (${response.status}).`);
+      if (!response.ok)
+        throw new Error(`Não foi possível abrir a tela (${response.status}).`);
       const html = await response.text();
       if (navigationId !== navigationSequence) return;
       const renderedHtml = html
@@ -161,35 +173,41 @@ const Router = {
         "merchant-home",
         route === "home" && window.Auth?.user?.type === "comerciante",
       );
-      document.body.classList.toggle("merchant-reviews", route === "avaliacoes");
+      document.body.classList.toggle(
+        "merchant-reviews",
+        route === "avaliacoes",
+      );
 
       const pageNames = {
         criarStory: "CriarStoryPage",
         minhasOfertas: "ComerciantePage",
         carrinho: "CarrinhoPage",
       };
-      const pageName = pageNames[route] || `${route.charAt(0).toUpperCase()}${route.slice(1)}Page`;
+      const pageName =
+        pageNames[route] ||
+        `${route.charAt(0).toUpperCase()}${route.slice(1)}Page`;
       const pageFunction = window[pageName];
       if (typeof pageFunction === "function") {
         const pageHtml = await pageFunction();
         if (navigationId !== navigationSequence) return;
-        if (typeof pageHtml === "string" && pageHtml.trim()) app.innerHTML = pageHtml;
+        if (typeof pageHtml === "string" && pageHtml.trim())
+          app.innerHTML = pageHtml;
       }
 
       const initName = pageNames[route]
         ? `${pageNames[route]}Init`
         : `${route.charAt(0).toUpperCase()}${route.slice(1)}PageInit`;
       const initFunction = window[initName];
-      const cleanup = typeof initFunction === "function"
-        ? await initFunction()
-        : null;
+      const cleanup =
+        typeof initFunction === "function" ? await initFunction() : null;
       if (navigationId !== navigationSequence) {
         if (typeof cleanup === "function") cleanup();
         return;
       }
       if (typeof cleanup === "function") activePageCleanup = cleanup;
 
-      const activeRoute = route === "carrinho" || route === "produto" ? "ofertas" : route;
+      const activeRoute =
+        route === "carrinho" || route === "produto" ? "ofertas" : route;
       document.body.className = document.body.className
         .split(/\s+/)
         .filter((c) => c && !c.startsWith("route-"))
@@ -205,7 +223,10 @@ const Router = {
       if (navigationId !== navigationSequence) return;
       console.error(error);
       if (!publicRoutes.has(route)) {
-        Components.mountNav(route === "carrinho" || route === "produto" ? "ofertas" : route, true);
+        Components.mountNav(
+          route === "carrinho" || route === "produto" ? "ofertas" : route,
+          true,
+        );
       }
       app.innerHTML = `<main class="page"><section class="card error-state"><h2>Não foi possível abrir esta tela</h2><p>${error.message}</p><button class="btn btn-primary" onclick="Router.go('home')">Tentar novamente</button></section></main>`;
     }

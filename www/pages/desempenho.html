@@ -1,0 +1,130 @@
+<main class="perf-page">
+  <header class="perf-header">
+    <button
+      class="perf-back"
+      type="button"
+      onclick="Router.back('home')"
+      aria-label="Voltar"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
+    </button>
+    <h1>Meu Desempenho</h1>
+  </header>
+
+  <p class="perf-error" data-perf-error role="alert" hidden></p>
+
+  <section class="perf-kpis" aria-label="Resumo do período">
+    <article class="perf-card perf-kpi">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path
+          d="M7 9h5l4.2 21.2a4 4 0 0 0 3.9 3.2h15.2a4 4 0 0 0 3.8-2.8L44 17H14"
+        />
+        <circle cx="21" cy="39" r="3.5" />
+        <circle cx="35" cy="39" r="3.5" />
+      </svg>
+      <strong data-perf-kpi="orders">—</strong>
+      <span>Pedidos Realizados</span>
+    </article>
+    <article class="perf-card perf-kpi">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="18" />
+        <path
+          d="M29.5 17.5c-1-1.6-3-2.5-5.5-2.5-3.2 0-5.2 1.6-5.2 3.8 0 5.4 11 2.8 11 8.4 0 2.3-2.2 3.8-5.3 3.8-2.7 0-4.9-1-6-2.8M24 11v4M24 33v4"
+        />
+      </svg>
+      <strong data-perf-kpi="sales">—</strong>
+      <span>Vendas no Período</span>
+    </article>
+    <article class="perf-card perf-kpi">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="19" r="13" />
+        <path
+          d="m17 30-4 14 11-5 11 5-4-14M24 12.5l2.2 4.5 5 .7-3.6 3.5.9 4.9-4.5-2.4-4.5 2.4.9-4.9-3.6-3.5 5-.7z"
+        />
+      </svg>
+      <strong data-perf-kpi="rating">—</strong>
+      <span>Avaliação Média</span>
+    </article>
+  </section>
+
+  <section class="perf-card perf-chart-card" aria-label="Gráfico de vendas">
+    <div class="perf-chart-head">
+      <h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="13" width="4" height="8" rx="1.5" />
+          <rect x="10" y="8" width="4" height="13" rx="1.5" />
+          <rect x="17" y="3" width="4" height="18" rx="1.5" />
+        </svg>
+        Suas Vendas
+      </h2>
+      <div class="perf-toggle" role="group" aria-label="Período do gráfico">
+        <button type="button" data-perf-period="today" aria-pressed="false">
+          Hoje
+        </button>
+        <button type="button" data-perf-period="week" aria-pressed="true">
+          Semana
+        </button>
+        <label class="perf-select">
+          <span class="perf-visually-hidden">Outro período</span>
+          <select data-perf-period-select>
+            <option value="">Período</option>
+            <option value="month">Mês</option>
+            <option value="days30">30 dias</option>
+            <option value="year">Ano</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="perf-chart" data-perf-chart></div>
+    <p class="perf-hint" data-perf-chart-hint>
+      Toque em um ponto para ver o valor.
+    </p>
+  </section>
+
+  <div class="perf-duo">
+    <section class="perf-card perf-top" aria-label="Mais vendidos">
+      <div class="perf-card-title">
+        <h2>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 21h8M10 18h4"
+            />
+          </svg>
+          Mais vendidos
+        </h2>
+        <span>Ranking</span>
+      </div>
+      <ol class="perf-top-list" data-perf-top></ol>
+    </section>
+
+    <section class="perf-card perf-goal" aria-label="Seu desempenho">
+      <div class="perf-card-title">
+        <h2>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 17 6-6 4 4 8-8M15 7h6v6" />
+          </svg>
+          Seu desempenho
+        </h2>
+      </div>
+      <div class="perf-goal-body" data-perf-goal></div>
+    </section>
+  </div>
+
+  <section class="perf-card perf-latest" aria-label="Últimos pedidos">
+    <div class="perf-card-title">
+      <h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+        Últimos pedidos
+      </h2>
+      <button type="button" class="perf-link" onclick="Router.go('pedidos')">
+        Ver todos →
+      </button>
+    </div>
+    <ul class="perf-latest-list" data-perf-latest></ul>
+  </section>
+</main>

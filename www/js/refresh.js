@@ -1,6 +1,12 @@
 // Atualização dos dados: puxar para atualizar + atualização automática.
 (function () {
-  const NO_PULL = new Set(["login", "cadastro", "criarOferta", "criarStory", "resgatar"]);
+  const NO_PULL = new Set([
+    "login",
+    "cadastro",
+    "criarOferta",
+    "criarStory",
+    "resgatar",
+  ]);
   // Telas com dados que mudam sozinhos -> intervalo da atualização automática (ms).
   // "pedidos" não entra: já usa onSnapshot (tempo real).
   const AUTO = {
@@ -10,6 +16,7 @@
     feira: 60000,
     minhasOfertas: 60000,
     avaliacoes: 60000,
+    desempenho: 60000,
     carteira: 30000,
   };
   const IDLE_MS = 10000; // só atualiza sozinho se a pessoa estiver parada
@@ -50,9 +57,12 @@
 
   function userIsBusy() {
     const el = document.activeElement;
-    if (el && el.matches?.("input, textarea, select, [contenteditable='true']")) return true;
+    if (el && el.matches?.("input, textarea, select, [contenteditable='true']"))
+      return true;
     if (document.querySelector("dialog[open]")) return true;
-    return /seller-image-editing|pix-withdraw-mode/.test(document.body.className);
+    return /seller-image-editing|pix-withdraw-mode/.test(
+      document.body.className,
+    );
   }
 
   function autoRefresh(force) {
@@ -66,7 +76,8 @@
 
   setInterval(() => {
     const route = window.Router?.current?.();
-    if (route in AUTO && Date.now() - lastRefresh >= AUTO[route]) autoRefresh(false);
+    if (route in AUTO && Date.now() - lastRefresh >= AUTO[route])
+      autoRefresh(false);
   }, 5000);
 
   document.addEventListener("visibilitychange", () => {
@@ -120,11 +131,16 @@
   function blocked(target) {
     const route = window.Router?.current?.();
     if (!route || NO_PULL.has(route)) return true;
-    if (/seller-image-editing|pix-withdraw-mode/.test(document.body.className)) return true;
+    if (/seller-image-editing|pix-withdraw-mode/.test(document.body.className))
+      return true;
     for (let el = target; el && el !== document.body; el = el.parentElement) {
       if (el.matches?.("input, textarea, select, [data-no-pull]")) return true;
       const style = getComputedStyle(el);
-      if (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight && el.scrollTop > 0) {
+      if (
+        /(auto|scroll)/.test(style.overflowY) &&
+        el.scrollHeight > el.clientHeight &&
+        el.scrollTop > 0
+      ) {
         return true;
       }
     }
@@ -158,7 +174,8 @@
       const dx = event.touches[0].clientX - startX;
       const dy = event.touches[0].clientY - startY;
       if (!armed) {
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) return void (pulling = false);
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8)
+          return void (pulling = false);
         if (dy < -6) return void (pulling = false);
         if (dy < 8) return;
         armed = true;
