@@ -143,8 +143,7 @@
     position: fixed !important;
     z-index: 900 !important;
     bottom: calc(
-      8px + var(--xepa-system-bottom, 0px) +
-        var(--xepa-keyboard-inset, 0px)
+      8px + var(--xepa-system-bottom, 0px) + var(--xepa-keyboard-inset, 0px)
     ) !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -309,7 +308,9 @@ body {
   will-change: transform, opacity;
 }
 .ptr.ptr-animate {
-  transition: transform 0.22s ease, opacity 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    opacity 0.22s ease;
 }
 .ptr svg {
   width: 24px;
@@ -440,4 +441,9 @@ body {
 }
 .co-toast {
   bottom: calc(90px + var(--xepa-system-bottom, 0px)) !important;
+}
+
+/* Teclado aberto: esconde o menu inferior (volta quando o teclado fecha) */
+body.keyboard-open #nav-root .bottom-nav {
+  display: none !important;
 }

@@ -13,6 +13,7 @@ const Router = {
     produto: "pages/produto.html",
     feira: "pages/feira.html",
     feiras: "pages/feiras.html",
+    banca: "pages/banca.html",
     perfil: "pages/perfil.html",
     avaliacoes: "pages/avaliacoes.html",
     desempenho: "pages/desempenho.html",
@@ -207,7 +208,11 @@ const Router = {
       if (typeof cleanup === "function") activePageCleanup = cleanup;
 
       const activeRoute =
-        route === "carrinho" || route === "produto" ? "ofertas" : route;
+        route === "carrinho" || route === "produto"
+          ? "ofertas"
+          : route === "banca"
+            ? "home"
+            : route;
       document.body.className = document.body.className
         .split(/\s+/)
         .filter((c) => c && !c.startsWith("route-"))

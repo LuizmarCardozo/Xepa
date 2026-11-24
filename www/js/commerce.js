@@ -426,7 +426,7 @@ window.ProdutoPageInit = async function () {
           <p class="eyebrow">${storyEscape(offer.category || "Oferta")}</p>
           <h1>${storyEscape(offer.name || "Produto")}</h1>
           <p class="product-detail-description">${storyEscape(offer.desc || "Produto fresco à venda.")}</p>
-          <p class="product-detail-seller">Vendido por ${storyEscape(offer.ownerName || "Comerciante")}</p>
+          <p class="product-detail-seller">Vendido por ${offer.ownerUid ? `<button class="product-detail-stall-link" type="button" data-open-stall="${storyEscape(offer.ownerUid)}">${storyEscape(offer.stallName || offer.ownerName || "Comerciante")} ›</button>` : storyEscape(offer.ownerName || "Comerciante")}</p>
           ${renderStallLocation(offer.stallLocation, "product-detail-market")}
           <strong class="product-detail-price">${window.formatMoney(offer.price)}<span>/${storyEscape(offer.unit || "unidade")}</span></strong>
           <div data-product-selection></div>
@@ -434,6 +434,12 @@ window.ProdutoPageInit = async function () {
       </section>`;
     renderSelection(offer);
     updateCartSummary();
+
+    document
+      .querySelector("[data-open-stall]")
+      ?.addEventListener("click", (event) =>
+        window.openStall?.(event.currentTarget.dataset.openStall),
+      );
 
     document
       .querySelector("[data-view-cart]")

@@ -114,7 +114,7 @@ function homeRenderMarket(market) {
     "🏪",
   );
   return `
-    <article class="market-card">
+    <article class="market-card market-card-link" data-market-id="${homeEscapeHtml(market.id || "")}" tabindex="0" role="button" aria-label="Ver a banca ${stallName}">
       <div class="market-img-wrap">
         ${image}
         <span class="market-badge">Feira cadastrada</span>
@@ -187,6 +187,16 @@ function homeLoadMarkets(container, maxItems, emptyMessage) {
         .slice(0, maxItems)
         .map(homeRenderMarket)
         .join("");
+      container.querySelectorAll("[data-market-id]").forEach((card) => {
+        const open = () => window.openStall?.(card.dataset.marketId);
+        card.addEventListener("click", open);
+        card.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            open();
+          }
+        });
+      });
     })
     .catch((error) => {
       console.error("Não foi possível carregar as feiras:", error);
@@ -347,11 +357,9 @@ window.HomePage = function () {
       .map((value) => String(value || "").trim())
       .filter(Boolean)
       .join(", ");
-    const details = [
-      location.marketName,
-      city,
-      location.reference,
-    ].filter((value) => String(value || "").trim());
+    const details = [location.marketName, city, location.reference].filter(
+      (value) => String(value || "").trim(),
+    );
     if (!details.length) return "";
     return `<p class="product-market-location">${details.map(homeEscapeHtml).join(" · ")}</p>`;
   }

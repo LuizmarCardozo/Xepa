@@ -30,7 +30,7 @@ import {
   where,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-import { createSupabaseStorage } from "./supabase.js";
+import { createSupabaseStorage } from "./supabase.js?v=2";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUOyibPzAG8nLNu_unoJJ2PsnmpZxiV4Q",
@@ -174,6 +174,7 @@ async function completeGoogleRegistration(user, signup) {
 async function syncPublicMarketEntry(userId, profile) {
   const stallLocation = normalizeStallLocation(profile.stallLocation) || {};
   const normalizedImage = normalizeImageData(profile.stallImage);
+  const normalizedBanner = normalizeImageData(profile.stallBanner);
   const market = {
     stallName: String(profile.stallName || "").trim() || "Banca cadastrada",
     marketName: stallLocation.marketName || "",
@@ -181,6 +182,7 @@ async function syncPublicMarketEntry(userId, profile) {
     state: String(stallLocation.state || "").trim(),
     reference: stallLocation.reference || "",
     image: normalizedImage?.startsWith("https://") ? normalizedImage : "",
+    banner: normalizedBanner?.startsWith("https://") ? normalizedBanner : "",
     updatedAt: new Date().toISOString(),
   };
   await setDoc(doc(db, "markets", userId), market, { merge: true });
@@ -872,6 +874,64 @@ window.Backend = {
       );
   },
 
+  // Dados públicos de uma banca (foto de perfil, banner, localização).
+  // O id do documento em "markets" é o uid do comerciante.
+  getMarket: async (marketId) => {
+    if (!marketId) return null;
+    const snapshot = await getDoc(doc(db, "markets", String(marketId)));
+    const market = snapshot.exists()
+      ? { id: snapshot.id, ...snapshot.data() }
+      : null;
+
+    // Banca vista pelo próprio dono: usa o banner do perfil já carregado.
+    const own = window.Auth?.user;
+    if (market && !market.banner && own?.uid === String(marketId)) {
+      market.banner = normalizeImageData(own.stallBanner) || "";
+    }
+    // Banner ainda não copiado para o diretório público: tenta ler do
+    // perfil do vendedor (se as regras permitirem; senão, segue sem banner).
+    if (market && !market.banner) {
+      try {
+        const userSnapshot = await getDoc(doc(db, "users", String(marketId)));
+        const banner = normalizeImageData(userSnapshot.data()?.stallBanner);
+        if (banner) market.banner = banner;
+      } catch (error) {
+        console.warn("Banner do vendedor indisponível:", error);
+      }
+    }
+    return market;
+  },
+
+  // Produtos ativos de uma banca, mais recentes primeiro.
+  getStallOffers: async (ownerUid) => {
+    if (!ownerUid) return [];
+    const sortRecent = (list) =>
+      list.sort((a, b) =>
+        String(b.createdAt).localeCompare(String(a.createdAt)),
+      );
+    try {
+      // Filtra por active == true na própria consulta (igual ao getOffers),
+      // pois as regras do Firestore só liberam a leitura de ofertas ativas.
+      const snapshot = await getDocs(
+        query(
+          collection(db, "offers"),
+          where("ownerUid", "==", ownerUid),
+          where("active", "==", true),
+        ),
+      );
+      return sortRecent(
+        snapshot.docs.map((offerDoc) => ({
+          id: offerDoc.id,
+          ...offerDoc.data(),
+        })),
+      );
+    } catch (error) {
+      console.warn("Consulta da banca falhou, usando lista geral:", error);
+      const all = await window.Backend.getOffers();
+      return sortRecent(all.filter((offer) => offer.ownerUid === ownerUid));
+    }
+  },
+
   createOrders: async (items, fulfillment, address, note, paymentMethod) => {
     const user = currentUser();
     const groups = new Map();
@@ -1021,7 +1081,9 @@ window.Backend = {
 
   updateOrderStatus: async (orderId, status) => {
     const user = currentUser();
-    const normalizedStatus = String(status || "").trim().toLowerCase();
+    const normalizedStatus = String(status || "")
+      .trim()
+      .toLowerCase();
     if (normalizedStatus === "delivered") {
       throw new Error("Informe o código do cliente para entregar o pedido.");
     }
@@ -1038,7 +1100,9 @@ window.Backend = {
       if (order.merchantUid !== user.uid) {
         throw new Error("Você não pode alterar este pedido.");
       }
-      const currentStatus = String(order.status || "pending").trim().toLowerCase();
+      const currentStatus = String(order.status || "pending")
+        .trim()
+        .toLowerCase();
       if (currentStatus === normalizedStatus) return false;
 
       transaction.update(orderRef, {

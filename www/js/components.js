@@ -137,8 +137,14 @@ if (document.body) startNavGuard();
 else document.addEventListener("DOMContentLoaded", startNavGuard);
 
 if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", syncMobileNavigationViewport);
-  window.visualViewport.addEventListener("scroll", syncMobileNavigationViewport);
+  window.visualViewport.addEventListener(
+    "resize",
+    syncMobileNavigationViewport,
+  );
+  window.visualViewport.addEventListener(
+    "scroll",
+    syncMobileNavigationViewport,
+  );
 }
 window.addEventListener("resize", syncMobileNavigationViewport);
 window.addEventListener("orientationchange", () =>
@@ -153,3 +159,43 @@ window.addEventListener("orientationchange", () =>
   });
 });
 syncMobileNavigationViewport();
+
+// ---- Esconde o menu inferior enquanto o teclado está aberto -----------
+(function setupKeyboardNavHide() {
+  let baseline = 0;
+  const vh = () =>
+    (window.visualViewport && window.visualViewport.height) ||
+    window.innerHeight;
+  const isEditable = (el) => {
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    const tag = el.tagName;
+    if (tag === "TEXTAREA" || tag === "SELECT") return true;
+    if (tag !== "INPUT") return false;
+    return !/^(button|checkbox|radio|submit|reset|file|image|range|color)$/i.test(
+      el.type,
+    );
+  };
+  function update() {
+    const h = vh();
+    if (h > baseline) baseline = h;
+    const shrunk = baseline - h > 120;
+    const open = shrunk && isEditable(document.activeElement);
+    document.body.classList.toggle("keyboard-open", open);
+  }
+  const burst = () =>
+    [0, 100, 250, 500, 800].forEach((t) => setTimeout(update, t));
+  document.addEventListener("focusin", burst);
+  document.addEventListener("focusout", burst);
+  window.addEventListener("resize", update);
+  if (window.visualViewport)
+    window.visualViewport.addEventListener("resize", update);
+  window.addEventListener("orientationchange", () =>
+    setTimeout(() => {
+      baseline = 0;
+      update();
+    }, 400),
+  );
+  if (document.body) update();
+  else document.addEventListener("DOMContentLoaded", update);
+})();

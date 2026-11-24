@@ -1,0 +1,236 @@
+/* Tela da banca (visão do cliente) */
+.stall-page {
+  padding: 0 0 130px;
+  background: #fff;
+}
+
+/* ---- Banner + foto de perfil ---- */
+.stall-hero {
+  position: relative;
+  padding-bottom: 14px;
+}
+.stall-banner {
+  position: relative;
+  height: 170px;
+  overflow: hidden;
+  border-radius: 0 0 24px 24px;
+  background: linear-gradient(135deg, #219653 0%, #a1d91a 100%);
+}
+.stall-banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.stall-banner-empty::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 85% 20%,
+      rgb(255 255 255 / 28%) 0 60px,
+      transparent 61px
+    ),
+    radial-gradient(
+      circle at 70% 90%,
+      rgb(255 255 255 / 16%) 0 80px,
+      transparent 81px
+    );
+}
+.stall-back {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 14px;
+  z-index: 2;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 94%);
+  color: #168f43;
+  font-size: 32px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+}
+.stall-page > .stall-back {
+  position: static;
+  margin: 14px;
+}
+.stall-identity {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 0 16px;
+  margin-top: -38px;
+  position: relative;
+}
+.stall-avatar {
+  flex: none;
+  width: 82px;
+  height: 82px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: #eef5d7;
+  object-fit: cover;
+  box-shadow: 0 4px 14px rgb(8 64 11 / 18%);
+}
+.stall-identity-text {
+  min-width: 0;
+  padding-bottom: 4px;
+}
+.stall-identity-text h1 {
+  margin: 0;
+  color: #000;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.stall-owner {
+  margin: 2px 0 0;
+  color: #687268;
+  font-size: 12px;
+}
+.stall-location {
+  margin: 10px 16px 0;
+  color: #555;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ---- Já comprou? ---- */
+.stall-purchase {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 16px 20px;
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+.stall-purchase strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+.stall-purchase p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.stall-purchase > div {
+  flex: 1;
+  min-width: 0;
+}
+.stall-purchase-icon {
+  flex: none;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 900;
+}
+.stall-purchase-yes {
+  background: #e6f4ea;
+  color: #14532d;
+  border: 1px solid #c9e8d2;
+}
+.stall-purchase-yes .stall-purchase-icon {
+  background: #219653;
+  color: #fff;
+}
+.stall-purchase-none {
+  background: #f6f7f4;
+  color: #4a524a;
+  border: 1px solid #e8eee6;
+}
+.stall-purchase-none .stall-purchase-icon {
+  background: #fff;
+}
+.stall-purchase-link {
+  flex: none;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #fff;
+  color: #219653;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid #c9e8d2;
+}
+
+/* ---- Produtos ---- */
+.stall-count {
+  color: #777;
+  font-size: 11px;
+  font-weight: 700;
+}
+.stall-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 16px 12px;
+}
+.stall-chip {
+  flex: none;
+  padding: 7px 14px;
+  border: 1px solid #e0e6dc;
+  border-radius: 999px;
+  background: #fff;
+  color: #333;
+  font-size: 12px;
+  font-weight: 700;
+}
+.stall-chip.active {
+  border-color: #219653;
+  background: #219653;
+  color: #fff;
+}
+.stall-product {
+  cursor: pointer;
+}
+.stall-product-media {
+  position: relative;
+}
+.stall-bought-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 4px 7px;
+  border-radius: 8px;
+  background: #219653;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@media (max-width: 380px) {
+  .stall-purchase {
+    margin: 6px 12px 16px;
+  }
+  .stall-identity,
+  .stall-location {
+    padding-left: 12px;
+    margin-left: 0;
+    margin-right: 12px;
+  }
+}
+
+/* Cards clicáveis da home e link na tela do produto */
+.market-card-link {
+  cursor: pointer;
+}
+.market-card-link:focus-visible {
+  outline: 3px solid #9ebf26;
+  outline-offset: 2px;
+}
+.product-detail-stall-link {
+  padding: 0;
+  background: none;
+  color: #219653;
+  font-size: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+}
