@@ -1,8 +1,5 @@
-// ============================================================
-//  COLE AQUI O LINK DE DOWNLOAD DO APP (Play Store, APK, etc.)
-//  Exemplo: "https://play.google.com/store/apps/details?id=com.xepa.app"
-// ============================================================
-const LINK_DOWNLOAD = "";
+// 
+const LINK_DOWNLOAD = "https://github.com/LuizmarCardozo/Xepa/releases/download/Beta/Xepa.1.0.apk";
 
 const botoes = document.querySelectorAll("[data-download]");
 const aviso = document.getElementById("aviso");
