@@ -1,3 +1,4 @@
+// Reúne carrinho, detalhes de produtos e novidades das feiras.
 const CART_KEY_PREFIX = "xepa_cart_";
 
 function cartKey() {
@@ -85,6 +86,7 @@ window.formatMoney = (value) =>
     currency: "BRL",
   });
 
+// O carrinho mantém os itens no armazenamento local do navegador.
 window.Cart = {
   items: readCart,
   count: () => readCart().reduce((sum, item) => sum + item.quantity, 0),
@@ -516,6 +518,7 @@ window.CarrinhoPage = function () {
     </main>`;
 };
 
+// Liga os controles do carrinho ao fluxo de reserva de pedidos.
 window.CarrinhoPageInit = function () {
   const list = document.getElementById("cart-items");
   const recommendationList = document.getElementById(

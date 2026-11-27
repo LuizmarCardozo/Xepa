@@ -1,3 +1,4 @@
+// Inicia a navegação depois da tentativa de carregar a sessão.
 document.addEventListener("DOMContentLoaded", async () => {
   const backendReady = window.Backend?.ready;
   if (typeof backendReady === "function") {

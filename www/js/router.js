@@ -1,3 +1,4 @@
+// Escolhe a tela, carrega seu HTML e inicializa suas ações.
 let navigationSequence = 0;
 let activePageCleanup = null;
 let currentRoute = null;

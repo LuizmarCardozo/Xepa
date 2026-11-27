@@ -2,11 +2,13 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Cada usuário autenticado acessa o próprio documento de perfil.
     match /users/{userId} {
       allow create, read, update: if request.auth != null
         && request.auth.uid == userId;
     }
 
+    // Define quem pode ler e atualizar os dados públicos de uma banca.
     match /markets/{marketId} {
       allow read: if request.auth != null;
       allow create, update: if request.auth != null
@@ -42,6 +44,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // A leitura considera ofertas ativas; alterações verificam o proprietário.
     match /offers/{offerId} {
       allow read: if request.auth != null
         && (resource.data.active == true
@@ -52,6 +55,7 @@ service cloud.firestore {
         && resource.data.ownerUid == request.auth.uid;
     }
 
+    // Novidades podem ser lidas por usuários autenticados e alteradas pelo dono.
     match /stories/{storyId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
@@ -60,6 +64,7 @@ service cloud.firestore {
         && resource.data.ownerUid == request.auth.uid;
     }
 
+    // Define acesso aos pedidos por comprador e vendedor e os critérios de avaliação.
     match /orders/{orderId} {
       allow create: if request.auth != null
         && request.resource.data.buyerUid == request.auth.uid;

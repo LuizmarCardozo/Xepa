@@ -1,3 +1,4 @@
+// Implementação antiga de autenticação local; confira se é carregada pelo index antes de usá-la.
 // js/auth.js
 const Auth = {
   user: JSON.parse(localStorage.getItem("xepa_user") || "null"),

@@ -1,3 +1,4 @@
+// Cria componentes de interface compartilhados entre as telas.
 const Components = {
   bottomNav(active) {
     if (window.Auth?.user?.type === "comerciante") {

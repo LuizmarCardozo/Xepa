@@ -1,3 +1,4 @@
+// Monta a interface da carteira do vendedor.
 window.CarteiraPage = function () {
   const pix = '<img src="assets/pay-pix.svg" alt="">';
   const card = '<img src="assets/pay-card.svg" alt="">';

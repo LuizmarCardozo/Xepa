@@ -1,3 +1,4 @@
+// Monta a página pública da banca e seus produtos.
 // js/banca.js — tela da banca vista pelo cliente
 // Mostra banner, foto de perfil, dados da banca, produtos e se o cliente
 // já comprou ali. Abra com: window.openStall(uidDoComerciante)

@@ -1,3 +1,4 @@
+// Controla as etapas e validações do cadastro de comprador e vendedor.
 const VALID_BRAZILIAN_DDDS = new Set([
   "11",
   "12",
@@ -127,6 +128,7 @@ function validateBrazilianPhone(value) {
   return { valid: true, message: "Telefone válido." };
 }
 
+// Verifica o formato e os dígitos verificadores; não consulta a titularidade do CPF.
 function validateCpf(value) {
   const digits = String(value).replace(/\D/g, "");
   if (digits.length !== 11) {

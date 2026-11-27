@@ -1,3 +1,4 @@
+// Controla as ações do formulário de entrada e recuperação de senha.
 window.LoginPage = function () {
   const form = document.getElementById("login-form");
   const btnGoogle = document.getElementById("btn-google");

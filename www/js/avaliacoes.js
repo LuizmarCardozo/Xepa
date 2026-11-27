@@ -1,3 +1,4 @@
+// Exibe avaliações dos pedidos e permite ao vendedor responder.
 (() => {
   const escapeReviewHtml = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (character) => {

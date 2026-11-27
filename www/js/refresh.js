@@ -1,3 +1,4 @@
+// Coordena a atualização da tela durante a navegação.
 // Atualização dos dados: puxar para atualizar + atualização automática.
 (function () {
   const NO_PULL = new Set([

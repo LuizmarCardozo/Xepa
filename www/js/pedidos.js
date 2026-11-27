@@ -1,3 +1,4 @@
+// Apresenta pedidos e ações para comprador e vendedor.
 // js/pedidos.js
 
 window.PedidosPage = function () {
@@ -575,6 +576,7 @@ function renderMerchantOrderDetail(order, userId) {
   </div>`;
 }
 
+// Carrega os pedidos e liga os controles disponíveis para cada perfil.
 window.PedidosPageInit = async function () {
   const container = document.querySelector("[data-pedidos]");
   if (!container) return;

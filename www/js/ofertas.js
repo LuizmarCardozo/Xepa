@@ -1,3 +1,4 @@
+// Exibe ofertas e aplica os filtros da tela de produtos.
 // js/ofertas.js
 
 const OFFERS_HTML_ESCAPE = {

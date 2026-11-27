@@ -1,3 +1,4 @@
+// Monta e atualiza as notificações exibidas ao usuário.
 // js/notificacoes.js
 // Sininho de notificações do cliente: mostra o status dos pedidos em tempo real.
 // Não precisa de coleção nova no Firebase: as notificações vêm dos próprios pedidos.

@@ -1,3 +1,4 @@
+// Reúne opções de configuração usadas pela interface.
 window.Auth = { user: null };
 window.Backend = {};
 window.XEPA_SUPABASE_CONFIG = window.XEPA_SUPABASE_CONFIG || {

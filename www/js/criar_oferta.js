@@ -1,3 +1,4 @@
+// Controla o formulário de criação e edição de ofertas.
 // js/criar_oferta.js
 // Tela "Nova oferta": upload de imagem, máscara de preço, validação
 // e persistência das ofertas no Firebase.
@@ -283,6 +284,7 @@ window.CriarOfertaPage = async function () {
     return true;
   }
 
+  // Reúne as validações do nome e do preço antes de publicar.
   function validate() {
     let valid = true;
 
@@ -359,6 +361,7 @@ window.CriarOfertaPage = async function () {
   // ---------------------------------------------------------
   // SUBMIT
   // ---------------------------------------------------------
+  // Valida os campos e encaminha a oferta para criação ou edição.
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 

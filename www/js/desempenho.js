@@ -1,3 +1,4 @@
+// Calcula e apresenta indicadores dos pedidos do vendedor.
 // Tela "Meu Desempenho" do comerciante: indicadores, gráfico de vendas,
 // mais vendidos, meta mensal e últimos pedidos, tudo calculado a partir dos
 // pedidos reais (Backend.getOrders).

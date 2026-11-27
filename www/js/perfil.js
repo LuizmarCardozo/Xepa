@@ -1,3 +1,4 @@
+// Monta o perfil e liga seus formulários às operações de dados.
 window.PerfilPage = function () {
   if (window.Auth?.user?.type === "comerciante")
     return `

@@ -1,3 +1,4 @@
+// Monta a tela inicial conforme o perfil e os dados disponíveis.
 // js/home.js
 
 const HOME_HTML_ESCAPE = {

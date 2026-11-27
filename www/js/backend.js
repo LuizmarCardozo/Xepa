@@ -1,3 +1,4 @@
+// Concentra a autenticação e as operações de dados usadas pela interface.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import {
   browserLocalPersistence,
@@ -668,6 +669,7 @@ window.Backend = {
     return updated;
   },
 
+  // Cria o documento da oferta e associa o vendedor conectado como proprietário.
   createOffer: async (offer) => {
     const user = currentUser();
     const offerRef = doc(collection(db, "offers"));
@@ -703,6 +705,7 @@ window.Backend = {
     return { id: offerRef.id, ...offerData };
   },
 
+  // Antes de editar, confere se a oferta existe e pertence ao usuário.
   updateOffer: async (offerId, offer) => {
     const user = currentUser();
     const offerRef = doc(db, "offers", offerId);
@@ -824,6 +827,7 @@ window.Backend = {
     }));
   },
 
+  // Apenas o proprietário pode excluir a oferta pelo fluxo do app.
   deleteOffer: async (offerId) => {
     const user = currentUser();
     const offerRef = doc(db, "offers", offerId);
@@ -932,6 +936,7 @@ window.Backend = {
     }
   },
 
+  // Agrupa os itens por vendedor e grava um pedido para cada grupo.
   createOrders: async (items, fulfillment, address, note, paymentMethod) => {
     const user = currentUser();
     const groups = new Map();
@@ -1116,6 +1121,7 @@ window.Backend = {
     });
   },
 
+  // Confere o código e o estado do pedido antes de marcá-lo como entregue.
   deliverOrder: async (orderId, confirmationCode) => {
     const user = currentUser();
     const normalizedOrderId = String(orderId || "").trim();

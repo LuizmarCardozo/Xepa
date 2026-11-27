@@ -1,3 +1,4 @@
+// Controla a tela e a validação dos dados de retirada Pix.
 function isValidPixCpf(value) {
   const digits = String(value).replace(/\D/g, "");
   if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false;

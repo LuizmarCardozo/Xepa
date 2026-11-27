@@ -1,3 +1,4 @@
+// Fornece operações de armazenamento de imagens no Supabase.
 // Upload de imagens no Supabase Storage usando a API REST diretamente.
 // Não depende mais de biblioteca externa (antes: import dinâmico de esm.sh,
 // que falhava com "Failed to fetch dynamically imported module").

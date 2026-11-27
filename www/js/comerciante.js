@@ -1,3 +1,4 @@
+// Lista ofertas do vendedor e trata ações disponíveis nessa tela.
 window.ComerciantePage = async function () {
   const list = document.querySelector("[data-my-offers]");
   const offerCount = document.querySelector("[data-offer-count]");
